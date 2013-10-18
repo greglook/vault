@@ -11,7 +11,7 @@
 
 
 (defprotocol BlobStore
-  (sizeof [this blobref] "Returns the size of the referenced blob in bytes, if it is stored.")
+  (stat [this blobref] "Returns the size of the referenced blob in bytes, if it is stored.")
   (get-blob [this blobref] "Retrieves the bytes for a given blob.")
   (put-blob [this data] "Stores the given bytes and returns the blobref.")
   (enumerate [this] "Enumerates the stored blobs.")) ; TODO: should `enumerate` include the blob sizes?
@@ -24,7 +24,7 @@
    given value."
   [value]
   ; TODO: customize the pretty printer style
-  (string/trim-newline (with-out-str (pprint value))))
+  (string/trim (with-out-str (pprint value))))
 
 
 (defn hash-blob
@@ -45,8 +45,6 @@
 (defn ref->path
   "Builds a filesystem path out of the given blobref"
   [blobref]
-  (let [[algo chash] (string/split blobref #":" 2)
-        subdir (apply str (take 3 chash))
-        file   (apply str (drop 3 chash))]
-    (string/join \/ [algo subdir file])))
+  (let [[algo digest] (string/split blobref #":" 2)]
+    (string/join \/ [algo (subs digest 0 3) (subs digest 3)])))
 
