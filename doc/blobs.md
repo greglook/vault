@@ -59,6 +59,7 @@ a remote host, or in _s3_ or other cloud-storage services.
 Blob stores can also be composed with intermediate layers. Some ideas:
 - `compress`: compress blobs to save space (may not be effective on all files)
 - `encrypt`: encrypt blobs stored in untrusted third-party services
+- `shard`: distribute blobs across different stores
 - `replicate`: store blobs in multiple locations
 - `cache`: preferentially access files but keep a fixed size locally
 
