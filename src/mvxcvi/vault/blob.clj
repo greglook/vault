@@ -1,13 +1,7 @@
 (ns mvxcvi.vault.blob
   (:require (clojure [pprint :refer [pprint]]
-                     [string :as string]))
-  (:import (java.security MessageDigest)))
+                     [string :as string])))
 
-
-(def hash-algorithms
-  "Map of the available content hashing algorithms."
-  {:sha1   "SHA-1"
-   :sha256 "SHA-256"})
 
 
 (defprotocol BlobStore
@@ -26,20 +20,6 @@
   ; TODO: customize the pretty printer style
   (string/trim (with-out-str (pprint value))))
 
-
-(defn hash-blob
-  "Computes the hash of the given blob."
-  [blob]
-  (let [algo   (MessageDigest/getInstance "SHA-256") ; TODO: don't hardcode
-        data   (.getBytes blob)
-        digest (.digest algo data)]
-    (->> digest (map (partial format "%02x")) string/join)))
-
-
-(defn blob->ref
-  "Calculates a reference hash for the given blob data."
-  [blob]
-  (str "sha256:" (hash-blob blob))) ; TODO: don't hardcode
 
 
 (defn ref->path
