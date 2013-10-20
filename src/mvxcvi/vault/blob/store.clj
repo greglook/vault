@@ -4,9 +4,27 @@
 ;; PROTOCOL
 
 (defprotocol BlobStore
-  (stat [this blobref] "Returns the size of the referenced blob in bytes, if it is stored.")
-  (get-blob [this blobref] "Retrieves the bytes for a given blob.")
-  (put-blob [this data] "Stores the given bytes and returns the blobref.")
-  (enumerate [this] "Enumerates the stored blobs."))
+  (enumerate
+    [this]
+    "Enumerates the stored blobs, returning a sequence of BlobRefs.")
 
-; TODO: should `enumerate` include the stat results?
+  (content-stream
+    [this blobref]
+    "Returns a stream of the byte content for the referenced blob, if it is
+    stored.")
+
+  (store-content!
+    [this content]
+    "Stores the given byte stream and returns the blob reference.")
+
+  (blob-info
+    [this blobref]
+    "Returns a map of metadata about the blob, if it is stored. Properties are
+    implementation-specific, but should include :size and potentially
+    :location."))
+
+
+(defn contains-blob?
+  "Determines whether the store contains the referenced blob."
+  [store blobref]
+  (not (nil? (blob-info store blobref))))
