@@ -28,7 +28,12 @@
     (str (name algorithm) ":" digest)))
 
 
-(defn content-address
+(defmethod print-method BlobRef
+  [value ^java.io.Writer w]
+  (.write w (str "#vault/blobref " \" value \")))
+
+
+(defn hash-content
   "Calculates the blob reference for the given content."
   [algorithm content]
   (let [hashfn (digest-functions algorithm)]
@@ -43,7 +48,16 @@
   "Parses an address string into a blobref. Accepts either a hash URI or the
   shorter \"algo:address\" format."
   [address]
-  (let [address (str address)
-        address (if (re-find #"^urn:" address) (subs address 4) address)
+  (let [address (if (re-find #"^urn:" address) (subs address 4) address)
         [algorithm digest] (string/split address #":" 2)]
     (BlobRef. (keyword algorithm) digest)))
+
+
+(defn blob-ref
+  "Constructs a blobref out of the arguments."
+  ([x]
+   (if (instance? BlobRef x)
+     x
+     (parse-address (str x))))
+  ([algorithm digest]
+   (BlobRef. algorithm digest)))
