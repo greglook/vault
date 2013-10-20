@@ -52,9 +52,8 @@
 
   (content-stream [this blobref]
     (let [file (blobref->file root blobref)]
-      (if (.exists file)
-        (io/input-stream file)
-        nil)))
+      (when (.exists file)
+        (io/input-stream file))))
 
 
   (store-content! [this content]
@@ -67,8 +66,9 @@
 
   (blob-info [this blobref]
     (let [file (blobref->file root blobref)]
-      {:location (.toURI file)
-       :size (.length file)})))
+      (when (.exists file)
+        {:location (.toURI file)
+         :size (.length file)}))))
 
 
 (defn file-store
