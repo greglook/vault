@@ -1,30 +1,49 @@
 (ns mvxcvi.vault.blob
-  (:require (clojure [pprint :refer [pprint]]
-                     [string :as string])))
+  (:require (clojure [string :as string])
+            digest))
+
+
+;; HASH ALGORITHMS
+
+(def ^:private digest-functions
+  "Map of content hashing algorithms to functional implementations."
+  {:md5    digest/md5
+   :sha1   digest/sha-1
+   :sha256 digest/sha-256})
+
+
+(def digest-algorithms
+  "Set of available content hashing algorithms."
+  (into #{} (keys digest-functions)))
 
 
 
-(defprotocol BlobStore
-  (stat [this blobref] "Returns the size of the referenced blob in bytes, if it is stored.")
-  (get-blob [this blobref] "Retrieves the bytes for a given blob.")
-  (put-blob [this data] "Stores the given bytes and returns the blobref.")
-  (enumerate [this] "Enumerates the stored blobs.")) ; TODO: should `enumerate` include the blob sizes?
+;; BLOB REFERENCE
+
+(defrecord BlobRef
+  [algorithm digest]
+
+  Object
+  (toString [this]
+    (str (name algorithm) ":" digest)))
 
 
-; TODO: this should probably be a multimethod; non-clojure data structures
-; (like a sequence of raw bytes) should have different serialization semantics.
-(defn serialize-blob
-  "Produces a string representing the 'canonical' serialization of the
-   given value."
-  [value]
-  ; TODO: customize the pretty printer style
-  (string/trim (with-out-str (pprint value))))
+(defn content-address
+  "Calculates the blob reference for the given content."
+  [algorithm content]
+  (let [hashfn (digest-functions algorithm)]
+    (when-not hashfn
+      (throw (IllegalArgumentException.
+               (str "Unsupported digest algorithm: " algorithm
+                    ", must be one of " (string/join ", " digest-algorithms)))))
+    (BlobRef. algorithm (-> content hashfn .toLowerCase))))
 
 
-
-(defn ref->path
-  "Builds a filesystem path out of the given blobref"
-  [blobref]
-  (let [[algo digest] (string/split blobref #":" 2)]
-    (string/join \/ [algo (subs digest 0 3) (subs digest 3)])))
-
+(defn parse-address
+  "Parses an address string into a blobref. Accepts either a hash URI or the
+  shorter \"algo:address\" format."
+  [address]
+  (let [address (str address)
+        address (if (re-find #"^urn:" address) (subs address 4) address)
+        [algorithm digest] (string/split address #":" 2)]
+    (BlobRef. (keyword algorithm) digest)))
