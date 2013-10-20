@@ -11,10 +11,13 @@
 
 
 (defn parse
-  "Parses a string into a blobref."
+  "Parses an address string into a blobref. Accepts either a hash URI or the
+  shorter \"algo:address\" format."
   [string]
-  (let [[algorithm address] (split string #":" 2)]
-    (BlobRef. algorithm address)))
+  (let [string (str string)
+        string (if (re-find #"^urn:" string) (subs string 4) string)
+        [algorithm address] (split string #":" 2)]
+    (BlobRef. (keyword algorithm) address)))
 
 
 
