@@ -79,7 +79,6 @@
 ;; COMMAND EXECUTION
 
 (defn- usage-banner
-  "Builds a usage banner given a command map."
   [branch cmd]
   (let [{:keys [usage desc commands]} cmd]
     (str "Usage: " (string/join " " branch) " " usage "\n\n" desc
@@ -91,8 +90,54 @@
                      (string/join "\n")))))))
 
 
+(defn- parse-command-args
+  [usage opts specs args]
+  (if specs
+    ; Parse arguments with command specs and merge opts.
+    (let [[command-opts action-args banner]
+         (apply cli args usage specs)
+         opts (merge opts command-opts (when (:help opts) {:help true}))]
+      [banner opts action-args])
+    [usage opts args]))
+
+
+(defn- parse-opts
+  [usage cmd opts args]
+  (let [subcommands (:commands cmd)
+        subcommand-names (apply hash-set (map :name subcommands))
+        ; Test for a subcommand invocation in the argument list.
+        [command-args [subcommand & subcommand-args]]
+        (split-with (complement subcommand-names) args)
+        ; Parse command args with option specs.
+        [banner opts action-args]
+        (parse-command-args usage opts (:specs cmd) command-args)
+        ; Map subcommand to actual command map.
+        subcommand (and subcommand
+                        (some #(and (= (:name %) subcommand) %)
+                              subcommands))]
+    [banner opts action-args subcommand subcommand-args]))
+
+
+(defn- execute-action
+  [usage action opts args]
+  (cond (:help opts)
+        (do (println usage)
+            (System/exit 0))
+
+        action
+        (action opts args)
+
+        :else
+        (do (when-not (empty? args)
+              (println "Unrecognized arguments:" (string/join " " args) "\n"))
+            (println usage)
+            (System/exit 1))))
+
+
 (defn execute
-  "Parses a sequence of arguments using a command map."
+  "Parses a sequence of arguments using a command map. The action function
+  associated with a given leaf command will be called with a merged options map
+  and any remaining arguments."
   ([cmd args]
    (execute cmd {} args))
 
@@ -105,46 +150,18 @@
      (recur cmd branch
             (assoc opts :help true)
             (filter #(not= "help" %) args))
-
+     ; Parse arguments, update options and find subcommands.
      (let [branch (conj branch (:name cmd))
-           subcmds (:commands cmd)
-           subcmd-names (apply hash-set (map :name subcmds))
            usage (usage-banner branch cmd)
-
-           ; Test for a subcommand invocation in the argument list.
-           [cmd-args [subcmd & subcmd-args]]
-           (split-with (complement subcmd-names) args)
-
-           ; Parse arguments with command specs, if present.
-           [cmd-opts action-args banner]
-           (if-let [specs (:specs cmd)]
-             (apply cli cmd-args usage (:specs cmd))
-             [opts cmd-args usage])
-
-           ; Merge parsed opts and initialize them.
-           opts (merge opts cmd-opts (when (:help opts) {:help true}))
+           [usage opts action-args subcommand subcommand-args]
+           (parse-opts usage cmd opts args)
            opts ((or (:init cmd) identity) opts)]
-
-       ;(clojure.pprint/pprint {:branch branch, :opts opts, :action-args action-args, :subcmd subcmd, :subcmd-args subcmd-args})
-
-       (if-let [subcmd (some #(and (= (:name %) subcmd) %) subcmds)]
+       ;(clojure.pprint/pprint {:branch branch, :opts opts, :action-args action-args, :subcommand subcommand, :subcommand-args subcommand-args})
+       (if subcommand
          ; Recur on selected subcommand.
          (if-not (empty? action-args)
            (throw (IllegalArgumentException.
                     (str "Unparsed arguments before command: " action-args)))
-           (recur subcmd branch opts subcmd-args))
-
-         ; Act on given command, either to print help or execute the action.
-         (cond (:help opts)
-               (do (println banner)
-                   (System/exit 0))
-
-               (:action cmd)
-               ((:action cmd) opts action-args)
-
-               :else
-               (do (when-not (empty? action-args)
-                     (println "Unrecognized arguments:"
-                              (string/join " " action-args) "\n"))
-                   (println banner)
-                   (System/exit 1))))))))
+           (recur subcommand branch opts subcommand-args))
+         ; Act on current command, either to print help or execute the action.
+         (execute-action usage (:action cmd) opts action-args))))))
