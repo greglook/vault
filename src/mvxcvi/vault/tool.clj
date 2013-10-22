@@ -91,6 +91,19 @@
 
 ;; COMMAND TREE EXECUTION
 
+(defn- usage-banner
+  "Builds a usage banner given a command map."
+  [branch cmd]
+  (let [{:keys [usage desc commands]} cmd]
+    (str "Usage: " (string/join " " branch) " " usage "\n\n" desc
+         (when (seq commands)
+           (str "\n\n Subcommand   Description\n"
+                    " ----------   -----------\n"
+                (->> commands
+                     (map #(format " %10s   %s" (:name %) (:desc %)))
+                     (string/join "\n")))))))
+
+
 (defn- handle-command
   "Handles a sequence of arguments following a command tree structure."
   ([cmd args]
@@ -98,40 +111,40 @@
 
   ([cmd branch opts args]
    (if (some #{"help"} args)
+     ; Recur with :help set in opts and the "help" argument removed.
      (recur cmd branch
             (assoc opts :help true)
             (filter #(not= "help" %) args))
+
      (let [branch (conj branch (:name cmd))
            subcmds (:commands cmd)
            subcmd-names (apply hash-set (map :name subcmds))
-           usage (str "Usage: " (string/join " " branch) " " (:usage cmd)
-                      "\n\n" (:desc cmd)
-                      (when (seq subcmds)
-                        (str "\n\n Subcommand   Description\n"
-                                 " ----------   -----------\n"
-                             (->> subcmds
-                                  (map #(format " %10s   %s" (:name %) (:desc %)))
-                                  (string/join "\n")))))
+           usage (usage-banner branch cmd)
 
+           ; Test for a subcommand invocation in the argument list.
            [cmd-args [subcmd & subcmd-args]]
            (split-with (complement subcmd-names) args)
 
+           ; Parse arguments with command specs, if present.
            [cmd-opts action-args banner]
            (if-let [specs (:specs cmd)]
              (apply cli cmd-args usage (:specs cmd))
              [opts cmd-args usage])
 
+           ; Merge parsed opts and initialize them.
            opts (merge opts cmd-opts (when (:help opts) {:help true}))
            opts ((or (:init cmd) identity) opts)]
 
        ;(clojure.pprint/pprint {:branch branch, :opts opts, :action-args action-args, :subcmd subcmd, :subcmd-args subcmd-args})
 
        (if-let [subcmd (some #(and (= (:name %) subcmd) %) subcmds)]
+         ; Recur on selected subcommand.
          (if-not (empty? action-args)
            (throw (IllegalArgumentException.
                     (str "Unparsed arguments before command: " action-args)))
            (recur subcmd branch opts subcmd-args))
 
+         ; Act on given command, either to print help or execute the action.
          (cond (:help opts)
                (do (println banner)
                    (System/exit 0))
