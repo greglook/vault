@@ -1,23 +1,8 @@
 (ns mvxcvi.vault.tool
   (:require [clojure.string :as string]
-            [clojure.tools.cli :refer [cli]])
+            [clojure.tools.cli :refer [cli]]
+            (mvxcvi.vault.tool [blob :as blob-tool]))
   (:gen-class :main true))
-
-;; Vault commands need to know:
-;; blob-store configuration
-;; indexer configuration
-;; gpg identity
-
-
-;; Ideas for tool commands:
-;; $ vault --blob-store ~/.config/vault/blob-store.edn
-;; $ vault blob list [start-blobref]
-;; $ vault blob info <blobref>
-;; $ vault blob get <blobref> > ./foo.dat
-;; $ vault blob put < ./foo.dat > ./blobref.txt
-;; $ vault object ...
-;; $ vault group ...
-
 
 
 ;; COMMAND TREE DEFINITION
@@ -163,6 +148,20 @@
 
 ;; COMMAND LINE INTERFACE
 
+;; Vault commands need to know:
+;; blob-store configuration
+;; indexer configuration
+;; gpg identity
+
+
+;; Ideas for tool commands:
+;; $ vault blob list [prefix]
+;; $ vault blob info <blobref>
+;; $ vault blob get <blobref> > ./foo.dat
+;; $ vault blob put < ./foo.dat > ./blobref.txt
+;; $ vault object ...
+;; $ vault group ...
+
 (def command-tree
   (command "vault [global opts] <command> [command args]"
     "Command-line tool for the vault data store."
@@ -174,9 +173,7 @@
     ["-h" "--help" "Show usage information."
      :flag true :default false]
 
-    #_ (init [opts]
-      (-> opts
-          (assoc :blob-store (slurp (:blob-store opts)))))
+    (init identity)
 
     (command "blob [opts] <action> [args]"
       "Blob storage command."
@@ -184,19 +181,19 @@
       (command "list [opts]"
         "Enumerate the stored blobs."
         ; ... filtering/range options
-        (action vector #_ blob-tool/list-blobs))
+        (action blob-tool/list-blobs))
 
       (command "info <blobref>"
         "Show information about a stored blob."
-        (action vector #_ blob-tool/blob-info))
+        (action blob-tool/blob-info))
 
-      (command "get <blobref>"
+      (command "get <blobref> > blob.dat"
         "Print the contents of a blob to stdout."
-        (action vector #_ blob-tool/get-blob))
+        (action blob-tool/get-blob))
 
-      (command "put"
+      (command "put < blob.dat"
         "Store a blob of data read from stdin and print the resulting blobref."
-        (action vector #_ blob-tool/put-blob)))))
+        (action blob-tool/put-blob)))))
 
 
 (defn -main [& args]
