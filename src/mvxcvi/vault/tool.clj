@@ -20,62 +20,76 @@
 
 
 
-;; COMMAND TREE STRUCTURE
+;; COMMAND TREE DEFINITION
 
 ; command nodes look like this:
 #_
 {:name "vault"
- :usage "vault [global opts] <command> [command args]"
+ :usage "[global opts] <command> [command args]"
  :desc "Command-line tool for the vault data store."
  :specs [["--blob-store" "Path to blob-store configuration." ...]]
  :init (fn [opts] ...)
- :commands {"blob" {:name "blob"}}
- :action (fn [opts args] ...)}
+ :action (fn [opts args] ...)
+ :commands [{:name "blob"} ...]}
 
 
-(def ^:private ^:dynamic *command-branch*
-  "Vector containing the command names on the current branch."
-  [])
+(defn- make-element-fn
+  "Resolves an element as a function body or symbolic reference."
+  [[element & body]]
+  (when element
+    (if (symbol? (first body))
+      (first body)
+      `(fn ~@body))))
+
+
+(defn- make-command
+  "Constructs a command node map from the given elements."
+  [cmd-name usage desc specs init-element action-element command-elements]
+  (let [cond-assoc (fn [coll [k v]] (if (and k v) (assoc coll k v) coll))
+        nonempty-vec (fn [xs] (and (seq xs) (vec xs)))]
+    (reduce cond-assoc
+            {:name cmd-name
+             :usage usage
+             :desc desc}
+            [[:specs    (nonempty-vec specs)]
+             [:init     (make-element-fn init-element)]
+             [:action   (make-element-fn action-element)]
+             [:commands (nonempty-vec command-elements)]])))
 
 
 (defmacro ^:private command
-  "Simple macro for building readable command trees."
+  "Macro to simplify building readable command trees."
   [usage desc & more]
-  (let [[cname usage] (string/split usage #" " 2)
-        [specs more] (split-with vector? more)
-        command {:name cname
-                 :usage `(string/join " " (concat *command-branch* [~usage]))
-                 :desc desc
-                 :specs (vec specs)}
-        elements (group-by first (filter list? more))]
-    (when (> (count (elements 'init)) 1)
+  (let [[cmd-name usage] (string/split usage #" " 2)
+        [specs more]     (split-with vector? more)
+        elements         (group-by first (filter list? more))
+        init-elements    (elements 'init)
+        action-elements  (elements 'action)
+        command-elements (elements 'command)]
+    (when-not (every? list? more)
       (throw (IllegalArgumentException.
-               (str "Multiple `init` elements in command definition: " (elements 'init)))))
-    (when (> (count (elements 'action)) 1)
+               (str "Non-list elements in '" cmd-name "' command definition: "
+                    (filter (complement list?) more)))))
+    (when (> (count init-elements) 1)
       (throw (IllegalArgumentException.
-               (str "Multiple `action` elements in command definition: " (elements 'action)))))
-    (when (and (elements 'command) (elements 'action))
+               (str "Multiple `init` elements in '" cmd-name
+                    "' command definition: " init-elements))))
+    (when (> (count action-elements) 1)
       (throw (IllegalArgumentException.
-               (str "Command definition contains both `command` and `action` elements: " more))))
-    (let [assoc-fn (fn [cmd [k & body]]
-                     (if k
-                       (if (symbol? (first body))
-                         (assoc cmd (keyword k) (first body))
-                         (assoc cmd (keyword k) `(fn ~@body)))
-                       cmd))
-          command (reduce assoc-fn command
-                          [(first (elements 'init))
-                           (first (elements 'action))])]
-      (if-let [subcommands (elements 'command)]
-        `(binding [*command-branch* (conj *command-branch* ~(:name command))]
-           (->>
-             ~(vec subcommands)
-             (map (juxt :name identity))
-             (into {})
-             (assoc ~command :commands)))
-        `(binding [*command-branch* (conj *command-branch* ~(:name command))]
-           ~command)))))
+               (str "Multiple `action` elements in '" cmd-name
+                    "' command definition: " action-elements))))
+    (when (and command-elements action-elements)
+      (throw (IllegalArgumentException.
+               (str "Both `command` and `action` elements in '" cmd-name
+                    "' command definition: " command-elements action-elements))))
+    (make-command cmd-name usage desc specs
+                  (first init-elements)
+                  (first action-elements)
+                  command-elements)))
 
+
+
+;; COMMAND TREE EXECUTION
 
 (defn- handle-command
   "Handles a sequence of arguments following a command tree structure."
