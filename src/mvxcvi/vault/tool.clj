@@ -93,30 +93,58 @@
 
 (defn- handle-command
   "Handles a sequence of arguments following a command tree structure."
-  [command opts args]
-  (let [subcommand-names (into #{} (cons "help" (keys (:commands command))))
+  ([cmd args]
+   (handle-command cmd [] {} args))
 
-        [command-args [subcommand & subcommand-args]]
-        (split-with (complement subcommand-names) args)
+  ([cmd branch opts args]
+   (if (some #{"help"} args)
+     (recur cmd branch
+            (assoc opts :help true)
+            (filter #(not= "help" %) args))
+     (let [branch (conj branch (:name cmd))
+           subcmds (:commands cmd)
+           subcmd-names (apply hash-set (map :name subcmds))
+           usage (str "Usage: " (string/join " " branch) " " (:usage cmd)
+                      "\n\n" (:desc cmd)
+                      (when (seq subcmds)
+                        (str "\n\n Subcommand   Description\n"
+                                 " ----------   -----------\n"
+                             (->> subcmds
+                                  (map #(format " %10s   %s" (:name %) (:desc %)))
+                                  (string/join "\n")))))
 
-        [command-opts remaining-args banner]
-        (apply cli command-args
-               (str "Usage: " (:usage command) "\n\n" (:desc command))
-               (:specs command))
+           [cmd-args [subcmd & subcmd-args]]
+           (split-with (complement subcmd-names) args)
 
-        new-opts (merge opts command-opts)
-        new-opts (delay (if-let [init (:init command)] (init new-opts) new-opts))]
-    (if subcommand
-      (if (= "help" subcommand)
-        (recur command
-               (assoc opts :help true)
-               (concat command-args subcommand-args))
-        (recur (get-in command [:commands subcommand])
-               @new-opts
-               subcommand-args)) ; NOTE: ignores unknown args before the subcommand
-      (cond (:help opts) (do (println banner) (System/exit 0))
-            (:action command) ((:action command) @new-opts command-args)
-            :else (do (println banner) (System/exit 1))))))
+           [cmd-opts action-args banner]
+           (if-let [specs (:specs cmd)]
+             (apply cli cmd-args usage (:specs cmd))
+             [opts cmd-args usage])
+
+           opts (merge opts cmd-opts (when (:help opts) {:help true}))
+           opts ((or (:init cmd) identity) opts)]
+
+       ;(clojure.pprint/pprint {:branch branch, :opts opts, :action-args action-args, :subcmd subcmd, :subcmd-args subcmd-args})
+
+       (if-let [subcmd (some #(and (= (:name %) subcmd) %) subcmds)]
+         (if-not (empty? action-args)
+           (throw (IllegalArgumentException.
+                    (str "Unparsed arguments before command: " action-args)))
+           (recur subcmd branch opts subcmd-args))
+
+         (cond (:help opts)
+               (do (println banner)
+                   (System/exit 0))
+
+               (:action cmd)
+               ((:action cmd) opts action-args)
+
+               :else
+               (do (when-not (empty? action-args)
+                     (println "Unrecognized arguments:"
+                              (string/join " " action-args) "\n"))
+                   (println banner)
+                   (System/exit 1))))))))
 
 
 
@@ -159,4 +187,4 @@
 
 
 (defn -main [& args]
-  (handle-command command-tree {} args))
+  (handle-command command-tree args))
