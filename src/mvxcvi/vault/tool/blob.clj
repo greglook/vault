@@ -1,22 +1,27 @@
 (ns mvxcvi.vault.tool.blob
   (:require [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
-            [mvxcvi.vault.blob.store :as store]))
+            [mvxcvi.vault.blob.store :as blobs]))
 
 
 (defn list-blobs
   [opts args]
-  (let [blobs (store/enumerate (:store opts)
-                               (select-keys opts [:start :count]))]
+  (let [store (:store opts)
+        controls (select-keys opts [:start :count])
+        blobs (blobs/enumerate store controls)]
     (doseq [blobref blobs]
       (println (str blobref)))))
 
 
 (defn blob-info
   [opts args]
-  ; TODO: implement
-  (println "Getting blob info")
-  (pprint [opts args]))
+  (when (empty? args)
+    (println "Arguments must be blobrefs or prefixes.")
+    (System/exit 1))
+  (let [store (:store opts)]
+    (doseq [prefix args
+            blobref (blobs/find-prefix store prefix)]
+      (println (str blobref) (blobs/blob-info store blobref)))))
 
 
 (defn get-blob
@@ -24,18 +29,16 @@
   (when (empty? args)
     (println "First argument must be a blobref or unique prefix.")
     (System/exit 1))
-  (let [prefix (first args)
-        store (:store opts)
-        blobs (store/enumerate store {:start prefix :count 5})]
-    (when (< 1 (count blobs))
+  (let [store (:store opts)
+        blobs (blobs/find-prefix store (first args))]
+    (when (> (count blobs) 1)
       (println "Multiple blobs match prefix: " blobs)
       (System/exit 1))
-    (with-open [stream (store/content-stream (:store opts) (first blobs))]
+    (with-open [stream (blobs/content-stream store (first blobs))]
       (io/copy stream *out*))))
 
 
 (defn put-blob
   [opts args]
-  ; TODO: implement
-  (println "Storing blob content")
-  (pprint [opts args]))
+  (let [blobref (blobs/store-content! (:store opts) *in*)]
+    (println (str blobref))))

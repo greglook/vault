@@ -32,3 +32,9 @@
   "Determines whether the store contains the referenced blob."
   [store blobref]
   (not (nil? (blob-info store blobref))))
+
+
+(defn find-prefix
+  [store prefix]
+  (->> (enumerate store {:start prefix})
+       (take-while #(.startsWith (str %) prefix))))

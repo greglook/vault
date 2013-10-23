@@ -46,10 +46,10 @@
   (enumerate
     [this opts]
     ; TODO: intelligently skip entries based on 'start' and iterate up to 'count'
-    (let [blobrefs (for [algorithm-dir (.listFiles root)]
-                     (for [prefix-dir (.listFiles algorithm-dir)]
-                       (for [midfix-dir (.listFiles prefix-dir)]
-                         (seq (.listFiles midfix-dir)))))
+    (let [blobrefs (for [algorithm-dir (sort (.listFiles root))]
+                     (for [prefix-dir (sort (.listFiles algorithm-dir))]
+                       (for [midfix-dir (sort (.listFiles prefix-dir))]
+                         (seq (sort (.listFiles midfix-dir))))))
           blobrefs (map (partial file->blobref root) (flatten blobrefs))
           blobrefs (if-let [start (:start opts)]
                      (drop-while #(< 0 (compare start (str %))) blobrefs)
@@ -74,11 +74,18 @@
 
 
   (store-content! [this content]
-    (let [blobref (blob/hash-content algorithm content)
-          file (blobref->file root blobref)]
-      (io/make-parents file)
-      (io/copy content file)
-      blobref)))
+    (let [tmp (io/file root "tmp"
+                       (str "landing-" (System/currentTimeMillis)))]
+      (io/make-parents tmp)
+      (io/copy content tmp)
+      (let [blobref (blob/hash-content algorithm tmp)
+            file (blobref->file root blobref)]
+        (io/make-parents file)
+        (when-not (.renameTo tmp file)
+          (throw (RuntimeException.
+                   (str "Failed to rename landing file " tmp
+                        " to stored blob " file))))
+        blobref))))
 
 
 (defn file-store

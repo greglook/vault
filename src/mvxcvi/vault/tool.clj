@@ -13,9 +13,6 @@
 ;; indexer configuration
 ;; gpg identity
 
-;; Ideas for tool commands:
-;; $ vault object ...
-;; $ vault group ...
 
 (def config-paths
   "Location of Vault configuration files."
@@ -58,6 +55,9 @@
         (printf " %8s%s  " (name nickname) (if (= nickname default) \* \space))
         (pprint store)))))
 
+
+
+;; COMMAND STRUCTURE
 
 (def commands
   (command "vault [global opts] <command> [command args]"
