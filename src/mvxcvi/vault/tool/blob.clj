@@ -1,11 +1,24 @@
 (ns mvxcvi.vault.tool.blob
-  (:require [clojure.pprint :refer [pprint]]))
+  (:require [clojure.pprint :refer [pprint]]
+            [mvxcvi.vault.blob.store :as store]))
+
+(defn- get-blob-store
+  [blob-stores nickname]
+  (if (keyword? nickname)
+    (let [target (blob-stores nickname)]
+      (if (keyword? target)
+        (recur blob-stores target)
+        target))))
 
 
 (defn list-blobs
   [opts args]
-  (println "Listing blobs")
-  (pprint [opts args]))
+  (let [blob-stores (:blob-stores opts)
+        store (get-blob-store blob-stores (:store opts :default))]
+    (if-not store
+      (throw (IllegalStateException. "No blob-store exists."))
+      (doseq [blobref (store/enumerate store)]
+        (println (str blobref))))))
 
 
 (defn blob-info

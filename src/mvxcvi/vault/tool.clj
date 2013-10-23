@@ -61,9 +61,12 @@
     (command "blob <action> [args]"
       "Blob storage command."
 
+      ["-s" "--store" "Select blob store to use." :default :default]
+
       (command "list [opts]"
         "Enumerate the stored blobs."
         ; ... filtering/range options
+
         (action blob-tool/list-blobs))
 
       (command "info <blobref>"
