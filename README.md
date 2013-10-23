@@ -5,4 +5,5 @@ datastore while maintaining a secure history of entity values.
 
 ## License
 
-Copyright © 2013 Gregory Look
+This is free and unencumbered software released into the public domain.
+See the `UNLICENSE` file for more information.
