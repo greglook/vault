@@ -3,6 +3,7 @@
             [clojure.pprint :refer [pprint]]
             [mvxcvi.vault.blob.store :as store]))
 
+
 (defn list-blobs
   [opts args]
   (let [blobs (store/enumerate (:store opts)
@@ -13,6 +14,7 @@
 
 (defn blob-info
   [opts args]
+  ; TODO: implement
   (println "Getting blob info")
   (pprint [opts args]))
 
@@ -34,5 +36,6 @@
 
 (defn put-blob
   [opts args]
+  ; TODO: implement
   (println "Storing blob content")
   (pprint [opts args]))

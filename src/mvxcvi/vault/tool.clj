@@ -19,8 +19,12 @@
 
 (def config-paths
   "Location of Vault configuration files."
-  {:blob-stores (str (get (System/getenv) "HOME") "/.config/vault/blob-stores.clj")})
+  {:blob-stores (str (get (System/getenv) "HOME")
+                     "/.config/vault/blob-stores.edn")})
 
+
+
+;; BLOB STORES
 
 (defn- initialize-blob-stores
   [opts]
@@ -34,12 +38,25 @@
 
 
 (defn- get-blob-store
-  [blob-stores nickname]
-  (if (keyword? nickname)
-    (let [target (blob-stores nickname)]
-      (if (keyword? target)
-        (recur blob-stores target)
-        target))))
+  "Returns the selected blob-store (as opposed to its keyword nickname)."
+  [opts]
+  (let [blob-stores (:blob-stores opts)
+        nickname (:store opts :default)]
+    (loop [store (blob-stores nickname)]
+      (if (keyword? store)
+        (recur (blob-stores store))
+        store))))
+
+
+(defn- list-blob-stores
+  [opts args]
+  (println "Available blob stores:")
+  (let [blob-stores (:blob-stores opts)
+        default     (:default blob-stores)]
+    (doseq [[nickname store] blob-stores]
+      (when-not (= :default nickname)
+        (printf " %8s%s  " (name nickname) (if (= nickname default) \* \space))
+        (pprint store)))))
 
 
 (def commands
@@ -58,14 +75,7 @@
 
       (command "stores"
         "List the available blob stores."
-        (action [opts args]
-          (println "Available blob stores:")
-          (let [blob-stores (:blob-stores opts)
-                default     (:default blob-stores)]
-            (doseq [[nickname store] blob-stores]
-              (when-not (= :default nickname)
-                (printf " %8s%s  " (name nickname) (if (= nickname default) \* \space))
-                (pprint store)))))))
+        (action list-blob-stores)))
 
     (command "blob <action> [args]"
       "Blob storage command."
@@ -73,10 +83,10 @@
       ["--store" "Select blob store to use."]
 
       (init [opts]
-        (let [blob-stores (:blob-stores opts)
-              store (get-blob-store blob-stores (:store opts :default))]
+        (let [store (get-blob-store opts)]
           (when-not store
-            (throw (IllegalStateException. "No blob-store exists.")))
+            (println "No blob-store initialized.")
+            (System/exit 1))
           (assoc opts :store store)))
 
       (command "list [opts]"
