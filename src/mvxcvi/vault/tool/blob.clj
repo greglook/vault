@@ -1,31 +1,14 @@
 (ns mvxcvi.vault.tool.blob
-  (:require [clojure.pprint :refer [pprint]]
+  (:require [clojure.java.io :as io]
+            [clojure.pprint :refer [pprint]]
             [mvxcvi.vault.blob.store :as store]))
-
-(defn- get-blob-store
-  [blob-stores nickname]
-  (if (keyword? nickname)
-    (let [target (blob-stores nickname)]
-      (if (keyword? target)
-        (recur blob-stores target)
-        target))))
-
 
 (defn list-blobs
   [opts args]
-  (let [blob-stores (:blob-stores opts)
-        store (get-blob-store blob-stores (:store opts :default))]
-    (if-not store
-      (throw (IllegalStateException. "No blob-store exists."))
-      (let [blobs (store/enumerate store)
-            blobs (if-let [start (:start opts)]
-                    (drop-while #(< 0 (compare start (str %))) blobs)
-                    blobs)
-            blobs (if-let [cnt (:count opts)]
-                    (take cnt blobs)
-                    blobs)]
-        (doseq [blobref blobs]
-          (println (str blobref)))))))
+  (let [blobs (store/enumerate (:store opts)
+                               (select-keys opts [:start :count]))]
+    (doseq [blobref blobs]
+      (println (str blobref)))))
 
 
 (defn blob-info
@@ -36,8 +19,17 @@
 
 (defn get-blob
   [opts args]
-  (println "Getting blob content")
-  (pprint [opts args]))
+  (when (empty? args)
+    (println "First argument must be a blobref or unique prefix.")
+    (System/exit 1))
+  (let [prefix (first args)
+        store (:store opts)
+        blobs (store/enumerate store {:start prefix :count 5})]
+    (when (< 1 (count blobs))
+      (println "Multiple blobs match prefix: " blobs)
+      (System/exit 1))
+    (with-open [stream (store/content-stream (:store opts) (first blobs))]
+      (io/copy stream *out*))))
 
 
 (defn put-blob

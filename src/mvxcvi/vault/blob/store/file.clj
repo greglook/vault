@@ -46,13 +46,18 @@
   (enumerate
     [this opts]
     ; TODO: intelligently skip entries based on 'start' and iterate up to 'count'
-    (->>
-      (for [algorithm-dir (.listFiles root)]
-        (for [prefix-dir (.listFiles algorithm-dir)]
-          (for [midfix-dir (.listFiles prefix-dir)]
-            (seq (.listFiles midfix-dir)))))
-      flatten
-      (map (partial file->blobref root))))
+    (let [blobrefs (for [algorithm-dir (.listFiles root)]
+                     (for [prefix-dir (.listFiles algorithm-dir)]
+                       (for [midfix-dir (.listFiles prefix-dir)]
+                         (seq (.listFiles midfix-dir)))))
+          blobrefs (map (partial file->blobref root) (flatten blobrefs))
+          blobrefs (if-let [start (:start opts)]
+                     (drop-while #(< 0 (compare start (str %))) blobrefs)
+                     blobrefs)
+          blobrefs (if-let [cnt (:count opts)]
+                     (take cnt blobrefs)
+                     blobrefs)]
+      blobrefs))
 
 
   (blob-info [this blobref]

@@ -33,6 +33,15 @@
       (assoc opts :blob-stores {}))))
 
 
+(defn- get-blob-store
+  [blob-stores nickname]
+  (if (keyword? nickname)
+    (let [target (blob-stores nickname)]
+      (if (keyword? target)
+        (recur blob-stores target)
+        target))))
+
+
 (def commands
   (command "vault [global opts] <command> [command args]"
     "Command-line tool for the vault data store."
@@ -61,7 +70,14 @@
     (command "blob <action> [args]"
       "Blob storage command."
 
-      ["--store" "Select blob store to use." :default :default]
+      ["--store" "Select blob store to use."]
+
+      (init [opts]
+        (let [blob-stores (:blob-stores opts)
+              store (get-blob-store blob-stores (:store opts :default))]
+          (when-not store
+            (throw (IllegalStateException. "No blob-store exists.")))
+          (assoc opts :store store)))
 
       (command "list [opts]"
         "Enumerate the stored blobs."
