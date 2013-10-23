@@ -63,8 +63,8 @@
   (blob-info [this blobref]
     (let [file (blobref->file root blobref)]
       (when (.exists file)
-        {:location (.toURI file)
-         :size (.length file)})))
+        {:size (.length file)
+         :since (java.util.Date. (.lastModified file))})))
 
 
   (content-stream [this blobref]

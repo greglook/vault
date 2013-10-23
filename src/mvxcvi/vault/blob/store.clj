@@ -35,6 +35,7 @@
 
 
 (defn find-prefix
+  "Lists stored blobs with references matching the given prefix."
   [store prefix]
   (->> (enumerate store {:start prefix})
        (take-while #(.startsWith (str %) prefix))))
