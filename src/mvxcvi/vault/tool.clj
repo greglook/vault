@@ -61,11 +61,13 @@
     (command "blob <action> [args]"
       "Blob storage command."
 
-      ["-s" "--store" "Select blob store to use." :default :default]
+      ["--store" "Select blob store to use." :default :default]
 
       (command "list [opts]"
         "Enumerate the stored blobs."
-        ; ... filtering/range options
+
+        ["-s" "--start" "Start enumerating blobs lexically following the start string."]
+        ["-n" "--count" "Limit the number of results returned." :parse-fn #(Integer. %)]
 
         (action blob-tool/list-blobs))
 

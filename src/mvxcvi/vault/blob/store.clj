@@ -6,7 +6,17 @@
 (defprotocol BlobStore
   (enumerate
     [this]
-    "Enumerates the stored blobs, returning a sequence of BlobRefs.")
+    [this opts]
+    "Enumerates the stored blobs, returning a sequence of BlobRefs.
+    Options should be keyword/value pairs from the following:
+    * :start - start enumerating blobrefs lexically following this string
+    * :count - limit results returned")
+
+  (blob-info
+    [this blobref]
+    "Returns a map of metadata about the blob, if it is stored. Properties are
+    implementation-specific, but should include :size and potentially
+    :location.")
 
   (content-stream
     [this blobref]
@@ -15,13 +25,7 @@
 
   (store-content!
     [this content]
-    "Stores the given byte stream and returns the blob reference.")
-
-  (blob-info
-    [this blobref]
-    "Returns a map of metadata about the blob, if it is stored. Properties are
-    implementation-specific, but should include :size and potentially
-    :location."))
+    "Stores the given byte stream and returns the blob reference."))
 
 
 (defn contains-blob?

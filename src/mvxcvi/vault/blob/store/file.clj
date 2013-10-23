@@ -41,6 +41,11 @@
   BlobStore
 
   (enumerate [this]
+    (enumerate this {}))
+
+  (enumerate
+    [this opts]
+    ; TODO: intelligently skip entries based on 'start' and iterate up to 'count'
     (->>
       (for [algorithm-dir (.listFiles root)]
         (for [prefix-dir (.listFiles algorithm-dir)]
@@ -48,6 +53,13 @@
             (seq (.listFiles midfix-dir)))))
       flatten
       (map (partial file->blobref root))))
+
+
+  (blob-info [this blobref]
+    (let [file (blobref->file root blobref)]
+      (when (.exists file)
+        {:location (.toURI file)
+         :size (.length file)})))
 
 
   (content-stream [this blobref]
@@ -61,14 +73,7 @@
           file (blobref->file root blobref)]
       (io/make-parents file)
       (io/copy content file)
-      blobref))
-
-
-  (blob-info [this blobref]
-    (let [file (blobref->file root blobref)]
-      (when (.exists file)
-        {:location (.toURI file)
-         :size (.length file)}))))
+      blobref)))
 
 
 (defn file-store

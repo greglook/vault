@@ -17,8 +17,15 @@
         store (get-blob-store blob-stores (:store opts :default))]
     (if-not store
       (throw (IllegalStateException. "No blob-store exists."))
-      (doseq [blobref (store/enumerate store)]
-        (println (str blobref))))))
+      (let [blobs (store/enumerate store)
+            blobs (if-let [start (:start opts)]
+                    (drop-while #(< 0 (compare start (str %))) blobs)
+                    blobs)
+            blobs (if-let [cnt (:count opts)]
+                    (take cnt blobs)
+                    blobs)]
+        (doseq [blobref blobs]
+          (println (str blobref)))))))
 
 
 (defn blob-info
