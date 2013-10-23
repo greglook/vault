@@ -51,10 +51,12 @@
         "List the available blob stores."
         (action [opts args]
           (println "Available blob stores:")
-          (doseq [[nickname store] (:blob-stores opts)]
-            (when-not (= :default nickname)
-              (printf " %8s   " (name nickname))
-              (pprint store))))))
+          (let [blob-stores (:blob-stores opts)
+                default     (:default blob-stores)]
+            (doseq [[nickname store] blob-stores]
+              (when-not (= :default nickname)
+                (printf " %8s%s  " (name nickname) (if (= nickname default) \* \space))
+                (pprint store)))))))
 
     (command "blob <action> [args]"
       "Blob storage command."
