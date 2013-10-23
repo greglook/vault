@@ -36,7 +36,7 @@
 ;; FILE STORE
 
 (defrecord FileBlobStore
-  [root algorithm]
+  [algorithm root]
 
   BlobStore
 
@@ -73,5 +73,4 @@
 
 (defn file-store
   "Creates a new local file-based blobstore."
-  ([root] (file-store root :sha256))
-  ([root algorithm] (FileBlobStore. (io/file root) algorithm)))
+  ([algorithm root] (FileBlobStore. algorithm (io/file root))))
