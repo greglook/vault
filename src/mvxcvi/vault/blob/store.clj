@@ -37,5 +37,9 @@
 (defn find-prefix
   "Lists stored blobs with references matching the given prefix."
   [store prefix]
-  (->> (enumerate store {:start prefix})
-       (take-while #(.startsWith (str %) prefix))))
+  (let [algorithm (:algorithm store)
+        prefix (if-not (some (partial = \:) prefix)
+                 (str (name algorithm) \: prefix)
+                 prefix)]
+    (->> (enumerate store {:start prefix})
+         (take-while #(.startsWith (str %) prefix)))))

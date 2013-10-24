@@ -15,12 +15,13 @@
 
 (defn blob-info
   [opts args]
-  (when (empty? args)
-    (println "Arguments must be blobrefs or prefixes.")
-    (System/exit 1))
-  (let [store (:store opts)]
-    (doseq [prefix args
-            blobref (blobs/find-prefix store prefix)]
+  (let [store (:store opts)
+        blobrefs (if (empty? args)
+                   (blobs/enumerate store)
+                   (for [prefix args
+                         blobref (blobs/find-prefix store prefix)]
+                     blobref))]
+    (doseq [blobref blobrefs]
       (println (str blobref) (blobs/blob-info store blobref)))))
 
 
