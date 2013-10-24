@@ -1,6 +1,6 @@
-(defproject vault "0.1.0-SNAPSHOT"
+(defproject vault "0.1.1-SNAPSHOT"
   :description "Content-addressible datastore."
-  :url "http://example.com/FIXME"
+  :url "https://github.com/greglook/vault"
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
   :dependencies [[org.clojure/clojure "1.5.1"]
