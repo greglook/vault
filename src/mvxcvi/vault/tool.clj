@@ -111,4 +111,5 @@
 
 
 (defn -main [& args]
-  (execute commands args))
+  (execute commands args)
+  (shutdown-agents))
