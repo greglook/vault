@@ -20,29 +20,39 @@
                      "/.config/vault/blob-stores.edn")})
 
 
+(def ^:private config-readers
+  "Map of EDN readers for supported types in config files."
+  {'vault/file-store (partial apply file-store)})
 
-;; BLOB STORES
+
+
+;; BLOB STORAGE
+
+(defn- select-blob-store
+  [stores selection]
+  (->> (or selection :default)
+       (iterate stores)
+       (drop-while keyword?)
+       first))
+
 
 (defn- initialize-blob-stores
   [opts]
   (try
     (let [config (slurp (:blob-stores config-paths))
-          edn-readers {'vault/file-store (partial apply file-store)}
-          stores (edn/read-string {:readers edn-readers} config)]
-      (assoc opts :blob-stores stores))
+          stores (edn/read-string {:readers config-readers} config)
+          store (select-blob-store stores (:store opts :default))]
+      (assoc opts :blob-stores stores :store store))
     (catch java.io.FileNotFoundException e
       (assoc opts :blob-stores {}))))
 
 
-(defn- get-blob-store
-  "Returns the selected blob-store (as opposed to its keyword nickname)."
+(defn- require-blob-store
   [opts]
-  (let [blob-stores (:blob-stores opts)
-        nickname (:store opts :default)]
-    (loop [store (blob-stores nickname)]
-      (if (keyword? store)
-        (recur (blob-stores store))
-        store))))
+  (when-not (:store opts)
+    (println "No blob-store initialized.")
+    (System/exit 1))
+  opts)
 
 
 (defn- list-blob-stores
@@ -63,6 +73,8 @@
   (command "vault [global opts] <command> [command args]"
     "Command-line tool for the vault data store."
 
+    ["--store" "Select blob store to use."
+     :parse-fn keyword]
     ["-v" "--verbose" "Show extra debugging messages."
      :flag true :default false]
     ["-h" "--help" "Show usage information."
@@ -80,14 +92,7 @@
     (command "blob <action> [args]"
       "Blob storage command."
 
-      ["--store" "Select blob store to use."]
-
-      (init [opts]
-        (let [store (get-blob-store opts)]
-          (when-not store
-            (println "No blob-store initialized.")
-            (System/exit 1))
-          (assoc opts :store store)))
+      (init require-blob-store)
 
       (command "list [opts]"
         "Enumerate the stored blobs."
