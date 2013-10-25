@@ -99,6 +99,10 @@
 
       (command "info <blobref>"
         "Show information about a stored blob."
+
+        ["--pretty" "Format the info over multiple lines for easier viewing."
+         :flag true :default true]
+
         (action blob-tool/blob-info))
 
       (command "get <blobref> > blob.dat"

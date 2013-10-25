@@ -22,7 +22,13 @@
                          blobref (blobs/find-prefix store prefix)]
                      blobref))]
     (doseq [blobref blobrefs]
-      (println (str blobref) (blobs/blob-info store blobref)))))
+      (let [info (blobs/blob-info store blobref)]
+        (if (:pretty opts)
+          (do
+            (println (str blobref))
+            (pprint info)
+            (println))
+          (println (str blobref) info))))))
 
 
 (defn get-blob
