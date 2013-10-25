@@ -2,6 +2,7 @@
   (:require
     [clojure.string :as string]
     [clojure.java.io :as io]
+    [clojure.java.shell :as shell]
     [mvxcvi.vault.blob :as blob]
     [mvxcvi.vault.blob.store :refer :all]))
 
@@ -32,6 +33,18 @@
       (blob/blob-ref algorithm (string/join digest)))))
 
 
+(defn- file-content-type
+  "Attempts to use the `file` command to provide content-type information for a
+  stored blob. Returns a MIME string on success."
+  [file]
+  (let [result (shell/sh "file"
+                         "--brief"
+                         "--mime"
+                         (.getAbsolutePath file))]
+    (when (= 0 (:exit result))
+      (string/trim (:out result)))))
+
+
 
 ;; FILE STORE
 
@@ -45,7 +58,7 @@
 
   (enumerate
     [this opts]
-    ; TODO: intelligently skip entries based on 'start' and iterate up to 'count'
+    ; TODO: intelligently skip entries based on 'start'
     (let [blobrefs (for [algorithm-dir (sort (.listFiles root))]
                      (for [prefix-dir (sort (.listFiles algorithm-dir))]
                        (for [midfix-dir (sort (.listFiles prefix-dir))]
@@ -64,7 +77,9 @@
     (let [file (blobref->file root blobref)]
       (when (.exists file)
         {:size (.length file)
-         :since (java.util.Date. (.lastModified file))})))
+         :since (java.util.Date. (.lastModified file))
+         :content-type (file-content-type file)
+         :location (.toURI file)})))
 
 
   (content-stream [this blobref]

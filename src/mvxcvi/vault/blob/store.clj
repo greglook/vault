@@ -15,8 +15,12 @@
   (blob-info
     [this blobref]
     "Returns a map of metadata about the blob, if it is stored. Properties are
-    implementation-specific, but should include :size and potentially
-    :location.")
+    implementation-specific, but should include:
+    * :size - blob size in bytes
+    * :since - date blob was added to store
+    Optionally, other attributes may also be included:
+    * :content-type - a guess at the type of content stored in the blob
+    * :location - a resource location for the blob")
 
   (content-stream
     [this blobref]
