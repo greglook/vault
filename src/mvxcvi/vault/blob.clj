@@ -56,9 +56,10 @@
   [address]
   (let [address (if (re-find #"^urn:" address) (subs address 4) address)
         address (if (re-find #"^hash:" address) (subs address 5) address)
-        [algorithm digest] (string/split address #":" 2)]
+        [algorithm digest] (string/split address #":" 2)
+        algorithm (keyword algorithm)]
     (assert-valid-digest algorithm)
-    (BlobRef. (keyword algorithm) digest)))
+    (BlobRef. algorithm digest)))
 
 
 (defn make-blobref
@@ -68,5 +69,6 @@
      x
      (parse-address (str x))))
   ([algorithm digest]
-   (assert-valid-digest algorithm)
-   (BlobRef. algorithm digest)))
+   (let [algorithm (keyword algorithm)]
+     (assert-valid-digest algorithm)
+     (BlobRef. algorithm digest))))
