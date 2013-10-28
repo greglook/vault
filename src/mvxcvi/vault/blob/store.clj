@@ -12,7 +12,7 @@
     * :start - start enumerating blobrefs lexically following this string
     * :count - limit results returned")
 
-  (blob-info
+  (stat
     [this blobref]
     "Returns a map of metadata about the blob, if it is stored. Properties are
     implementation-specific, but should include:
@@ -22,12 +22,11 @@
     * :content-type - a guess at the type of content stored in the blob
     * :location - a resource location for the blob")
 
-  (content-stream
+  (open
     [this blobref]
-    "Returns a stream of the byte content for the referenced blob, if it is
-    stored.")
+    "Opens a stream of byte content for the referenced blob, if it is stored.")
 
-  (store-content!
+  (store!
     [this content]
     "Stores the given byte stream and returns the blob reference."))
 
@@ -35,7 +34,7 @@
 (defn contains-blob?
   "Determines whether the store contains the referenced blob."
   [store blobref]
-  (not (nil? (blob-info store blobref))))
+  (not (nil? (stat store blobref))))
 
 
 (defn find-prefix

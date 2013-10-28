@@ -22,7 +22,7 @@
                          blobref (blobs/find-prefix store prefix)]
                      blobref))]
     (doseq [blobref blobrefs]
-      (let [info (blobs/blob-info store blobref)]
+      (let [info (blobs/stat store blobref)]
         (if (:pretty opts)
           (do
             (println (str blobref))
@@ -37,15 +37,15 @@
     (println "First argument must be a blobref or unique prefix.")
     (System/exit 1))
   (let [store (:store opts)
-        blobs (blobs/find-prefix store (first args))]
-    (when (> (count blobs) 1)
-      (println "Multiple blobs match prefix: " blobs)
+        blobrefs (blobs/find-prefix store (first args))]
+    (when (> (count blobrefs) 1)
+      (println "Multiple blobs match prefix: " blobrefs)
       (System/exit 1))
-    (with-open [stream (blobs/content-stream store (first blobs))]
+    (with-open [stream (blobs/open store (first blobrefs))]
       (io/copy stream *out*))))
 
 
 (defn put-blob
   [opts args]
-  (let [blobref (blobs/store-content! (:store opts) *in*)]
+  (let [blobref (blobs/store! (:store opts) *in*)]
     (println (str blobref))))

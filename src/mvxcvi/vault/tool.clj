@@ -90,7 +90,7 @@
         (action list-blob-stores)))
 
     (command "blob <action> [args]"
-      "Blob storage command."
+      "Low-level commands dealing with data blobs."
 
       (init require-blob-store)
 
@@ -102,7 +102,7 @@
 
         (action blob-tool/list-blobs))
 
-      (command "info <blobref>"
+      (command "stat <blobref>"
         "Show information about a stored blob."
 
         ["--pretty" "Format the info over multiple lines for easier viewing."

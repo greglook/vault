@@ -30,7 +30,7 @@
 
 (defmethod print-method BlobRef
   [value ^java.io.Writer w]
-  (.write w (str "#vault/blobref " \" value \")))
+  (.write w (str "#vault/ref " \" value \")))
 
 
 (defn hash-content
@@ -49,11 +49,12 @@
   shorter \"algo:address\" format."
   [address]
   (let [address (if (re-find #"^urn:" address) (subs address 4) address)
+        address (if (re-find #"^hash:" address) (subs address 5) address)
         [algorithm digest] (string/split address #":" 2)]
     (BlobRef. (keyword algorithm) digest)))
 
 
-(defn blob-ref
+(defn make-blobref
   "Constructs a blobref out of the arguments."
   ([x]
    (if (instance? BlobRef x)

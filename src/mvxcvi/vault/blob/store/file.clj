@@ -3,7 +3,7 @@
     [clojure.string :as string]
     [clojure.java.io :as io]
     [clojure.java.shell :as shell]
-    [mvxcvi.vault.blob :as blob]
+    [mvxcvi.vault.blob :refer :all]
     [mvxcvi.vault.blob.store :refer :all]))
 
 
@@ -11,7 +11,7 @@
 
 (defn- blobref->file
   [root blobref]
-  (let [blobref (blob/blob-ref blobref)
+  (let [blobref (make-blobref blobref)
         {:keys [algorithm digest]} blobref]
     (io/file root
              (name algorithm)
@@ -30,7 +30,7 @@
     (let [[algorithm & digest] (-> file
                                    (subs (inc (count root)))
                                    (string/split #"/"))]
-      (blob/blob-ref algorithm (string/join digest)))))
+      (make-blobref algorithm (string/join digest)))))
 
 
 (defn- file-content-type
@@ -73,7 +73,7 @@
       blobrefs))
 
 
-  (blob-info [this blobref]
+  (stat [this blobref]
     (let [file (blobref->file root blobref)]
       (when (.exists file)
         {:size (.length file)
@@ -82,18 +82,18 @@
          :location (.toURI file)})))
 
 
-  (content-stream [this blobref]
+  (open [this blobref]
     (let [file (blobref->file root blobref)]
       (when (.exists file)
         (io/input-stream file))))
 
 
-  (store-content! [this content]
+  (store! [this content]
     (let [tmp (io/file root "tmp"
                        (str "landing-" (System/currentTimeMillis)))]
       (io/make-parents tmp)
       (io/copy content tmp)
-      (let [blobref (blob/hash-content algorithm tmp)
+      (let [blobref (hash-content algorithm tmp)
             file (blobref->file root blobref)]
         (io/make-parents file)
         (when-not (.renameTo tmp file)
