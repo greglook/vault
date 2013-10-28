@@ -1,7 +1,7 @@
 (ns mvxcvi.vault.blob.store)
 
 
-;; PROTOCOL
+;; BLOB STORE PROTOCOL
 
 (defprotocol BlobStore
   (enumerate
@@ -31,18 +31,32 @@
     "Stores the given byte stream and returns the blob reference."))
 
 
+
+;; HELPER FUNCTIONS
+
 (defn contains-blob?
   "Determines whether the store contains the referenced blob."
   [store blobref]
   (not (nil? (stat store blobref))))
 
 
-(defn find-prefix
-  "Lists stored blobs with references matching the given prefix."
+(defn- adjust-prefix
+  "Adds the store's algorithm to a blobref prefix if none is specified."
   [store prefix]
-  (let [algorithm (:algorithm store)
-        prefix (if-not (some (partial = \:) prefix)
-                 (str (name algorithm) \: prefix)
-                 prefix)]
-    (->> (enumerate store {:start prefix})
-         (take-while #(.startsWith (str %) prefix)))))
+  (if-not (some (partial = \:) prefix)
+    (str (name (:algorithm store)) \: prefix)
+    prefix))
+
+
+(defn enumerate-prefixes
+  "Lists stored blobs with references matching the given prefixes."
+  ([store]
+   (enumerate store))
+  ([store prefix]
+   (let [algorithm (:algorithm store)
+         prefix (adjust-prefix store prefix)]
+     (->> (enumerate store {:start prefix})
+          (take-while #(.startsWith (str %) prefix)))))
+  ([store prefix & more]
+   (let [prefixes (cons prefix more)]
+     (apply concat (for [prefix prefixes] (enumerate-prefixes store prefix))))))

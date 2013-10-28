@@ -15,31 +15,30 @@
 
 (defn blob-info
   [opts args]
-  (let [store (:store opts)
-        blobrefs (if (empty? args)
-                   (blobs/enumerate store)
-                   (for [prefix args
-                         blobref (blobs/find-prefix store prefix)]
-                     blobref))]
-    (doseq [blobref blobrefs]
+  (let [store (:store opts)]
+    (doseq [blobref (apply blobs/enumerate-prefixes store args)]
       (let [info (blobs/stat store blobref)]
         (if (:pretty opts)
           (do
             (println (str blobref))
             (pprint info)
-            (println))
-          (println (str blobref) info))))))
+            (newline))
+          (do
+            (print (str blobref) \space)
+            (prn info)))))))
 
 
 (defn get-blob
   [opts args]
-  (when (empty? args)
-    (println "First argument must be a blobref or unique prefix.")
+  (when (or (empty? args) (> (count args) 1))
+    (println "Must provide a single blobref or unique prefix.")
     (System/exit 1))
   (let [store (:store opts)
-        blobrefs (blobs/find-prefix store (first args))]
+        blobrefs (blobs/enumerate-prefixes store (first args))]
     (when (> (count blobrefs) 1)
-      (println "Multiple blobs match prefix: " blobrefs)
+      (println (count blobrefs) "blobs match prefix:")
+      (doseq [blobref blobrefs]
+        (println (str blobref)))
       (System/exit 1))
     (with-open [stream (blobs/open store (first blobrefs))]
       (io/copy stream *out*))))
