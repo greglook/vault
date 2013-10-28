@@ -17,6 +17,14 @@
   (into #{} (keys digest-functions)))
 
 
+(defn- assert-valid-digest
+  [algorithm]
+  (when-not (digest-functions algorithm)
+    (throw (IllegalArgumentException.
+             (str "Unsupported digest algorithm: " algorithm
+                  ", must be one of " (string/join ", " digest-algorithms))))))
+
+
 
 ;; BLOB REFERENCE
 
@@ -24,6 +32,7 @@
   [algorithm digest]
 
   Object
+
   (toString [this]
     (str (name algorithm) ":" digest)))
 
@@ -36,21 +45,19 @@
 (defn hash-content
   "Calculates the blob reference for the given content."
   [algorithm content]
+  (assert-valid-digest algorithm)
   (let [hashfn (digest-functions algorithm)]
-    (when-not hashfn
-      (throw (IllegalArgumentException.
-               (str "Unsupported digest algorithm: " algorithm
-                    ", must be one of " (string/join ", " digest-algorithms)))))
     (BlobRef. algorithm (-> content hashfn .toLowerCase))))
 
 
 (defn parse-address
-  "Parses an address string into a blobref. Accepts either a hash URI or the
+  "Parses an address string into a blobref. Accepts either a hash URN or the
   shorter \"algo:address\" format."
   [address]
   (let [address (if (re-find #"^urn:" address) (subs address 4) address)
         address (if (re-find #"^hash:" address) (subs address 5) address)
         [algorithm digest] (string/split address #":" 2)]
+    (assert-valid-digest algorithm)
     (BlobRef. (keyword algorithm) digest)))
 
 
@@ -61,4 +68,5 @@
      x
      (parse-address (str x))))
   ([algorithm digest]
+   (assert-valid-digest algorithm)
    (BlobRef. algorithm digest)))
