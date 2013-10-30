@@ -23,7 +23,7 @@
   "Constructs a text doc, which may be colored if *colored-output* is true."
   [text & codes]
   (if *colored-output*
-    [:span [:pass (apply ansi/escape codes)] text [:pass (ansi/escape :none)]]
+    [:span [:pass (ansi/esc codes)] text [:pass (ansi/escape :none)]]
     text))
 
 

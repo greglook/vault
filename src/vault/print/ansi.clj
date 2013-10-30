@@ -33,17 +33,26 @@
    :bg-reset   49})
 
 
+(defn esc
+  "Returns an ANSI escope string which will apply the given collection of SGR
+  codes."
+  [codes]
+  (let [codes (map sgr-code codes codes)
+        codes (string/join \; codes)]
+    (str \u001b \[ codes \m)))
+
+
 (defn escape
   "Returns an ANSI escope string which will enact the given SGR codes."
   [& codes]
-  (let [codes (map sgr-code codes codes)]
-    (str \u001b \[ (string/join \; codes) \m)))
+  (esc codes))
 
 
 (defn sgr
-  "Wraps the given string with SGR escape codes."
+  "Wraps the given string with SGR escapes to apply the given codes, then reset
+  the graphics."
   [string & codes]
-  (str (apply escape codes) string (escape :none)))
+  (str (esc codes) string (escape :none)))
 
 
 (defmacro with-sgr
