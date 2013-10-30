@@ -1,0 +1,30 @@
+; An object root blob contains two EDN values - the root node, and a signature
+; by the owner's key.
+
+#vault/object.root
+{:owner #vault/ref "algo:digest"             ; public key ref
+ :time #inst "2013-10-23T20:06:13.000-00:00" ; current time by default
+ :id "a123d1c0f82f2ea1"                      ; random string by deault
+ :content #vault/ref "algo:digest"           ; optional initial content
+ :attributes {:title "Example Object"}}      ; optional initial attributes
+
+
+
+; Update blobs:
+
+#vault/object.update
+{:time #inst "2013-10-25T09:13:24.000-00:00"
+ :past [#vault/ref "algo:digest"  ; update 123 involving object1
+        #vault/ref "algo:digest"] ; update 456 involving object2
+ :updates {#vault/ref "algo:digest" ; object 1
+           [[:set-attribute :title "Foo"]
+            [:add-attribute :tags "things"]]
+           #vault/ref "algo:digest" ; object 2
+           [[:set-content #vault/ref "algo:digest"]]}}
+
+
+#vault/object.update
+{:time #inst "2013-10-25T09:13:24.000-00:00"
+ :past [#vault/ref "algo:digest"]
+ :updates {#vault/ref "algo:digest"
+           [[:set-attribute :title "Foo"]]}}
