@@ -2,7 +2,7 @@
   (:require (clojure
               [edn :as edn]
               [pprint :refer [pprint]])
-            (vault.blob.store
+            (vault.store
               [file :refer [file-store]])
             [vault.cli :refer [command execute]]
             (vault.tool

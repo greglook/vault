@@ -1,10 +1,10 @@
-(ns vault.blob.store.file
+(ns vault.store.file
   (:require
     [clojure.string :as string]
     [clojure.java.io :as io]
     [clojure.java.shell :as shell]
     [vault.blob :refer :all]
-    [vault.blob.store :refer :all]))
+    [vault.store :refer :all]))
 
 
 ;; HELPER FUNCTIONS
