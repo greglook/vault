@@ -1,9 +1,8 @@
 (ns mvxcvi.vault.print
   "Utilities for canonical printing of EDN values."
-  (:require (clojure [pprint :refer :all]
-                     [string :as string])
+  (:require (clojure [string :as string])
             [mvxcvi.vault.print.ansi :as ansi]
-            #_ [fipp.edn :refer [pprint]]))
+            [fipp.printer :refer [defprinter]]))
 
 
 ;; HELPER FUNCTIONS
@@ -20,50 +19,51 @@
     ~@body))
 
 
-(defn- color
-  "Wrap color codes around a string if *colored-output* is set."
-  [string & codes]
+(defn- color-text
+  "Constructs a text doc, which may be colored if *colored-output* is true."
+  [text & codes]
   (if *colored-output*
-    (apply ansi/sgr string codes)
-    string))
+    [:span [:pass (apply ansi/escape codes)] text [:pass (ansi/escape :none)]]
+    text))
 
 
-(defn- pr-colored
-  "Print a colored version of the printed output of the value."
-  [value & codes]
-  (let [text (with-out-str (print-method value *out*))
-        text (apply color text codes)]
-    (.write ^java.io.Writer *out* text)))
-
-
-(defmacro ^:private colored-dispatch
-  [dispatch-value & codes]
-  `(defmethod canonical-dispatch ~dispatch-value
-     [value#]
-     (pr-colored value# ~@codes)))
+(defn- delimiter
+  "Colors a delimiter apropriately."
+  [delim]
+  (color-text delim :bold :red))
 
 
 
 ;; DISPATCH MULTIMETHOD
 
-(defmulti canonical-dispatch
-  "Pretty-printer dispatch function for canonical EDN printing. This method also
-  supports ANSI color escapes for syntax highlighting if desired."
+(defmulti canonize
+  "Converts the given value into a 'canonical' structured document, suitable
+  for printing with fipp. This method also supports ANSI color escapes for
+  syntax highlighting if desired."
   type)
 
 
-(defmethod canonical-dispatch clojure.lang.ISeq
-  [alist]
-  (pprint-logical-block
-    :prefix (color "(" :bold :red)
-    :suffix (color ")" :bold :red)
-    (print-length-loop [alist (seq alist)]
-      (when alist
-        (write-out (first alist))
-        (when (next alist)
-          (.write ^java.io.Writer *out* " ")
-          (pprint-newline :linear)
-          (recur (next alist)))))))
+(defmacro ^:private color-primitive
+  [dispatch & codes]
+  `(defmethod canonize ~dispatch
+     [value#]
+     (color-text (pr-str value#) ~@codes)))
+
+
+(color-primitive nil :red)
+(color-primitive java.lang.Boolean :bold :blue)
+(color-primitive java.lang.Number :cyan)
+(color-primitive java.lang.Character :bold :magenta)
+(color-primitive java.lang.String :bold :magenta)
+(color-primitive clojure.lang.Keyword :bold :yellow)
+
+
+(defmethod canonize clojure.lang.ISeq
+  [s]
+  [:group
+   (delimiter "(")
+   [:align (interpose :line (map canonize s))]
+   (delimiter ")")])
 
 
 ; vector
@@ -72,25 +72,11 @@
 
 ; Canonical sets should print their entries in sorted order.
 
-(colored-dispatch clojure.lang.Keyword :bold :yellow)
-(colored-dispatch java.lang.Boolean :bold :blue)
-(colored-dispatch java.lang.Number :cyan)
-(colored-dispatch java.lang.Character :bold :magenta)
-(colored-dispatch java.lang.String :bold :magenta)
 
 
-; nil/true/false
-
-
-(defmethod canonical-dispatch :default
+(defmethod canonize :default
   [value]
-  (.write ^java.io.Writer *out* (str \< (.getName (class value)) \space))
-  (pr value)
-  (.write ^java.io.Writer *out* ">"))
+  [:text (str \< (.getName (class value)) \space (pr-str value) \>)])
 
 
-(defn cprint
-  "Canonically-print a value."
-  [value]
-  (with-pprint-dispatch canonical-dispatch
-    (pprint value)))
+(defprinter cprint canonize {:width 80})
