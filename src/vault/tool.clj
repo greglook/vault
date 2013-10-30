@@ -29,6 +29,21 @@
 
 
 
+;; UTILITY ACTIONS
+
+(defn- debug-command
+  [opts args]
+  (pprint opts)
+  (pprint args))
+
+
+(defn- not-yet-implemented
+  [opts args]
+  (println "This command is not yet implemented")
+  (System/exit 1))
+
+
+
 ;; BLOB STORAGE
 
 (defn- select-blob-store
@@ -119,7 +134,25 @@
 
       (command "put < blob.dat"
         "Store a blob of data read from stdin and print the resulting blobref."
-        (action blob-tool/put-blob)))))
+        (action blob-tool/put-blob)))
+
+    (command "object <action> [args]"
+      "Interact with object entities and data."
+
+      (command "create [args]"
+        "Create a new object."
+
+        ["--time" "Set the time to create the object root with. Defaults to the current time."]
+        ["--id" "Set an identity for the object root. Defaults to a random string."]
+        ["--attributes" "Provide an initial set of attributes for the object."]
+        ["--value" "Set the initial object value to the given reference."]
+
+        (action not-yet-implemented))
+
+      (command "update <object> <type> [args]"
+        "Apply an update to an existing object."
+
+        (action not-yet-implemented)))))
 
 
 (defn -main [& args]
