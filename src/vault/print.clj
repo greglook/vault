@@ -1,7 +1,7 @@
-(ns mvxcvi.vault.print
+(ns vault.print
   "Utilities for canonical printing of EDN values."
   (:require (clojure [string :as string])
-            [mvxcvi.vault.print.ansi :as ansi]
+            [vault.print.ansi :as ansi]
             [fipp.printer :refer [defprinter]]))
 
 

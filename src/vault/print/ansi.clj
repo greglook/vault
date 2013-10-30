@@ -1,4 +1,4 @@
-(ns mvxcvi.vault.print.ansi
+(ns vault.print.ansi
   (:require [clojure.string :as string]))
 
 
