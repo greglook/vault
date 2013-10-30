@@ -122,7 +122,7 @@
      (delimiter "}")]))
 
 
-(defmethod canonize clojure.lang.IPersistentMap
+(defn- canonize-map
   [m]
   (let [entries (sort-by first total-order (seq m))
         entries (for [[k v] entries]
@@ -131,6 +131,19 @@
      (delimiter "{")
      [:align (interpose [:span "," :line] entries)]
      (delimiter "}")]))
+
+
+(defmethod canonize clojure.lang.IPersistentMap
+  [m]
+  (canonize-map m))
+
+
+(defmethod canonize clojure.lang.IRecord
+  [r]
+  [:span (delimiter "#") (-> r class .getName) (canonize-map r)])
+
+
+(prefer-method canonize clojure.lang.IRecord clojure.lang.IPersistentMap)
 
 
 (defmethod canonize :tagged-value
