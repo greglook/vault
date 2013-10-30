@@ -1,9 +1,12 @@
-(ns mvxcvi.vault.tool
-  (:require (clojure [edn :as edn]
-                     [pprint :refer [pprint]])
-            [mvxcvi.util.cli :refer [command execute]]
-            (mvxcvi.vault.blob.store [file :refer [file-store]])
-            (mvxcvi.vault.tool [blob :as blob-tool]))
+(ns vault.tool
+  (:require (clojure
+              [edn :as edn]
+              [pprint :refer [pprint]])
+            (vault.store
+              [file :refer [file-store]])
+            [vault.cli :refer [command execute]]
+            (vault.tool
+              [blob :as blob-tool]))
   (:import java.io.FileNotFoundException)
   (:gen-class :main true))
 
@@ -23,6 +26,21 @@
 (def ^:private config-readers
   "Map of EDN readers for supported types in config files."
   {'vault/file-store (partial apply file-store)})
+
+
+
+;; UTILITY ACTIONS
+
+(defn- debug-command
+  [opts args]
+  (pprint opts)
+  (pprint args))
+
+
+(defn- not-yet-implemented
+  [opts args]
+  (println "This command is not yet implemented")
+  (System/exit 1))
 
 
 
@@ -116,7 +134,25 @@
 
       (command "put < blob.dat"
         "Store a blob of data read from stdin and print the resulting blobref."
-        (action blob-tool/put-blob)))))
+        (action blob-tool/put-blob)))
+
+    (command "object <action> [args]"
+      "Interact with object entities and data."
+
+      (command "create [args]"
+        "Create a new object."
+
+        ["--time" "Set the time to create the object root with. Defaults to the current time."]
+        ["--id" "Set an identity for the object root. Defaults to a random string."]
+        ["--attributes" "Provide an initial set of attributes for the object."]
+        ["--value" "Set the initial object value to the given reference."]
+
+        (action not-yet-implemented))
+
+      (command "update <object> <type> [args]"
+        "Apply an update to an existing object."
+
+        (action not-yet-implemented)))))
 
 
 (defn -main [& args]

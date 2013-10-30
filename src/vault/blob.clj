@@ -1,5 +1,5 @@
-(ns mvxcvi.vault.blob
-  (:require (clojure [string :as string])
+(ns vault.blob
+  (:require [clojure.string :as string]
             digest))
 
 

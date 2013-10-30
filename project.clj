@@ -7,4 +7,4 @@
                  [org.clojure/tools.cli "0.2.4"]
                  [digest "1.4.3"]
                  [fipp "0.4.1"]]
-  :main mvxcvi.vault.tool)
+  :main vault.tool)

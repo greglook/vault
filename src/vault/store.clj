@@ -1,4 +1,4 @@
-(ns mvxcvi.vault.blob.store)
+(ns vault.store)
 
 
 ;; BLOB STORE PROTOCOL
