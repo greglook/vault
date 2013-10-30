@@ -12,17 +12,17 @@ that entity over time. Objects are referenced by the address of their
 _root_.
 
 Object roots are static, so changes to that object are enacted by adding
-further _change blobs_ to the store. These blobs specify accumulating
+further _update blobs_ to the store. These blobs specify accumulating
 modifications to the object, thus the 'current' state of the object can be
-determined by applying the full sequence of changes made to it.
+determined by applying the full sequence of updates made to it.
 
-Changes should include a reference to the 'prior' object change. This gives
+Updates should include a reference to the 'prior' object update. This gives
 version-control semantics and lets branches and merges happen.
 
 ## Object Attributes
 
 Objects act much like a map, containing various named attributes. These mutable
-properties are specified directly by change blobs, and generally support
+properties are specified directly by update blobs, and generally support
 _metadata_ about the entity represented by the object. Some common attributes:
 - `title`: string naming the object
 - `description`: longer string describing the object
@@ -35,7 +35,7 @@ the nature of the data.
 
 ## Resolving State
 
-Since each change blob references its 'parent' changes, these blobs form a tree
+Since each update blob references its 'parent' updates, these blobs form a tree
 descending from the object root. The 'current' state of the object is the tip
 of the tree with the latest timestamp.
 
@@ -52,5 +52,5 @@ about the entity, but this is brittle - if the metadata changes, all the
 transactions must be re-stored with an updated hash reference. The better design
 is to store transactions which refer to the object representing the entities
 in question, which can then be updated at will. If necessary, the state of the
-entity at an arbitrary time can be recovered by replaying the changes up to
+entity at an arbitrary time can be recovered by replaying the updates up to
 then.
