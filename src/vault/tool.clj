@@ -1,9 +1,12 @@
-(ns mvxcvi.vault.tool
-  (:require (clojure [edn :as edn]
-                     [pprint :refer [pprint]])
-            [mvxcvi.util.cli :refer [command execute]]
-            (mvxcvi.vault.blob.store [file :refer [file-store]])
-            (mvxcvi.vault.tool [blob :as blob-tool]))
+(ns vault.tool
+  (:require (clojure
+              [edn :as edn]
+              [pprint :refer [pprint]])
+            (vault.blob.store
+              [file :refer [file-store]])
+            [vault.cli :refer [command execute]]
+            (vault.tool
+              [blob :as blob-tool]))
   (:import java.io.FileNotFoundException)
   (:gen-class :main true))
 

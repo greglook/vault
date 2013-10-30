@@ -1,6 +1,6 @@
-(ns mvxcvi.vault.blob-test
+(ns vault.blob-test
   (:require [clojure.test :refer :all]
-            [mvxcvi.vault.blob :refer :all]))
+            [vault.blob :refer :all]))
 
 
 (def blob-content

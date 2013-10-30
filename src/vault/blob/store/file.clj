@@ -1,10 +1,10 @@
-(ns mvxcvi.vault.blob.store.file
+(ns vault.blob.store.file
   (:require
     [clojure.string :as string]
     [clojure.java.io :as io]
     [clojure.java.shell :as shell]
-    [mvxcvi.vault.blob :refer :all]
-    [mvxcvi.vault.blob.store :refer :all]))
+    [vault.blob :refer :all]
+    [vault.blob.store :refer :all]))
 
 
 ;; HELPER FUNCTIONS
