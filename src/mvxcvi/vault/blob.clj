@@ -31,6 +31,15 @@
 (defrecord BlobRef
   [algorithm digest]
 
+  Comparable
+
+  (compareTo [this that]
+    (if (= this that)
+      0
+      (->> [this that]
+           (map (juxt :algorithm :digest))
+           (apply compare))))
+
   Object
 
   (toString [this]
