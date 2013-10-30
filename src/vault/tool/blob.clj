@@ -1,7 +1,7 @@
-(ns mvxcvi.vault.tool.blob
+(ns vault.tool.blob
   (:require [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
-            [mvxcvi.vault.blob.store :as blobs]))
+            [vault.store :as blobs]))
 
 
 (defn list-blobs
