@@ -46,6 +46,27 @@
       (string/trim (:out result)))))
 
 
+(defmacro ^:private for-files
+  [[sym dir] expr]
+  (let [sym (vary-meta sym assoc :tag 'java.io.File)
+        dir (vary-meta dir assoc :tag 'java.io.File)]
+    `(let [files# (->> ~dir .listFiles sort)]
+       (for [~sym files#]
+         ~expr))))
+
+
+(defn- enumerate-files
+  "Generates a lazy sequence of file blobs contained in a root directory."
+  [root]
+  ; TODO: intelligently skip entries based on 'start'
+  (flatten
+    (for-files [algorithm-dir root]
+      (for-files [prefix-dir algorithm-dir]
+        (for-files [midfix-dir prefix-dir]
+          (for-files [blob midfix-dir]
+            blob))))))
+
+
 
 ;; FILE STORE
 
@@ -60,19 +81,9 @@
 
   (enumerate
     [this opts]
-    ; TODO: intelligently skip entries based on 'start'
-    (let [blobrefs (for [algorithm-dir (sort (.listFiles root))]
-                     (for [prefix-dir (sort (.listFiles ^java.io.File algorithm-dir))]
-                       (for [midfix-dir (sort (.listFiles ^java.io.File prefix-dir))]
-                         (seq (sort (.listFiles ^java.io.File midfix-dir))))))
-          blobrefs (map (partial file->blobref root) (flatten blobrefs))
-          blobrefs (if-let [start (:start opts)]
-                     (drop-while #(< 0 (compare start (str %))) blobrefs)
-                     blobrefs)
-          blobrefs (if-let [cnt (:count opts)]
-                     (take cnt blobrefs)
-                     blobrefs)]
-      blobrefs))
+    (->> (enumerate-files root)
+         (map (partial file->blobref root))
+         (select-blobrefs opts)))
 
 
   (stat [this blobref]

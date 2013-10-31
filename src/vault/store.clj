@@ -43,10 +43,26 @@
 
 (defn- adjust-prefix
   "Adds the store's algorithm to a blobref prefix if none is specified."
-  [store prefix]
+  [algorithm prefix]
   (if-not (some (partial = \:) prefix)
-    (str (name (:algorithm store)) \: prefix)
+    (str (name algorithm) \: prefix)
     prefix))
+
+
+(defn select-blobrefs
+  "Selects blobrefs from a lazy sequence based on input criteria."
+  [opts blobrefs]
+  (let [{:keys [start prefix]} opts
+        blobrefs (if-let [start (or start prefix)]
+                   (drop-while #(< 0 (compare start (str %))) blobrefs)
+                   blobrefs)
+        blobrefs (if prefix
+                   (take-while #(.startsWith (str %) prefix) blobrefs)
+                   blobrefs)
+        blobrefs (if-let [n (:count opts)]
+                   (take n blobrefs)
+                   blobrefs)]
+    blobrefs))
 
 
 (defn enumerate-prefixes
@@ -54,10 +70,7 @@
   ([store]
    (enumerate store))
   ([store prefix]
-   (let [algorithm (:algorithm store)
-         prefix (adjust-prefix store prefix)]
-     (->> (enumerate store {:start prefix})
-          (take-while #(.startsWith (str %) prefix)))))
+   (let [prefix (adjust-prefix (:algorithm store) prefix)]
+     (enumerate store {:prefix prefix})))
   ([store prefix & more]
-   (let [prefixes (cons prefix more)]
-     (apply concat (for [prefix prefixes] (enumerate-prefixes store prefix))))))
+   (mapcat (partial enumerate-prefixes store) (cons prefix more))))
