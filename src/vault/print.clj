@@ -85,8 +85,8 @@
 
 
 (color-primitive nil :bold :black)
-(color-primitive java.lang.Boolean :cyan)
-(color-primitive java.lang.Number :green)
+(color-primitive java.lang.Boolean :green)
+(color-primitive java.lang.Number :cyan)
 (color-primitive java.lang.Character :bold :magenta)
 (color-primitive java.lang.String :bold :magenta)
 (color-primitive clojure.lang.Keyword :bold :yellow)
@@ -153,8 +153,10 @@
 
 (defmethod canonize :default
   [value]
-  [:span "<" (color-text (.getName (class value)) :green)
-   (str \space (pr-str value) \>)])
+  [:span (color-text "#<" :blue)
+   (color-text (.getName (class value)) :bold :blue)
+   " " (str value)
+   (color-text ">" :blue)])
 
 
 (defprinter cprint canonize {:width 80})
