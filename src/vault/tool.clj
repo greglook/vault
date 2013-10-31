@@ -116,7 +116,7 @@
         "Enumerate the stored blobs."
 
         ["-s" "--start" "Start enumerating blobs lexically following the start string."]
-        ["-n" "--count" "Limit the number of results returned." :parse-fn #(Integer. %)]
+        ["-n" "--count" "Limit the number of results returned." :parse-fn #(Integer/parseInt %)]
 
         (action blob-tool/list-blobs))
 

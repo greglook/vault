@@ -23,6 +23,7 @@
     * :location - a resource location for the blob")
 
   (open
+    ^java.io.InputStream
     [this blobref]
     "Opens a stream of byte content for the referenced blob, if it is stored.")
 

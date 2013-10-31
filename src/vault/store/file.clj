@@ -10,6 +10,7 @@
 ;; HELPER FUNCTIONS
 
 (defn- blobref->file
+  ^java.io.File
   [root blobref]
   (let [blobref (make-blobref blobref)
         {:keys [algorithm digest]} blobref]
@@ -36,7 +37,7 @@
 (defn- file-content-type
   "Attempts to use the `file` command to provide content-type information for a
   stored blob. Returns a MIME string on success."
-  [file]
+  [^java.io.File file]
   (let [result (shell/sh "file"
                          "--brief"
                          "--mime"
@@ -49,7 +50,8 @@
 ;; FILE STORE
 
 (defrecord FileBlobStore
-  [algorithm root]
+  [algorithm
+   ^java.io.File root]
 
   BlobStore
 
@@ -60,9 +62,9 @@
     [this opts]
     ; TODO: intelligently skip entries based on 'start'
     (let [blobrefs (for [algorithm-dir (sort (.listFiles root))]
-                     (for [prefix-dir (sort (.listFiles algorithm-dir))]
-                       (for [midfix-dir (sort (.listFiles prefix-dir))]
-                         (seq (sort (.listFiles midfix-dir))))))
+                     (for [prefix-dir (sort (.listFiles ^java.io.File algorithm-dir))]
+                       (for [midfix-dir (sort (.listFiles ^java.io.File prefix-dir))]
+                         (seq (sort (.listFiles ^java.io.File midfix-dir))))))
           blobrefs (map (partial file->blobref root) (flatten blobrefs))
           blobrefs (if-let [start (:start opts)]
                      (drop-while #(< 0 (compare start (str %))) blobrefs)

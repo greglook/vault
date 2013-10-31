@@ -89,5 +89,6 @@
   "Calculates the blob reference for the given content."
   [algorithm content]
   (assert-valid-digest algorithm)
-  (let [hashfn (digest-functions algorithm)]
-    (BlobRef. algorithm (-> content hashfn .toLowerCase))))
+  (let [hashfn (digest-functions algorithm)
+        digest ^String (hashfn content)]
+    (BlobRef. algorithm (.toLowerCase digest))))
