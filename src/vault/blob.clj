@@ -1,6 +1,6 @@
 (ns vault.blob
   (:require [clojure.string :as string]
-            [vault.print :as vp]
+            [vault.data :as data]
             digest))
 
 
@@ -48,9 +48,9 @@
 
 
 (extend-type BlobRef
-  vp/TaggedValue
-  (edn-tag [this] 'vault/ref)
-  (edn-value [this] (str this)))
+  data/TaggedValue
+  (tag [this] 'vault/ref)
+  (value [this] (str this)))
 
 
 (defmethod print-method BlobRef
@@ -58,13 +58,8 @@
   (.write w (str "#vault/ref " \" value \")))
 
 
-(defn hash-content
-  "Calculates the blob reference for the given content."
-  [algorithm content]
-  (assert-valid-digest algorithm)
-  (let [hashfn (digest-functions algorithm)]
-    (BlobRef. algorithm (-> content hashfn .toLowerCase))))
 
+;; CONSTRUCTION
 
 (defn parse-address
   "Parses an address string into a blobref. Accepts either a hash URN or the
@@ -88,3 +83,11 @@
    (let [algorithm (keyword algorithm)]
      (assert-valid-digest algorithm)
      (BlobRef. algorithm digest))))
+
+
+(defn hash-content
+  "Calculates the blob reference for the given content."
+  [algorithm content]
+  (assert-valid-digest algorithm)
+  (let [hashfn (digest-functions algorithm)]
+    (BlobRef. algorithm (-> content hashfn .toLowerCase))))

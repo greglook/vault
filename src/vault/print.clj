@@ -2,11 +2,12 @@
   "Utilities for canonical printing of EDN values."
   (:require [clojure.string :as string]
             [clojure.data.codec.base64 :as b64]
+            [vault.data :as data]
             [vault.print.ansi :as ansi]
             [fipp.printer :refer [defprinter]]))
 
 
-;; HELPER FUNCTIONS
+;; CONTROL VARS
 
 (def ^:dynamic *colored-output*
   "Output ANSI colored output from print functions."
@@ -19,6 +20,22 @@
   `(binding [*colored-output* true]
     ~@body))
 
+
+(def ^:dynamic *strict-mode*
+  "If set, throw an exception if there is no defined canonical print method for
+  a given value."
+  false)
+
+
+(defmacro with-strict-mode
+  "Performs the given forms with strict mode enabled."
+  [& body]
+  `(binding [*strict-mode* true]
+    ~@body))
+
+
+
+;; COLORING FUNCTIONS
 
 (defn- color-text
   "Constructs a text doc, which may be colored if *colored-output* is true."
@@ -35,46 +52,11 @@
 
 
 
-;; TOTAL-ORDERING COMPARATOR
-
-(defn total-order
-  "Comparator function that provides a total-ordering of EDN values."
-  [a b]
-  (compare (pr-str a) (pr-str b))) ; FIXME: dirty hack
-
-
-
-;; EDN-TAGGED PROTOCOL
-
-(defprotocol TaggedValue
-  (edn-tag [this] "Return the tag symbol to apply to the value.")
-  (edn-value [this] "Return the value to pass to the tag."))
-
-
-(extend-protocol TaggedValue
-  (Class/forName "[B")
-  (edn-tag [this] 'bin)
-  (edn-value [this] (apply str (map char (b64/encode this))))
-
-  java.util.Date
-  (edn-tag [this] 'inst)
-  (edn-value [this]
-    (let [utc-format (doto (java.text.SimpleDateFormat.
-                             "yyyy-MM-dd'T'HH:mm:ss.SSS-00:00")
-                       (.setTimeZone (java.util.TimeZone/getTimeZone "GMT")))]
-      (.format utc-format this)))
-
-  java.util.UUID
-  (edn-tag [this] 'uuid)
-  (edn-value [this] (str this)))
-
-
-
 ;; DISPATCH MULTIMETHOD
 
 (defn- canonize-dispatch
   [value]
-  (if (extends? TaggedValue (class value))
+  (if (extends? data/TaggedValue (class value))
     :tagged-value
     (type value)))
 
@@ -124,7 +106,7 @@
 
 (defmethod canonize clojure.lang.IPersistentSet
   [s]
-  (let [entries (sort total-order (seq s))]
+  (let [entries (sort data/total-order (seq s))]
     [:group
      (delimiter "#{")
      [:align (interpose :line (map canonize entries))]
@@ -133,7 +115,7 @@
 
 (defn- canonize-map
   [m]
-  (let [entries (sort-by first total-order (seq m))
+  (let [entries (sort-by first data/total-order (seq m))
         entries (for [[k v] entries]
                   [:span (canonize k) " " (canonize v)])]
     [:group
@@ -157,7 +139,7 @@
 
 (defmethod canonize :tagged-value
   [v]
-  [:span (color-text (str \# (edn-tag v)) :red) " " (canonize (edn-value v))])
+  [:span (color-text (str \# (data/tag v)) :red) " " (canonize (data/value v))])
 
 
 (defmethod canonize :default
