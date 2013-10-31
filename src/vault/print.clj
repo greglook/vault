@@ -1,6 +1,7 @@
 (ns vault.print
   "Utilities for canonical printing of EDN values."
-  (:require (clojure [string :as string])
+  (:require [clojure.string :as string]
+            [clojure.data.codec.base64 :as b64]
             [vault.print.ansi :as ansi]
             [fipp.printer :refer [defprinter]]))
 
@@ -51,13 +52,21 @@
 
 
 (extend-protocol TaggedValue
+  (Class/forName "[B")
+  (edn-tag [this] 'bin)
+  (edn-value [this] (apply str (map char (b64/encode this))))
+
   java.util.Date
   (edn-tag [this] 'inst)
   (edn-value [this]
     (let [utc-format (doto (java.text.SimpleDateFormat.
                              "yyyy-MM-dd'T'HH:mm:ss.SSS-00:00")
                        (.setTimeZone (java.util.TimeZone/getTimeZone "GMT")))]
-      (.format utc-format this))))
+      (.format utc-format this)))
+
+  java.util.UUID
+  (edn-tag [this] 'uuid)
+  (edn-value [this] (str this)))
 
 
 
