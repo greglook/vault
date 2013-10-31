@@ -1,7 +1,7 @@
 (ns vault.tool.blob
   (:require [clojure.java.io :as io]
-            [clojure.pprint :refer [pprint]]
-            [vault.store :as blobs]))
+            (vault [store :as blobs]
+                   [print :refer [cprint with-colored-output]])))
 
 
 (defn list-blobs
@@ -21,7 +21,7 @@
         (if (:pretty opts)
           (do
             (println (str blobref))
-            (pprint info)
+            (with-colored-output (cprint info))
             (newline))
           (do
             (print (str blobref) \space)

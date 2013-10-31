@@ -1,5 +1,6 @@
 (ns vault.blob
   (:require [clojure.string :as string]
+            [vault.print :as vp]
             digest))
 
 
@@ -44,6 +45,12 @@
 
   (toString [this]
     (str (name algorithm) ":" digest)))
+
+
+(extend-type BlobRef
+  vp/TaggedValue
+  (edn-tag [this] 'vault/ref)
+  (edn-value [this] (str this)))
 
 
 (defmethod print-method BlobRef
