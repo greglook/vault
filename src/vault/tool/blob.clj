@@ -1,7 +1,7 @@
 (ns vault.tool.blob
   (:require [clojure.java.io :as io]
-            (vault [store :as blobs]
-                   [print :refer [cprint with-colored-output]])))
+            [vault.store :as blobs]
+            [vault.data.print :refer [cprint with-colored-output]]))
 
 
 (defn list-blobs

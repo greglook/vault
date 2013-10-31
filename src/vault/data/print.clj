@@ -1,4 +1,4 @@
-(ns vault.print
+(ns vault.data.print
   "Utilities for canonical printing of EDN values."
   (:require ansi
             [clojure.string :as string]
