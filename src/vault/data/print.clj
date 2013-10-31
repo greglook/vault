@@ -139,15 +139,14 @@
 
 (defmethod canonize :tagged-value
   [v]
-  [:span (color-text (str \# (data/tag v)) :red) " " (canonize (data/value v))])
+  ^:tagged-value
+  [:span (color-text (str \# (data/tag v)) :red)
+   " " (canonize (data/value v))])
 
 
 (defn- tagged-value-doc?
   [doc]
-  (and (seq doc)
-       (= (first doc) :span)
-       (string? (second doc))
-       (re-matches #"#[\w\/.-]+" (second doc))))
+  (:tagged-value (meta doc)))
 
 
 (defmethod canonize :default
