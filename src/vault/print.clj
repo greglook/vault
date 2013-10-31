@@ -144,10 +144,13 @@
 
 (defmethod canonize :default
   [value]
-  [:span (color-text "#<" :blue)
-   (color-text (.getName (class value)) :bold :blue)
-   " " (str value)
-   (color-text ">" :blue)])
+  (if *strict-mode*
+    (throw (IllegalArgumentException.
+             (str "No canonical representation for " (class value) ": " value)))
+    [:span (color-text "#<" :blue)
+     (color-text (.getName (class value)) :bold :blue)
+     " " (str value)
+     (color-text ">" :blue)]))
 
 
 (defprinter cprint canonize {:width 80})

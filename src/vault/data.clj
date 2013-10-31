@@ -23,7 +23,7 @@
 (extend-protocol TaggedValue
   (Class/forName "[B")
   (tag [this] 'bin)
-  (value [this] (apply str (map char (b64/encode this))))
+  (value [this] (-> this b64/encode (map char) (apply str)))
 
   java.util.Date
   (tag [this] 'inst)
@@ -39,4 +39,9 @@
 
 
 
-; TODO: add support for reading #bin strings
+;; READER FUNCTIONS
+
+(defn read-bin
+  "Reads a base64-encoded string into a byte array."
+  [^String bin]
+  (b64/decode (.getBytes bin)))
