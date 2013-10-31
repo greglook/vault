@@ -1,7 +1,7 @@
 (ns vault.blob-test
   (:require [clojure.test :refer :all]
             [vault.blob :refer :all]
-            [vault.print :refer [edn-tag edn-value]]))
+            [vault.data :as data]))
 
 
 (def blob-content
@@ -38,8 +38,8 @@
 
 
 (deftest edn-representation
-  (is (= 'vault/ref (edn-tag blob-ref)))
-  (is (= blob-address (edn-value blob-ref))))
+  (is (= 'vault/ref (data/tag blob-ref)))
+  (is (= blob-address (data/value blob-ref))))
 
 
 (deftest address-parsing
