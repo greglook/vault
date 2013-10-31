@@ -1,10 +1,10 @@
 (ns vault.print
   "Utilities for canonical printing of EDN values."
-  (:require [clojure.string :as string]
+  (:require ansi
+            [clojure.string :as string]
             [clojure.data.codec.base64 :as b64]
-            [vault.data :as data]
-            [vault.print.ansi :as ansi]
-            [fipp.printer :refer [defprinter]]))
+            [fipp.printer :refer [defprinter]]
+            [vault.data :as data]))
 
 
 ;; CONTROL VARS

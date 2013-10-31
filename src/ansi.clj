@@ -1,4 +1,4 @@
-(ns vault.print.ansi
+(ns ansi
   (:require [clojure.string :as string]))
 
 
