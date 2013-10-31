@@ -3,7 +3,7 @@
   (:require ansi
             [clojure.string :as string]
             [clojure.data.codec.base64 :as b64]
-            [fipp.printer :refer [defprinter]]
+            [fipp.printer :refer [defprinter pprint-document]]
             [vault.data :as data]))
 
 
@@ -142,6 +142,14 @@
   [:span (color-text (str \# (data/tag v)) :red) " " (canonize (data/value v))])
 
 
+(defn- tagged-value-doc?
+  [doc]
+  (and (seq doc)
+       (= (first doc) :span)
+       (string? (second doc))
+       (re-matches #"#[\w\/.-]+" (second doc))))
+
+
 (defmethod canonize :default
   [value]
   (if *strict-mode*
@@ -153,4 +161,30 @@
      (color-text ">" :blue)]))
 
 
-(defprinter cprint canonize {:width 80})
+;; PRINT FUNCTIONS
+
+(defprinter pprint canonize {:width 80})
+
+
+(defn cprint
+  "Like pprint, but turns on colored output."
+  ([value]
+   (with-colored-output (pprint value)))
+  ([value opts]
+   (with-colored-output (pprint value opts))))
+
+
+(defn edn-blob
+  "Returns a canonical EDN representation suitable for serializing to a blob."
+  [value]
+  (let [doc (binding [*colored-output* false
+                      *strict-mode* true]
+              (canonize value))
+        doc (if (tagged-value-doc? doc)
+              (let [[op tag sep & more] doc]
+                `[~op ~tag :line ~@more])
+              doc)]
+    (-> doc
+        (pprint-document {:width 80})
+        with-out-str
+        string/trim)))
