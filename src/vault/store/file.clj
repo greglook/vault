@@ -46,6 +46,12 @@
       (string/trim (:out result)))))
 
 
+(defmacro ^:private for-files
+  [[sym dir] expr]
+  `(for [~sym (sort (.listFiles ^java.io.File ~dir))]
+     ~expr))
+
+
 
 ;; FILE STORE
 
@@ -61,10 +67,11 @@
   (enumerate
     [this opts]
     ; TODO: intelligently skip entries based on 'start'
-    (let [blobrefs (for [algorithm-dir (sort (.listFiles root))]
-                     (for [prefix-dir (sort (.listFiles ^java.io.File algorithm-dir))]
-                       (for [midfix-dir (sort (.listFiles ^java.io.File prefix-dir))]
-                         (seq (sort (.listFiles ^java.io.File midfix-dir))))))
+    (let [blobrefs (for-files [algorithm-dir root]
+                     (for-files [prefix-dir algorithm-dir]
+                       (for-files [midfix-dir prefix-dir]
+                         (for-files [blob midfix-dir]
+                           blob))))
           blobrefs (map (partial file->blobref root) (flatten blobrefs))
           blobrefs (if-let [start (:start opts)]
                      (drop-while #(< 0 (compare start (str %))) blobrefs)
