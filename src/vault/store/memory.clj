@@ -12,6 +12,10 @@
 
   BlobStore
 
+  (algorithm [this]
+    algorithm)
+
+
   (enumerate [this]
     (enumerate this {}))
 
@@ -29,13 +33,19 @@
       (io/input-stream blob)))
 
 
-   (store! [this content]
-     (with-open [buffer (java.io.ByteArrayOutputStream.)]
-       (io/copy content buffer)
-       (let [data (.toByteArray buffer)
-             blobref (hash-content algorithm data)]
-         (swap! store assoc blobref data)
-         blobref))))
+  (store! [this content]
+    (with-open [buffer (java.io.ByteArrayOutputStream.)]
+      (io/copy content buffer)
+      (let [data (.toByteArray buffer)
+            blobref (hash-content algorithm data)]
+        (swap! store assoc blobref data)
+        blobref)))
+
+
+  (remove! [this blobref]
+    (when (contains? @store blobref)
+      (swap! store dissoc blobref)
+      true)))
 
 
 (defn memory-store

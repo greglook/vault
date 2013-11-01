@@ -4,7 +4,9 @@
 ;; BLOB STORE PROTOCOL
 
 (defprotocol BlobStore
-  ; TODO: get-algorithm method?
+  (algorithm
+    [this]
+    "Returns the algorithm in use by the blob store.")
 
   (enumerate
     [this]
@@ -31,7 +33,12 @@
 
   (store!
     [this content]
-    "Stores the given byte stream and returns the blob reference."))
+    "Stores the given byte stream and returns the blob reference.")
+
+  (remove!
+    [this blobref]
+    "Remove the referenced blob from this store. Returns true if the store
+    contained the blob when this method was called."))
 
 
 
