@@ -49,16 +49,14 @@
 
 (defmacro ^:private for-files
   [[sym dir] expr]
-  (let [sym (vary-meta sym assoc :tag 'java.io.File)
-        dir (vary-meta dir assoc :tag 'java.io.File)]
-    `(let [files# (->> ~dir .listFiles sort)]
-       (for [~sym files#]
-         ~expr))))
+  `(let [files# (->> ~dir .listFiles sort)]
+     (for [~(vary-meta sym assoc :tag 'java.io.File) files#]
+       ~expr)))
 
 
 (defn- enumerate-files
   "Generates a lazy sequence of file blobs contained in a root directory."
-  [root]
+  [^java.io.File root]
   ; TODO: intelligently skip entries based on 'start'
   (flatten
     (for-files [algorithm-dir root]
