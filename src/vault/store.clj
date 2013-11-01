@@ -4,6 +4,8 @@
 ;; BLOB STORE PROTOCOL
 
 (defprotocol BlobStore
+  ; TODO: get-algorithm method?
+
   (enumerate
     [this]
     [this opts]
@@ -41,14 +43,6 @@
   (not (nil? (stat store blobref))))
 
 
-(defn prefix-address
-  "Adds the given algorithm to a blobref if none is specified."
-  [algorithm address]
-  (if-not (some (partial = \:) address)
-    (str (name algorithm) \: address)
-    address))
-
-
 (defn select-blobrefs
   "Selects blobrefs from a lazy sequence based on input criteria."
   [opts blobrefs]
@@ -63,16 +57,3 @@
                    (take n blobrefs)
                    blobrefs)]
     blobrefs))
-
-
-(defn enumerate-prefixes
-  "Lists stored blobs with references matching the given prefixes."
-  ([store]
-   (enumerate store))
-  ([store prefix]
-   (->> prefix
-        (prefix-address (:algorithm store))
-        (hash-map :prefix)
-        (enumerate store)))
-  ([store prefix & more]
-   (mapcat (partial enumerate-prefixes store) (cons prefix more))))
