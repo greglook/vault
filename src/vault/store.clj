@@ -41,12 +41,12 @@
   (not (nil? (stat store blobref))))
 
 
-(defn- adjust-prefix
-  "Adds the store's algorithm to a blobref prefix if none is specified."
-  [algorithm prefix]
-  (if-not (some (partial = \:) prefix)
-    (str (name algorithm) \: prefix)
-    prefix))
+(defn prefix-address
+  "Adds the given algorithm to a blobref if none is specified."
+  [algorithm address]
+  (if-not (some (partial = \:) address)
+    (str (name algorithm) \: address)
+    address))
 
 
 (defn select-blobrefs
@@ -70,7 +70,9 @@
   ([store]
    (enumerate store))
   ([store prefix]
-   (let [prefix (adjust-prefix (:algorithm store) prefix)]
-     (enumerate store {:prefix prefix})))
+   (->> prefix
+        (prefix-address (:algorithm store))
+        (hash-map :prefix)
+        (enumerate store)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefixes store) (cons prefix more))))
