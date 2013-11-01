@@ -38,6 +38,7 @@
   "Attempts to use the `file` command to provide content-type information for a
   stored blob. Returns a MIME string on success."
   [^java.io.File file]
+  ; TODO: check out java.nio.file.Files/probeContentType
   (let [result (shell/sh "file"
                          "--brief"
                          "--mime"
@@ -76,6 +77,10 @@
 
   BlobStore
 
+  (algorithm [this]
+    algorithm)
+
+
   (enumerate [this]
     (enumerate this {}))
 
@@ -112,7 +117,13 @@
           (throw (RuntimeException.
                    (str "Failed to rename landing file " tmp
                         " to stored blob " file))))
-        blobref))))
+        blobref)))
+
+
+  (remove! [this blobref]
+    (let [file (blobref->file root blobref)]
+      (when (.exists file)
+        (.delete file)))))
 
 
 (defn file-store

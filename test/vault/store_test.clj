@@ -1,12 +1,11 @@
 (ns vault.store-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.java.io :as io]
+            [clojure.test :refer :all]
             [vault.blob :as blob]
             [vault.store :refer :all]
             (vault.store
               [memory :refer [memory-store]]
-              [file :refer [file-store]])
-            )
-  (:import java.nio.file.Files))
+              [file :refer [file-store]])))
 
 
 (deftest blob-containment
@@ -74,10 +73,9 @@
   (test-blob-store memory-store))
 
 
-#_
 (deftest file-blob-store
-  (let [tmpdir (Files/createTempDirectory "vault-test.file-blob-store")]
-    (try
-      (test-blob-store #(file-store % (.toFile tmpdir)))
-      (finally
-        (println "TODO: delete" tmpdir)))))
+  (let [tmpdir (io/file "target" "test" "tmp"
+                        (str "file-blob-store."
+                             (System/currentTimeMillis)))]
+    (.mkdirs tmpdir)
+    (test-blob-store #(file-store % tmpdir))))
