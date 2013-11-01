@@ -1,8 +1,8 @@
 (ns vault.store.file
   (:require
-    [clojure.string :as string]
     [clojure.java.io :as io]
     [clojure.java.shell :as shell]
+    [clojure.string :as string]
     [vault.blob :refer :all]
     [vault.store :refer :all]))
 
@@ -79,8 +79,7 @@
   (enumerate [this]
     (enumerate this {}))
 
-  (enumerate
-    [this opts]
+  (enumerate [this opts]
     (->> (enumerate-files root)
          (map (partial file->blobref root))
          (select-blobrefs opts)))
@@ -117,5 +116,7 @@
 
 
 (defn file-store
-  "Creates a new local file-based blobstore."
-  ([algorithm root] (FileBlobStore. algorithm (io/file root))))
+  "Creates a new local file-based blob store."
+  [algorithm root]
+  (FileBlobStore. algorithm
+                  (io/file root)))
