@@ -23,7 +23,7 @@
 (extend-protocol TaggedValue
   (Class/forName "[B")
   (tag [this] 'bin)
-  (value [this] (-> this b64/encode (map char) (apply str)))
+  (value [this] (->> this b64/encode (map char) (apply str)))
 
   java.util.Date
   (tag [this] 'inst)
