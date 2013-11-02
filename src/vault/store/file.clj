@@ -34,17 +34,11 @@
       (->blobref algorithm (string/join digest)))))
 
 
-(defn- file-content-type
-  "Attempts to use the `file` command to provide content-type information for a
-  stored blob. Returns a MIME string on success."
+(defn- probe-content-type
+  "Attempts to provide content-type information for a stored blob. Returns a
+  MIME string on success."
   [^java.io.File file]
-  ; TODO: check out java.nio.file.Files/probeContentType
-  (let [result (shell/sh "file"
-                         "--brief"
-                         "--mime"
-                         (.getAbsolutePath file))]
-    (when (= 0 (:exit result))
-      (string/trim (:out result)))))
+  (java.nio.file.Files/probeContentType (.toPath file)))
 
 
 (defmacro ^:private for-files
@@ -93,7 +87,7 @@
       (when (.exists file)
         {:size (.length file)
          :since (java.util.Date. (.lastModified file))
-         :content-type (file-content-type file)
+         :content-type (probe-content-type file)
          :location (.toURI file)})))
 
 
