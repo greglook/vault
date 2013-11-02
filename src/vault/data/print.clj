@@ -115,9 +115,10 @@
 
 (defn- canonize-map
   [m]
-  (let [entries (sort-by first data/total-order (seq m))
-        entries (for [[k v] entries]
-                  [:span (canonize k) " " (canonize v)])]
+  (let [canonize-kv (fn [[k v]] [:span (canonize k) " " (canonize v)])
+        entries (->> (seq m)
+                     (sort-by first data/total-order)
+                     (map canonize-kv))]
     [:group
      (delimiter "{")
      [:align (interpose [:span "," :line] entries)]
