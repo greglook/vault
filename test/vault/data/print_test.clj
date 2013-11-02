@@ -39,9 +39,20 @@
 (deftest canonical-records
   (testing "Records"
     (let [r (->TestRecord \x \y)]
-      (is (thrown? IllegalArgumentException (edn-blob r)) "should not print canonical representation")
+      (is (thrown? IllegalArgumentException (edn-blob r))
+          "should not print non-EDN representation")
       (is (= (with-out-str (pprint r))
              "#vault.data.print_test.TestRecord{:bar \\y, :foo \\x}\n")))))
+
+
+(deftest default-canonize
+  (testing "Unknown values"
+    (let [usd (java.util.Currency/getInstance "USD")]
+      (is (thrown? IllegalArgumentException
+                   (with-strict-mode (edn-blob usd)))
+                   "should not print non-EDN representation")
+      (is (= (with-out-str (pprint usd))
+             "#<java.util.Currency USD>\n")))))
 
 
 (deftest special-blob-format
