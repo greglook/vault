@@ -39,31 +39,68 @@
        (.write w# (edn-str v#))))
 
 
-(defn read-bin
-  "Reads a base64-encoded string into a byte array."
-  [^String bin]
-  (b64/decode (.getBytes bin)))
 
+;; BUILT-IN EDN TAGS
 
+; #inst - Date-time instant as an ISO-8601 string.
 
-;; BUILT-IN TAGS
-
-(extend-protocol TaggedValue
-  (Class/forName "[B")
-  (tag [this] 'bin)
-  (value [this] (->> this b64/encode (map char) (apply str)))
-
-  java.util.Date
-  (tag [this] 'inst)
-  (value [this]
-    (let [utc-format (doto (java.text.SimpleDateFormat.
-                             "yyyy-MM-dd'T'HH:mm:ss.SSS-00:00")
+(defn- format-utc
+  "Produces an ISO-8601 formatted date-time string from the given Date."
+  [^java.util.Date date]
+  (let [date-format (doto (java.text.SimpleDateFormat.
+                            "yyyy-MM-dd'T'HH:mm:ss.SSS-00:00")
                        (.setTimeZone (java.util.TimeZone/getTimeZone "GMT")))]
-      (.format utc-format this)))
+    (.format date-format date)))
 
-  java.util.UUID
+
+(extend-type java.util.Date
+  TaggedValue
+  (tag [this] 'inst)
+  (value [this] (format-utc this)))
+
+
+; #uuid - Universally-unique identifier string.
+
+(extend-type java.util.UUID
+  TaggedValue
   (tag [this] 'uuid)
   (value [this] (str this)))
 
 
+
+;; EXPANDED EDN TAG SUPPORT
+
+; #bin - Binary data in the form of byte arrays.
+
+(extend-type (Class/forName "[B")
+  TaggedValue
+  (tag [this] 'bin)
+  (value [this] (->> this b64/encode (map char) (apply str))))
+
+
 (defprint-method (Class/forName "[B"))
+
+
+(defn read-bin
+  "Reads a base64-encoded string into a byte array."
+  ^bytes
+  [^String bin]
+  (b64/decode (.getBytes bin)))
+
+
+; #uri - Universal Resource Identifier string.
+
+(extend-type java.net.URI
+  TaggedValue
+  (tag [this] 'uri)
+  (value [this] (str this)))
+
+
+(defprint-method java.net.URI)
+
+
+(defn read-uri
+  "Constructs a URI from a string value."
+  ^java.net.URI
+  [^String uri]
+  (java.net.URI. uri))
