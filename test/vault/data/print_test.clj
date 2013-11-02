@@ -49,7 +49,7 @@
   (testing "Unknown values"
     (let [usd (java.util.Currency/getInstance "USD")]
       (is (thrown? IllegalArgumentException
-                   (with-strict-mode (edn-blob usd)))
+                   (edn-blob usd))
                    "should not print non-EDN representation")
       (is (= (with-out-str (pprint usd))
              "#<java.util.Currency USD>\n")))))

@@ -14,24 +14,10 @@
   false)
 
 
-(defmacro with-colored-output
-  "Performs the given forms with colored output enabled."
-  [& body]
-  `(binding [*colored-output* true]
-    ~@body))
-
-
 (def ^:dynamic *strict-mode*
   "If set, throw an exception if there is no defined canonical print method for
   a given value."
   false)
-
-
-(defmacro with-strict-mode
-  "Performs the given forms with strict mode enabled."
-  [& body]
-  `(binding [*strict-mode* true]
-    ~@body))
 
 
 
@@ -173,9 +159,11 @@
 (defn cprint
   "Like pprint, but turns on colored output."
   ([value]
-   (with-colored-output (pprint value)))
+   (binding [*colored-output* true]
+     (pprint value)))
   ([value opts]
-   (with-colored-output (pprint value opts))))
+   (binding [*colored-output* true]
+     (pprint value opts))))
 
 
 (defn edn-blob
