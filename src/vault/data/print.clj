@@ -132,7 +132,10 @@
 
 (defmethod canonize clojure.lang.IRecord
   [r]
-  [:span (delimiter "#") (-> r class .getName) (canonize-map r)])
+  (if *strict-mode*
+    (throw (IllegalArgumentException.
+             (str "No canonical representation for " (class r) ": " r)))
+    [:span (delimiter "#") (-> r class .getName) (canonize-map r)]))
 
 
 (prefer-method canonize clojure.lang.IRecord clojure.lang.IPersistentMap)
@@ -140,14 +143,15 @@
 
 (defmethod canonize :tagged-value
   [v]
-  ^:tagged-value
-  [:span (color-text (str \# (data/tag v)) :red)
-   " " (canonize (data/value v))])
+  (vary-meta
+    [:span (color-text (str \# (data/tag v)) :red)
+     " " (canonize (data/value v))]
+    assoc ::tagged-value true))
 
 
 (defn- tagged-value-doc?
   [doc]
-  (:tagged-value (meta doc)))
+  (::tagged-value (meta doc)))
 
 
 (defmethod canonize :default
