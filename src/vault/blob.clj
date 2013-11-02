@@ -23,7 +23,7 @@
   (when-not (digest-functions algorithm)
     (throw (IllegalArgumentException.
              (str "Unsupported digest algorithm: " algorithm
-                  ", must be one of " (string/join ", " digest-algorithms))))))
+                  ", must be one of: " (string/join ", " digest-algorithms))))))
 
 
 
@@ -71,11 +71,10 @@
     (BlobRef. algorithm digest)))
 
 
-(defn make-blobref
-  "Constructs a blobref out of the arguments."
+(defn ->blobref
+  "Constructs a BlobRef out of the arguments."
   ([x]
-   (if (instance? BlobRef x)
-     x
+   (if (instance? BlobRef x) x
      (parse-address (str x))))
   ([algorithm digest]
    (let [algorithm (keyword algorithm)]

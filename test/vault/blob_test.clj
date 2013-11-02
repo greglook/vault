@@ -15,12 +15,12 @@
 
 
 (deftest blobref-comparison
-  (let [br1 (make-blobref :sha1 "33655e63cafac69a5287e96f71457bbfa6d7deec")
-        br2 (make-blobref :sha256 "14ea6507645c2ba7e973ea87444bf0470fc2e1f4b64f4f692f736acf9a4dec8a")
-        br3 (make-blobref :sha256 "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9")]
+  (let [br1 (->blobref :sha1 "33655e63cafac69a5287e96f71457bbfa6d7deec")
+        br2 (->blobref :sha256 "14ea6507645c2ba7e973ea87444bf0470fc2e1f4b64f4f692f736acf9a4dec8a")
+        br3 (->blobref :sha256 "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9")]
     (testing "comparison"
       (is (= 0 (compare br1 br1)) "is reflexive")
-      (is (= 0 (compare br2 (make-blobref (:algorithm br2) (:digest br2))))
+      (is (= 0 (compare br2 (->blobref (:algorithm br2) (:digest br2))))
           "gives zero for equal blobrefs")
       (testing "between algorithms"
         (is (> 0 (compare br1 br2)))
@@ -58,7 +58,7 @@
 
 
 (deftest make-blobref-test
-  (testing "make-blobref"
-    (is (identical? (make-blobref blob-ref) blob-ref))
-    (is (= (make-blobref blob-address) blob-ref))
-    (is (= (make-blobref :sha256 (:digest blob-ref)) blob-ref))))
+  (testing "->blobref"
+    (is (identical? (->blobref blob-ref) blob-ref))
+    (is (= (->blobref blob-address) blob-ref))
+    (is (= (->blobref :sha256 (:digest blob-ref)) blob-ref))))

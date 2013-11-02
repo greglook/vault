@@ -12,7 +12,7 @@
 (defn- blobref->file
   ^java.io.File
   [root blobref]
-  (let [blobref (make-blobref blobref)
+  (let [blobref (->blobref blobref)
         {:keys [algorithm digest]} blobref]
     (io/file root
              (name algorithm)
@@ -31,7 +31,7 @@
     (let [[algorithm & digest] (-> file
                                    (subs (inc (count root)))
                                    (string/split #"/"))]
-      (make-blobref algorithm (string/join digest)))))
+      (->blobref algorithm (string/join digest)))))
 
 
 (defn- file-content-type

@@ -15,11 +15,11 @@
 
 
 (deftest blobref-selection
-  (let [a (blob/make-blobref :md5 "37b51d194a7513e45b56f6524f2d51f2")
-        b (blob/make-blobref :md5 "73fcffa4b7f6bb68e44cf984c85f6e88")
-        c (blob/make-blobref :md5 "73fe285cedef654fccc4a4d818db4cc2")
-        d (blob/make-blobref :md5 "acbd18db4cc2f85cedef654fccc4a4d8")
-        e (blob/make-blobref :md5 "c3c23db5285662ef7172373df0003206")
+  (let [a (blob/->blobref :md5 "37b51d194a7513e45b56f6524f2d51f2")
+        b (blob/->blobref :md5 "73fcffa4b7f6bb68e44cf984c85f6e88")
+        c (blob/->blobref :md5 "73fe285cedef654fccc4a4d818db4cc2")
+        d (blob/->blobref :md5 "acbd18db4cc2f85cedef654fccc4a4d8")
+        e (blob/->blobref :md5 "c3c23db5285662ef7172373df0003206")
         blobrefs [a b c d e]]
     (are [brs opts] (= brs (select-blobrefs opts blobrefs))
          blobrefs {}
