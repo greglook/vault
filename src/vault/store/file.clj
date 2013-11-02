@@ -49,9 +49,9 @@
 
 (defmacro ^:private for-files
   [[sym dir] expr]
-  `(let [files# (->> ~dir .listFiles sort)]
-     (for [~(vary-meta sym assoc :tag 'java.io.File) files#]
-       ~expr)))
+  `(let [files# (->> ~dir .listFiles sort)
+         f# (fn [~(vary-meta sym assoc :tag 'java.io.File)] ~expr)]
+     (map f# files#)))
 
 
 (defn- enumerate-files
