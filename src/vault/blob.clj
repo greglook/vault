@@ -53,9 +53,7 @@
   (value [this] (str this)))
 
 
-(defmethod print-method BlobRef
-  [value ^java.io.Writer w]
-  (.write w (str "#vault/ref " \" value \")))
+(data/defprint-method BlobRef)
 
 
 

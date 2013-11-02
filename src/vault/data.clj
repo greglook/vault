@@ -20,6 +20,34 @@
   (value [this] "Return the value to pass to the tag."))
 
 
+
+;; SERIALIZATION FUNCTIONS
+
+(defn edn-str
+  "Converts the given TaggedValue data to a tagged EDN string."
+  ^String
+  [v]
+  (str \# (tag v) \space (pr-str (value v))))
+
+
+(defmacro defprint-method
+  "Defines a print-method for the given class which writes out the EDN
+  serialization from `edn-str`."
+  [c]
+  `(defmethod print-method ~c
+     [v# ^java.io.Writer w#]
+       (.write w# (edn-str v#))))
+
+
+(defn read-bin
+  "Reads a base64-encoded string into a byte array."
+  [^String bin]
+  (b64/decode (.getBytes bin)))
+
+
+
+;; BUILT-IN TAGS
+
 (extend-protocol TaggedValue
   (Class/forName "[B")
   (tag [this] 'bin)
@@ -38,10 +66,4 @@
   (value [this] (str this)))
 
 
-
-;; READER FUNCTIONS
-
-(defn read-bin
-  "Reads a base64-encoded string into a byte array."
-  [^String bin]
-  (b64/decode (.getBytes bin)))
+(defprint-method (Class/forName "[B"))
