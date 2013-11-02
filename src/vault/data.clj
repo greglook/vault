@@ -6,10 +6,50 @@
 
 ;; TOTAL-ORDERING COMPARATOR
 
+(defn- boolean? [x]
+  (instance? java.lang.Boolean x))
+
+
+(defn- type-priority
+  "Determines the 'priority' of the given value based on its type."
+  [x]
+  (let [predicates [nil? boolean? number? char? string? keyword? symbol?
+                    list? vector? set? map?]
+        priority (->> predicates
+                      (map vector (range))
+                      (some (fn [[i p]] (when (p x) i))))]
+    (or priority (count predicates))))
+
+
 (defn total-order
-  "Comparator function that provides a total-ordering of EDN values."
+  "Comparator function that provides a total-ordering of EDN values.
+
+  Values of different types sort in order of their types:
+  - nil
+  - Boolean
+  - Number
+  - Character
+  - String
+  - Keyword
+  - Symbol
+  - List
+  - Vector
+  - Set
+  - Map
+
+  All other types are sorted by print representation."
   [a b]
-  (compare (pr-str a) (pr-str b))) ; FIXME: dirty hack
+  (if (= a b) 0
+    (let [pri-a (type-priority a)
+          pri-b (type-priority b)]
+      (cond (< pri-a pri-b) -1
+            (> pri-a pri-b)  1
+
+            (instance? java.lang.Comparable a)
+            (compare a b)
+
+            :else
+            (compare (pr-str a) (pr-str b))))))
 
 
 

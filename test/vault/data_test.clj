@@ -3,7 +3,31 @@
             [vault.data :refer :all]))
 
 
-(deftest total-ordering) ; TODO: implement
+(deftest total-ordering
+  (let [t (java.util.Date. 1234567890)
+        elements [-123 4096N 3.14159M 0.0
+                  nil true false
+                  \c \b \a
+                  "thirteen" "one"
+                  :foo :my-ns/bar :a-ns/baz :zap
+                  'x 'aaa/foo 'z/bar 'y
+                  t
+                  {:x 1 :y 2}
+                  '(1 2 3 4)
+                  [1 2 3]
+                  #{'howdy 'doody}
+                  '(2 3 4)]]
+    (is (= (sort total-order elements)
+           [nil false true -123 0.0 3.14159M 4096N
+            \a \b \c "one" "thirteen"
+            :foo :zap :a-ns/baz :my-ns/bar
+            'x 'y 'aaa/foo 'z/bar
+            '(1 2 3 4)
+            '(2 3 4)
+            [1 2 3]
+            #{'howdy 'doody}
+            {:x 1 :y 2}
+            t]))))
 
 
 (deftest built-in-tagged-values
