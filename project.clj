@@ -1,4 +1,4 @@
-(defproject vault "0.2.0"
+(defproject vault "0.3.0-SNAPSHOT"
   :description "Content-addressible datastore."
   :url "https://github.com/greglook/vault"
   :license {:name "Public Domain"
