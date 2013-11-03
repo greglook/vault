@@ -1,13 +1,14 @@
-# vault
+# Vault
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library and application to store documents in a content-addressable
+datastore while maintaining a secure history of entity values.
 
-## Usage
-
-FIXME
+This is heavily inspired by the [Camlistore](http://camlistore.org/) project.
+Vault does not aim to be (directly) compatible with Camlistore, but many of the
+concepts are similar, and the stored metadata would probably not be that hard
+to convert.
 
 ## License
 
-Copyright © 2013 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+This is free and unencumbered software released into the public domain.
+See the `UNLICENSE` file for more information.
