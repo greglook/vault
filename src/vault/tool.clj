@@ -1,40 +1,20 @@
 (ns vault.tool
   (:require (clojure
-              [edn :as edn]
-              [pprint :refer [pprint]])
-            (vault.store
-              [file :refer [file-store]])
+              [edn :as edn])
             [vault.cli :refer [command execute]]
+            [vault.data.print :refer [pprint cprint]]
             (vault.tool
+              [config :as config]
               [blob :as blob-tool]))
-  (:import java.io.FileNotFoundException)
   (:gen-class :main true))
-
-
-;; Vault commands need to know:
-;; blob-store configuration
-;; indexer configuration
-;; gpg identity
-
-
-(def config-paths
-  "Location of Vault configuration files."
-  {:blob-stores (str (get (System/getenv) "HOME")
-                     "/.config/vault/blob-stores.edn")})
-
-
-(def ^:private config-readers
-  "Map of EDN readers for supported types in config files."
-  {'vault/file-store (partial apply file-store)})
-
 
 
 ;; UTILITY ACTIONS
 
 (defn- debug-command
   [opts args]
-  (pprint opts)
-  (pprint args))
+  (cprint opts)
+  (cprint args))
 
 
 (defn- not-yet-implemented
@@ -44,53 +24,14 @@
 
 
 
-;; BLOB STORAGE
-
-(defn- select-blob-store
-  [stores selection]
-  (->> (or selection :default)
-       (iterate stores)
-       (drop-while keyword?)
-       first))
-
-
-(defn- initialize-blob-stores
-  [opts]
-  (try
-    (let [config (slurp (:blob-stores config-paths))
-          stores (edn/read-string {:readers config-readers} config)
-          store (select-blob-store stores (:store opts :default))]
-      (assoc opts :blob-stores stores :store store))
-    (catch java.io.FileNotFoundException e
-      (assoc opts :blob-stores {}))))
-
-
-(defn- require-blob-store
-  [opts]
-  (when-not (:store opts)
-    (println "No blob-store initialized.")
-    (System/exit 1))
-  opts)
-
-
-(defn- list-blob-stores
-  [opts args]
-  (println "Available blob stores:")
-  (let [blob-stores (:blob-stores opts)
-        default     (:default blob-stores)]
-    (doseq [[nickname store] blob-stores]
-      (when-not (= :default nickname)
-        (printf " %8s%s  " (name nickname) (if (= nickname default) \* \space))
-        (pprint store)))))
-
-
-
 ;; COMMAND STRUCTURE
 
 (def commands
   (command "vault [global opts] <command> [command args]"
     "Command-line tool for the vault data store."
 
+    ["--config" "Set path to vault configuration."
+     :default config/default-path]
     ["--store" "Select blob store to use."
      :parse-fn keyword]
     ["-v" "--verbose" "Show extra debugging messages."
@@ -98,19 +39,30 @@
     ["-h" "--help" "Show usage information."
      :flag true :default false]
 
-    (init initialize-blob-stores)
+    (init config/initialize)
 
     (command "config <type>"
       "Show configuration information."
 
+      (command "dump"
+        "Prints out a raw version of the configuration map."
+
+        ["--pretty" "Formats the info over multiple lines for easier viewing."
+         :flag true :default false]
+
+        (action [opts args]
+          (if (:pretty opts)
+            (cprint opts)
+            (prn opts))))
+
       (command "stores"
         "List the available blob stores."
-        (action list-blob-stores)))
+        (action config/list-blob-stores)))
 
     (command "blob <action> [args]"
       "Low-level commands dealing with data blobs."
 
-      (init require-blob-store)
+      (init config/setup-blob-store)
 
       (command "list [opts]"
         "Enumerate the stored blobs."

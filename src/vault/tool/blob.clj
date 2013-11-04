@@ -4,6 +4,9 @@
             [vault.data.print :refer [cprint]]))
 
 
+
+;; HELPER FUNCTIONS
+
 (defn- prefix-address
   "Adds the given algorithm to a blobref if none is specified."
   [algorithm address]
@@ -25,6 +28,9 @@
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))
 
+
+
+;; BLOB ACTIONS
 
 (defn list-blobs
   [opts args]
