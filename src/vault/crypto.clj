@@ -125,26 +125,26 @@
 (defn print-key-info
   "Prints information about the given key."
   [k]
-  (println "Key id:" (Long/toHexString (key-id k))
-           (if (.isMasterKey k) "(master key)" "(subkey)"))
-  (when (instance? PGPSecretKey k)
-    (if (.isPrivateKeyEmpty k)
-      (println "    Private key is not available.")
-      (if (.isSigningKey k)
-        (println "    Private key is available for decryption and signing.")
-        (println "    Private key is available for decryption."))))
   (let [public-key (if (instance? PGPSecretKey k) (.getPublicKey k) k)
         strength (.getBitStrength public-key)
         algorithm (or (key-algorithm public-key) "UNKNOWN")
         fingerprint (->> (.getFingerprint public-key)
                          (map (partial format "%02X"))
                          string/join)]
-    (if (.isEncryptionKey public-key)
-      (println "    Public key is available for encryption.")
-      (println "    Public key is available."))
-    (println "    Algorithm:" algorithm (str \( strength " bits)"))
+    (println (if (.isMasterKey k) "Master key:" "Subkey:")
+             (Long/toHexString (key-id k))
+             (str \( strength \/ algorithm \)))
     (println "    Fingerprint:"
              (str (subs fingerprint 0 (- (count fingerprint) 8)) \/
                   (subs fingerprint (- (count fingerprint) 8))))
-    (doseq [uid (.getUserIDs public-key)]
+    (if (.isEncryptionKey public-key)
+      (println "    Public key is available for encryption.")
+      (println "    Public key is available."))
+    (when (instance? PGPSecretKey k)
+      (if (.isPrivateKeyEmpty k)
+        (println "    Private key is not available.")
+        (if (.isSigningKey k)
+          (println "    Private key is available for decryption and signing.")
+          (println "    Private key is available for decryption."))))
+    (doseq [uid (iterator-seq (.getUserIDs public-key))]
       (println "    User ID:" uid))))
