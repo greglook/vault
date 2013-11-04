@@ -1,10 +1,8 @@
 (ns vault.tool
   (:require (clojure
-              [edn :as edn]
-              [pprint :refer [pprint]])
+              [edn :as edn])
             [vault.cli :refer [command execute]]
-            (vault.store
-              [file :refer [file-store]])
+            [vault.data.print :refer [pprint cprint]]
             (vault.tool
               [config :as config]
               [blob :as blob-tool]))
@@ -15,8 +13,8 @@
 
 (defn- debug-command
   [opts args]
-  (pprint opts)
-  (pprint args))
+  (cprint opts)
+  (cprint args))
 
 
 (defn- not-yet-implemented
@@ -45,6 +43,17 @@
 
     (command "config <type>"
       "Show configuration information."
+
+      (command "dump"
+        "Prints out a raw version of the configuration map."
+
+        ["--pretty" "Formats the info over multiple lines for easier viewing."
+         :flag true :default false]
+
+        (action [opts args]
+          (if (:pretty opts)
+            (cprint opts)
+            (prn opts))))
 
       (command "stores"
         "List the available blob stores."
