@@ -1,0 +1,6 @@
+; Sets can be represented directly by EDN. Canonical sets MUST print their
+; entries in sorted order.
+
+#{#vault/ref "algo:blobref"
+  #vault/ref "algo:blobref"
+  #vault/ref "algo:blobref"}
