@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [vault.data.print :refer [cprint]]
             (vault.store
-              [file :refer [file-store]])))
+              [file :refer [file-store]]
+              [memory :refer [memory-store]])))
 
 
 ;; CONFIGURATION FILE LOADING
@@ -15,7 +16,8 @@
 
 (def ^:private config-readers
   "Map of EDN readers for supported types in config files."
-  {'vault/file-store (partial apply file-store)})
+  {'vault/file-store (partial apply file-store)
+   'vault/memory-store (partial apply memory-store)})
 
 
 (defn- find-configs
