@@ -3,18 +3,26 @@
             [clojure.string :as string])
   (:import
     (java.security Security)
-    (org.bouncycastle.jce.provider BouncyCastleProvider)
-    (org.bouncycastle.openpgp PGPUtil
-                              PGPPublicKey
-                              PGPPublicKeyRingCollection
-                              PGPSecretKey
-                              PGPSecretKeyRingCollection
-                              PGPSignature
-                              PGPSignatureGenerator
-                              )))
+    (org.bouncycastle.jce.provider
+      BouncyCastleProvider)
+    (org.bouncycastle.openpgp
+      PGPObjectFactory
+      PGPPublicKey
+      PGPPublicKeyRingCollection
+      PGPSecretKey
+      PGPSecretKeyRingCollection
+      PGPSignature
+      PGPSignatureGenerator
+      PGPSignatureList
+      PGPUtil)
+    (org.bouncycastle.openpgp.operator.bc
+      BcPGPContentSignerBuilder
+      BcPGPContentVerifierBuilderProvider
+      BcPGPDigestCalculatorProvider
+      BcPBESecretKeyDecryptorBuilder)))
 
 
-; Install the BouncyCastle security provider.
+; Install the BouncyCastle security provider. TODO: is this necessary?
 (Security/addProvider (new BouncyCastleProvider))
 
 
@@ -90,18 +98,33 @@
         (.getSecretKey (key-id id)))))
 
 
+(defn- extract-private-key
+  [secret-key passphrase]
+  (.extractPrivateKey secret-key
+    (-> (BcPGPDigestCalculatorProvider.)
+        (BcPBESecretKeyDecryptorBuilder.)
+        (.build (.toCharArray passphrase)))))
+
+
+(defn- build-signature-generator
+  [hash-algorithm-code key-algorithm-code]
+  (PGPSignatureGenerator.
+   (BcPGPContentSignerBuilder.
+     key-algorithm-code
+     hash-algorithm-code)))
+
+
 (defn- generate-signature
   [data-source
    hash-algorithm-code
    key-algorithm-code
    private-key]
-  (let [generator (PGPSignatureGenerator.
-                    key-algorithm-code
+  (let [generator (build-signature-generator
                     hash-algorithm-code
-                    security-provider)]
+                    key-algorithm-code)]
     (.init generator PGPSignature/BINARY_DOCUMENT private-key)
     (with-open [data (io/input-stream data-source)]
-      (let [buffer (byte-array 256)]
+      (let [buffer (byte-array 1024)]
         (loop [n (.read data buffer)]
           (when (> n 0)
             (.update generator buffer 0 n)
@@ -111,15 +134,28 @@
 
 (defn sign
   [data-source secret-key passphrase]
-  (let [private-key (.extractPrivateKey
-                      secret-key
-                      passphrase
-                      security-provider)]
-    (generate-signature
-      data-source
-      (hash-algorithms *hash-algorithm*)
-      (key-algorithm-code secret-key)
-      private-key)))
+  (generate-signature
+    data-source
+    (hash-algorithms *hash-algorithm*)
+    (key-algorithm-code secret-key)
+    (extract-private-key secret-key passphrase)))
+
+
+(defn encode-signature
+  [sig]
+  (.getEncoded sig))
+
+
+(defn decode-signature
+  [data]
+  (with-open [data-stream (PGPUtil/getDecoderStream
+                            (io/input-stream data))]
+    (let [sig-list (.nextObject (PGPObjectFactory. data-stream))]
+      (when-not (instance? PGPSignatureList sig-list)
+        (throw (IllegalArgumentException.
+                 (str "Data did not contain a PGPSignatureList: " sig-list))))
+      (when-not (.isEmpty sig-list)
+        (.get sig-list 0)))))
 
 
 (defn print-key-info
