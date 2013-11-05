@@ -58,7 +58,7 @@
 
 
 
-;; TEST FUNCTIONALITY
+;; KEY FUNCTIONS
 
 (defn key-id
   "Coerce argument into a PGP key identifier."
@@ -67,6 +67,7 @@
         (string? x) (Long/parseLong x 16)
         (instance? PGPPublicKey x) (.getKeyID x)
         (instance? PGPSecretKey x) (.getKeyID x)
+        (instance? PGPSignature x) (.getKeyID x)
         :else (throw (IllegalArgumentException.
                        (str "Don't know how to make key id from: " x)))))
 
@@ -106,6 +107,9 @@
         (.build (.toCharArray passphrase)))))
 
 
+
+;; SIGNATURE FUNCTIONS
+
 (defn- build-signature-generator
   [hash-algorithm-code key-algorithm-code]
   (PGPSignatureGenerator.
@@ -132,13 +136,33 @@
     (.generate generator)))
 
 
-(defn sign
+(defn sign-data
   [data-source secret-key passphrase]
   (generate-signature
     data-source
     (hash-algorithms *hash-algorithm*)
     (key-algorithm-code secret-key)
     (extract-private-key secret-key passphrase)))
+
+
+(defn verify-signature
+  [data-source signature public-key]
+  (when-not (= (key-id signature) (key-id public-key))
+    (throw (IllegalArgumentException.
+             (str "Signature key id "
+                  (Long/toHexString (key-id signature))
+                  " doesn't match public key id "
+                  (Long/toHexString (key-id public-key))))))
+  (.init signature
+         (BcPGPContentVerifierBuilderProvider.)
+         public-key)
+  (with-open [data (io/input-stream data-source)]
+    (let [buffer (byte-array 1024)]
+      (loop [n (.read data buffer)]
+        (when (> n 0)
+          (.update signature buffer 0 n)
+          (recur (.read data buffer))))))
+  (.verify signature))
 
 
 (defn encode-signature
@@ -157,6 +181,9 @@
       (when-not (.isEmpty sig-list)
         (.get sig-list 0)))))
 
+
+
+;; DEBUGGING HELPERS
 
 (defn print-key-info
   "Prints information about the given key."
