@@ -16,10 +16,12 @@ further _update blobs_ to the store. These blobs specify accumulating
 modifications to the object, thus the 'current' state of the object can be
 determined by applying the full sequence of updates made to it.
 
-Updates should include a reference to the 'prior' object update. This gives
-version-control semantics and lets branches and merges happen.
+Updates must include a reference to 'past' update blobs which affected the
+object(s) being updated. This gives version-control semantics and lets branches
+and merges happen, in addition to providing causal ordering of the updates to
+any given object.
 
-## Object Attributes
+## Attributes and Content
 
 Objects act much like a map, containing various named attributes. These mutable
 properties are specified directly by update blobs, and generally support
@@ -29,19 +31,22 @@ _metadata_ about the entity represented by the object. Some common attributes:
 - `content-type`: MIME type for the object's content
 - `tags`: set of string tags labeling the object
 
-Objects can also have a _value_, which is considered to be the 'state' of the
-object. Whether to assign a value to an object or use the attributes depends on
-the nature of the data.
+Objects can also have a _content value_, which is considered to be the 'state'
+of the object. Whether to assign content to an object or use the attributes
+depends on the nature of the data.
 
 ## Resolving State
 
-Since each update blob references its 'parent' updates, these blobs form a tree
-descending from the object root. The 'current' state of the object is the tip
-of the tree with the latest timestamp.
+Since each update blob references its 'past' updates, these blobs form a tree
+descending from the object root. The 'current' state of the object is determined
+by the tip of the tree with the longest history.
 
-TODO: discuss conflict resolution?
+When an update is merging branches (i.e. there are multiple paths back to the
+root) and there are conflicts, the merge update SHOULD explicitly specify the
+desired state for the conflicting attribute or content. If not specified, then
+the first lineage in the sequence of past updates which affects the value wins.
 
-## Example
+## Motivation
 
 When data includes a reference to an _identity_, the attribute should refer to a
 object representing that entity. As an example, a financial transaction may
