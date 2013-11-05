@@ -2,9 +2,6 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string])
   (:import
-    (java.security Security)
-    (org.bouncycastle.jce.provider
-      BouncyCastleProvider)
     (org.bouncycastle.openpgp
       PGPObjectFactory
       PGPPublicKey
@@ -22,15 +19,7 @@
       BcPBESecretKeyDecryptorBuilder)))
 
 
-; Install the BouncyCastle security provider. TODO: is this necessary?
-(Security/addProvider (new BouncyCastleProvider))
-
-
-
 ;; CONSTANTS
-
-(def ^:private security-provider "BC")
-
 
 (def ^:dynamic *hash-algorithm*
   "Digest algorithm used for creating signatures."
@@ -61,7 +50,7 @@
 ;; KEY FUNCTIONS
 
 (defn key-id
-  "Coerce argument into a PGP key identifier."
+  "Returns the PGP key identifier associated with the argument."
   [x]
   (cond (integer? x) x
         (string? x) (Long/parseLong x 16)
@@ -73,7 +62,7 @@
 
 
 (defn- key-algorithm-code
-  "Returns numeric algorithm code from key argument."
+  "Returns the numeric key algorithm code from the argument."
   [k]
   (cond (instance? PGPPublicKey k) (.getAlgorithm k)
         (instance? PGPSecretKey k) (.getAlgorithm (.getPublicKey k))
@@ -84,10 +73,6 @@
   "Returns the name of the algorithm used by the given key."
   [k]
   (algorithm-name public-key-algorithms (key-algorithm-code k)))
-
-
-(defn signing-key? [k]
-  (.isSigningKey k))
 
 
 (defn load-secret-key
