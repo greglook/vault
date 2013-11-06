@@ -7,7 +7,7 @@
 ; zero-valued bytes.
 ;
 ; Each part in the vector must be a map containing a :size key. The value of
-; this key specifies the number of bytes in the sequence are contributed by the
+; this key specifies the number of bytes in the sequence contributed by the
 ; part. The part size must be a positive integer.
 ;
 ; If no other keys are present, the part represents an all-zero region of bytes,
