@@ -6,15 +6,11 @@
 
 ;; TOTAL-ORDERING COMPARATOR
 
-(defn- boolean? [x]
-  (instance? java.lang.Boolean x))
-
-
 (defn- type-priority
   "Determines the 'priority' of the given value based on its type."
   [x]
-  (let [predicates [nil? boolean? number? char? string? keyword? symbol?
-                    list? vector? set? map?]
+  (let [predicates [nil? false? true? number? char? string?
+                    keyword? symbol? list? vector? set? map?]
         priority (->> predicates
                       (map vector (range))
                       (some (fn [[i p]] (when (p x) i))))]

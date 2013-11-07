@@ -16,12 +16,13 @@
                   '(1 2 3 4)
                   [1 2 3]
                   #{'howdy 'doody}
-                  '(2 3 4)]]
+                  '(2 3 4)
+                  'x]]
     (is (= (sort total-order elements)
            [nil false true -123 0.0 3.14159M 4096N
             \a \b \c "one" "thirteen"
             :foo :zap :a-ns/baz :my-ns/bar
-            'x 'y 'aaa/foo 'z/bar
+            'x 'x 'y 'aaa/foo 'z/bar
             '(1 2 3 4)
             '(2 3 4)
             [1 2 3]
