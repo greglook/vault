@@ -1,7 +1,10 @@
 (ns vault.data
   "Code to handle structured data, usually represented as EDN."
-  (:require [clojure.string :as string]
-            [clojure.data.codec.base64 :as b64]))
+  (:require [clojure.data.codec.base64 :as b64])
+  (:import
+    (java.net URI)
+    (java.text SimpleDateFormat)
+    (java.util Date TimeZone UUID)))
 
 
 ;; TOTAL-ORDERING COMPARATOR
@@ -82,14 +85,14 @@
 
 (defn- format-utc
   "Produces an ISO-8601 formatted date-time string from the given Date."
-  [^java.util.Date date]
+  [^Date date]
   (let [date-format (doto (java.text.SimpleDateFormat.
                             "yyyy-MM-dd'T'HH:mm:ss.SSS-00:00")
-                       (.setTimeZone (java.util.TimeZone/getTimeZone "GMT")))]
+                       (.setTimeZone (TimeZone/getTimeZone "GMT")))]
     (.format date-format date)))
 
 
-(extend-type java.util.Date
+(extend-type Date
   TaggedValue
   (edn-tag [this] 'inst)
   (edn-value [this] (format-utc this)))
@@ -97,7 +100,7 @@
 
 ; #uuid - Universally-unique identifier string.
 
-(extend-type java.util.UUID
+(extend-type UUID
   TaggedValue
   (edn-tag [this] 'uuid)
   (edn-value [this] (str this)))
@@ -126,17 +129,17 @@
 
 ; #uri - Universal Resource Identifier string.
 
-(extend-type java.net.URI
+(extend-type URI
   TaggedValue
   (edn-tag [this] 'uri)
   (edn-value [this] (str this)))
 
 
-(defprint-method java.net.URI)
+(defprint-method URI)
 
 
 (defn read-uri
   "Constructs a URI from a string value."
-  ^java.net.URI
+  ^URI
   [^String uri]
-  (java.net.URI. uri))
+  (URI. uri))
