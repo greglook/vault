@@ -14,7 +14,7 @@ to convert.
 For now, there's no built in script to call, so just make an alias for
 leiningen:
 
-```shell
+```sh
 alias vault='lein run --'
 vault help
 ```
