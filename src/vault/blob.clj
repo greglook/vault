@@ -49,8 +49,8 @@
 
 (extend-type BlobRef
   data/TaggedValue
-  (tag [this] 'vault/ref)
-  (value [this] (str this)))
+  (edn-tag [this] 'vault/ref)
+  (edn-value [this] (str this)))
 
 
 (data/defprint-method BlobRef)

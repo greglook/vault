@@ -130,8 +130,8 @@
 (defmethod canonize :tagged-value
   [v]
   (vary-meta
-    [:span (color-text (str \# (data/tag v)) :red)
-     " " (canonize (data/value v))]
+    [:span (color-text (str \# (data/edn-tag v)) :red)
+     " " (canonize (data/edn-value v))]
     assoc ::tagged-value true))
 
 

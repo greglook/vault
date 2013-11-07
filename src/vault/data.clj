@@ -52,8 +52,8 @@
 ;; EDN-TAGGED VALUE PROTOCOL
 
 (defprotocol TaggedValue
-  (tag [this] "Return the tag symbol to apply to the value.")
-  (value [this] "Return the value to pass to the tag."))
+  (edn-tag [this] "Return the EDN tag symbol for this data type.")
+  (edn-value [this] "Return the EDN value to follow the tag."))
 
 
 
@@ -63,7 +63,7 @@
   "Converts the given TaggedValue data to a tagged EDN string."
   ^String
   [v]
-  (str \# (tag v) \space (pr-str (value v))))
+  (str \# (edn-tag v) \space (pr-str (edn-value v))))
 
 
 (defmacro defprint-method
@@ -91,16 +91,16 @@
 
 (extend-type java.util.Date
   TaggedValue
-  (tag [this] 'inst)
-  (value [this] (format-utc this)))
+  (edn-tag [this] 'inst)
+  (edn-value [this] (format-utc this)))
 
 
 ; #uuid - Universally-unique identifier string.
 
 (extend-type java.util.UUID
   TaggedValue
-  (tag [this] 'uuid)
-  (value [this] (str this)))
+  (edn-tag [this] 'uuid)
+  (edn-value [this] (str this)))
 
 
 
@@ -110,8 +110,8 @@
 
 (extend-type (Class/forName "[B")
   TaggedValue
-  (tag [this] 'bin)
-  (value [this] (->> this b64/encode (map char) (apply str))))
+  (edn-tag [this] 'bin)
+  (edn-value [this] (->> this b64/encode (map char) (apply str))))
 
 
 (defprint-method (Class/forName "[B"))
@@ -128,8 +128,8 @@
 
 (extend-type java.net.URI
   TaggedValue
-  (tag [this] 'uri)
-  (value [this] (str this)))
+  (edn-tag [this] 'uri)
+  (edn-value [this] (str this)))
 
 
 (defprint-method java.net.URI)

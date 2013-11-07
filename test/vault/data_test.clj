@@ -33,7 +33,7 @@
 
 (deftest built-in-tagged-values
   (testing "TaggedValue"
-    (are [data t v] (and (= t (tag data)) (= v (value data)))
+    (are [data t v] (and (= t (edn-tag data)) (= v (edn-value data)))
          (byte-array 10)
          'bin "AAAAAAAAAAAAAA=="
 
@@ -49,7 +49,7 @@
 
 (deftest bin-reading
   (let [byte-arr (.getBytes "foobarbaz")
-        value-str (value byte-arr)
+        value-str (edn-value byte-arr)
         read-arr (read-bin value-str)]
     (is (= (count byte-arr) (count read-arr)))
     (is (= (seq byte-arr) (seq read-arr)))))
@@ -57,4 +57,4 @@
 
 (deftest uri-reading
   (let [uri (java.net.URI. "urn:isbn:0-486-27557-4")]
-    (is (= uri (read-uri (value uri))))))
+    (is (= uri (read-uri (edn-value uri))))))

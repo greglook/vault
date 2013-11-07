@@ -57,8 +57,8 @@
 
 (deftest special-blob-format
   (let [tv (reify data/TaggedValue
-             (tag [this] 'my-app/type)
-             (value [this] {:alpha 'foo :omega 1234}))]
+             (edn-tag [this] 'my-app/type)
+             (edn-value [this] {:alpha 'foo :omega 1234}))]
     (is (= (edn-blob tv)
            "#my-app/type\n{:alpha foo, :omega 1234}")
         "top-level tagged values in blob should print tag on separate line")))

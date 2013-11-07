@@ -38,8 +38,8 @@
 
 
 (deftest edn-representation
-  (is (= 'vault/ref (data/tag blob-ref)))
-  (is (= blob-address (data/value blob-ref))))
+  (is (= 'vault/ref (data/edn-tag blob-ref)))
+  (is (= blob-address (data/edn-value blob-ref))))
 
 
 (deftest address-parsing
