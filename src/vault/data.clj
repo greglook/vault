@@ -59,7 +59,6 @@
   (edn-value [this] "Return the EDN value to follow the tag."))
 
 
-
 ;; SERIALIZATION FUNCTIONS
 
 (defn edn-str
@@ -72,10 +71,40 @@
 (defmacro defprint-method
   "Defines a print-method for the given class which writes out the EDN
   serialization from `edn-str`."
-  [c]
-  `(defmethod print-method ~c
+  [t]
+  `(defmethod print-method ~t
      [v# ^java.io.Writer w#]
        (.write w# (edn-str v#))))
+
+
+
+;; EXTENSION FUNCTIONS
+
+(defmacro extend-tagged-value
+  "Extends the TaggedValue protocol with implementations which return the
+  given symbol as the tag and use the body to calculate the value. The symbol
+  'this' is bound to the data. This macro also defines a print-method which
+  delegates to edn-str."
+  [t tag & body]
+  `(do
+     (extend-type ~t
+       TaggedValue
+       (edn-tag [~'this] (quote ~tag))
+       (edn-value [~'this]
+         ~@(if (and (= 1 (count body)) (symbol? (first body)))
+             (list (list (first body) 'this))
+             body)))
+     (defprint-method ~t)))
+
+
+(defmacro extend-tagged-str
+  [c tag]
+  `(extend-tagged-value ~c ~tag str))
+
+
+(defmacro extend-tagged-map
+  [c tag]
+  `(extend-tagged-value ~c ~tag (into {} (seq ~'this))))
 
 
 
@@ -92,32 +121,20 @@
     (.format date-format date)))
 
 
-(extend-type Date
-  TaggedValue
-  (edn-tag [this] 'inst)
-  (edn-value [this] (format-utc this)))
+(extend-tagged-value Date inst format-utc)
 
 
 ; #uuid - Universally-unique identifier string.
-
-(extend-type UUID
-  TaggedValue
-  (edn-tag [this] 'uuid)
-  (edn-value [this] (str this)))
+(extend-tagged-str UUID uuid)
 
 
 
 ;; EXPANDED EDN TAG SUPPORT
 
 ; #bin - Binary data in the form of byte arrays.
-
-(extend-type (Class/forName "[B")
-  TaggedValue
-  (edn-tag [this] 'bin)
-  (edn-value [this] (->> this b64/encode (map char) (apply str))))
-
-
-(defprint-method (Class/forName "[B"))
+(extend-tagged-value
+  (Class/forName "[B") bin
+  (->> this b64/encode (map char) (apply str)))
 
 
 (defn read-bin
@@ -128,14 +145,7 @@
 
 
 ; #uri - Universal Resource Identifier string.
-
-(extend-type URI
-  TaggedValue
-  (edn-tag [this] 'uri)
-  (edn-value [this] (str this)))
-
-
-(defprint-method URI)
+(extend-tagged-str URI uri)
 
 
 (defn read-uri
