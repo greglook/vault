@@ -1,7 +1,7 @@
-(ns vault.data.print-test
+(ns vault.print-test
   (:require [clojure.test :refer :all]
             [vault.data :as data]
-            [vault.data.print :refer :all]))
+            [vault.print :refer :all]))
 
 
 (deftest canonical-primitives
@@ -42,7 +42,7 @@
       (is (thrown? IllegalArgumentException (edn-blob r))
           "should not print non-EDN representation")
       (is (= (with-out-str (pprint r))
-             "#vault.data.print_test.TestRecord{:bar \\y, :foo \\x}\n")))))
+             "#vault.print_test.TestRecord{:bar \\y, :foo \\x}\n")))))
 
 
 (deftest default-canonize

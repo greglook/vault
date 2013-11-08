@@ -1,7 +1,7 @@
 (ns vault.tool.config
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [vault.data.print :refer [cprint]]
+            [vault.print :refer [cprint]]
             (vault.store
               [file :refer [file-store]]
               [memory :refer [memory-store]])))

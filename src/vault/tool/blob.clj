@@ -1,7 +1,7 @@
 (ns vault.tool.blob
   (:require [clojure.java.io :as io]
             [vault.store :as blobs]
-            [vault.data.print :refer [cprint]]))
+            [vault.print :refer [cprint]]))
 
 
 

@@ -1,11 +1,11 @@
 (ns vault.tool
-  (:require (clojure
-              [edn :as edn])
-            [vault.data.print :refer [pprint cprint]]
-            (vault.tool
-              [command :refer [command execute]]
-              [config :as config]
-              [blob :as blob-tool]))
+  (:require
+    [clojure.edn :as edn]
+    [vault.print :refer [pprint cprint]]
+    (vault.tool
+      [command :refer [command execute]]
+      [config :as config]
+      [blob :as blob-tool]))
   (:gen-class :main true))
 
 

@@ -1,8 +1,7 @@
-(ns vault.data.print
-  "Utilities for canonical printing of EDN values."
+(ns vault.print
+  "Functions for canonical printing of EDN values."
   (:require ansi
             [clojure.string :as string]
-            [clojure.data.codec.base64 :as b64]
             [fipp.printer :refer [defprinter pprint-document]]
             [vault.data :as data]))
 
@@ -177,6 +176,6 @@
                 `[~op ~tag :line ~@more])
               doc)]
     (-> doc
-        (pprint-document {:width 80})
+        (pprint-document {:width 100})
         with-out-str
         string/trim)))
