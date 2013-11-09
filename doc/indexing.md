@@ -15,6 +15,28 @@ Since indexes are not intended to be durable, it is fine to delete and rebuild
 them at any time. Indexes can be treated as a type of blobstore which does not
 support the `open` operation.
 
+## Interface
+
+Indexers can be thought of as _views_ of the blob data. It should be possible to
+declaratively specify the transformations to produce each view, a predicate
+which determines whether to apply the given transformation to a blob, and a
+number of _indexes_ on that view to optimize.
+
+```clojure
+{:attrs [blob key data ^Date time]
+ :indexes [[data key]
+           [key time]]
+ :predicate #(= (type %) :vault/signature)
+ :view (fn [blobref sig]
+         {:blob blobref
+          :key (:key sig)
+          :data (or (:data sig) blobref)})}
+```
+
+The above definition indexes signature data, enabling lookups for:
+- what keys have signed data in a given blob?
+- what blobs have been signed by a given key over time?
+
 ## Implementations
 
 Indexes can be implemented on many kinds of databases. Early support will
