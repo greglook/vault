@@ -47,13 +47,8 @@
     (str (name algorithm) ":" digest)))
 
 
-(extend-type BlobRef
-  data/TaggedValue
-  (edn-tag [this] 'vault/ref)
-  (edn-value [this] (str this)))
-
-
-(data/defprint-method BlobRef)
+; FIXME: this doesn't need to be here, could be declared later to remove dependency on vault.data
+(data/extend-tagged-str BlobRef vault/ref)
 
 
 
