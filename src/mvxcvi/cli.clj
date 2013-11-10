@@ -1,4 +1,4 @@
-(ns vault.tool.command
+(ns mvxcvi.cli
   (:require [clojure.string :as string]
             [clojure.tools.cli :refer [cli]]))
 

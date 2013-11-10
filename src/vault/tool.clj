@@ -1,8 +1,8 @@
 (ns vault.tool
   (:require
+    [mvxcvi.cli :refer [command execute]]
     [puget.printer :refer [pprint cprint]]
     (vault.tool
-      [command :refer [command execute]]
       [config :as config]
       [blob :as blob-tool]))
   (:gen-class :main true))
