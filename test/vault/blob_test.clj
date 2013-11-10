@@ -10,7 +10,7 @@
 (def blob-ref
   (blob/->BlobRef :sha256 "97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"))
 
-(def blob-address
+(def blob-id
   "sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d")
 
 
@@ -32,16 +32,16 @@
 
 (deftest blobref-strings
   (testing "string representation"
-    (is (= (str blob-ref) blob-address))))
+    (is (= (str blob-ref) blob-id))))
 
 
-(deftest address-parsing
-  (testing "parse-address"
-    (are [addr] (= (blob/parse-address addr) blob-ref)
-         (str "urn:hash:" blob-address)
-         (str "urn:" blob-address)
-         blob-address)
-    (is (thrown? IllegalArgumentException (blob/parse-address "abc1:a19d14f8e")))))
+(deftest identifier-parsing
+  (testing "parse-identifier"
+    (are [addr] (= (blob/parse-identifier addr) blob-ref)
+         (str "urn:hash:" blob-id)
+         (str "urn:" blob-id)
+         blob-id)
+    (is (thrown? IllegalArgumentException (blob/parse-identifier "abc1:a19d14f8e")))))
 
 
 (deftest content-hashing-test
@@ -53,5 +53,5 @@
 (deftest make-blobref-test
   (testing "blob/ref"
     (is (identical? (blob/ref blob-ref) blob-ref))
-    (is (= (blob/ref blob-address) blob-ref))
+    (is (= (blob/ref blob-id) blob-ref))
     (is (= (blob/ref :sha256 (:digest blob-ref)) blob-ref))))

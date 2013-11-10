@@ -37,7 +37,7 @@
 
 
 (defn- test-stored-blob
-  "Determines whether the store contains the data at the given address."
+  "Determines whether the store contains the data for the given identifier"
   [store blobref data]
   (let [blob-info (blob/stat store blobref)
         stored-content (with-open [stream (blob/open store blobref)]

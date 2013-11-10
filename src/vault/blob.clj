@@ -104,13 +104,13 @@
 
 ;; HELPER FUNCTIONS
 
-(defn parse-address
-  "Parses an address string into a blobref. Accepts either a hash URN or the
-  shorter \"algo:address\" format."
-  [address]
-  (let [address (if (re-find #"^urn:" address) (subs address 4) address)
-        address (if (re-find #"^hash:" address) (subs address 5) address)
-        [algorithm digest] (string/split address #":" 2)
+(defn parse-identifier
+  "Parses a hash identifier string into a blobref. Accepts either a hash URN
+  or the shorter \"algo:digest\" format."
+  [id]
+  (let [id (if (re-find #"^urn:" id) (subs id 4) id)
+        id (if (re-find #"^hash:" id) (subs id 5) id)
+        [algorithm digest] (string/split id #":" 2)
         algorithm (keyword algorithm)]
     (assert-valid-digest algorithm)
     (BlobRef. algorithm digest)))
@@ -120,7 +120,7 @@
   "Constructs a BlobRef out of the arguments."
   ([x]
    (if (instance? BlobRef x) x
-     (parse-address (str x))))
+     (parse-identifier (str x))))
   ([algorithm digest]
    (let [algorithm (keyword algorithm)]
      (assert-valid-digest algorithm)

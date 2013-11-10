@@ -7,12 +7,12 @@
 
 ;; HELPER FUNCTIONS
 
-(defn- prefix-address
+(defn- prefix-identifier
   "Adds the given algorithm to a blobref if none is specified."
-  [algorithm address]
-  (if-not (some (partial = \:) address)
-    (str (name algorithm) \: address)
-    address))
+  [algorithm id]
+  (if-not (some (partial = \:) id)
+    (str (name algorithm) \: id)
+    id))
 
 
 (defn- enumerate-prefix
@@ -22,7 +22,7 @@
    (blob/list store {}))
   ([store prefix]
    (->> prefix
-        (prefix-address (:algorithm store)) ; FIXME: assumption about store type
+        (prefix-identifier (:algorithm store)) ; FIXME: assumption about store type
         (hash-map :prefix)
         (blob/list store)))
   ([store prefix & more]
