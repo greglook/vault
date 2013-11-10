@@ -33,7 +33,7 @@
     (with-open [buffer (java.io.ByteArrayOutputStream.)]
       (io/copy content buffer)
       (let [data (.toByteArray buffer)
-            blobref (blob/hash-content algorithm data)]
+            blobref (blob/digest algorithm data)]
         (swap! store assoc blobref data)
         blobref)))
 

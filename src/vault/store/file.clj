@@ -97,7 +97,7 @@
                        (str "landing-" (System/currentTimeMillis)))]
       (io/make-parents tmp)
       (io/copy content tmp)
-      (let [blobref (blob/hash-content algorithm tmp)
+      (let [blobref (blob/digest algorithm tmp)
             file (blobref->file root blobref)]
         (io/make-parents file)
         (when-not (.renameTo tmp file)

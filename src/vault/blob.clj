@@ -4,21 +4,6 @@
             digest))
 
 
-;; HASH ALGORITHMS
-
-(def ^:private digest-functions
-  "Map of content hashing algorithms to functional implementations."
-  {:md5    digest/md5
-   :sha1   digest/sha-1
-   :sha256 digest/sha-256})
-
-
-(def digest-algorithms
-  "Set of available content hashing algorithms."
-  (into #{} (keys digest-functions)))
-
-
-
 ;; BLOB REFERENCE
 
 (defrecord BlobRef
@@ -85,7 +70,19 @@
 
 
 
-;; HELPER FUNCTIONS
+;; CONTENT HASHING
+
+(def ^:private digest-functions
+  "Map of content hashing algorithms to functional implementations."
+  {:md5    digest/md5
+   :sha1   digest/sha-1
+   :sha256 digest/sha-256})
+
+
+(def digest-algorithms
+  "Set of available content hashing algorithms."
+  (into #{} (keys digest-functions)))
+
 
 (defn- assert-valid-digest
   [algorithm]
@@ -95,7 +92,7 @@
                   ", must be one of: " (string/join ", " digest-algorithms))))))
 
 
-(defn hash-content
+(defn digest
   "Calculates the blob reference for the given content."
   [algorithm content]
   (assert-valid-digest algorithm)
@@ -103,6 +100,9 @@
         digest ^String (hashfn content)]
     (BlobRef. algorithm (.toLowerCase digest))))
 
+
+
+;; HELPER FUNCTIONS
 
 (defn parse-address
   "Parses an address string into a blobref. Accepts either a hash URN or the

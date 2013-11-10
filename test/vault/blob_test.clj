@@ -46,8 +46,8 @@
 
 (deftest content-hashing-test
   (testing "hash-content"
-    (is (= (blob/hash-content :sha256 blob-content) blob-ref))
-    (is (thrown? IllegalArgumentException (blob/hash-content :sha4 "xyz")))))
+    (is (= (blob/digest :sha256 blob-content) blob-ref))
+    (is (thrown? IllegalArgumentException (blob/digest :sha4 "xyz")))))
 
 
 (deftest make-blobref-test

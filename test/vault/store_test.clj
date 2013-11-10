@@ -8,7 +8,7 @@
 
 
 (deftest blob-containment
-  (let [blobref (blob/hash-content :sha1 "foo bar")]
+  (let [blobref (blob/digest :sha1 "foo bar")]
     (is (false? (blob/contains-blob? (reify BlobStore (stat [this blobref] nil)) blobref)))
     (is (true? (blob/contains-blob? (reify BlobStore (stat [this blobref] {:size 1})) blobref)))))
 
