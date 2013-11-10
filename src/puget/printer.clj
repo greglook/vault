@@ -1,9 +1,11 @@
-(ns vault.print
-  "Functions for canonical printing of EDN values."
-  (:require ansi
-            [clojure.string :as string]
-            [fipp.printer :refer [defprinter pprint-document]]
-            [vault.data :as data]))
+(ns puget.printer
+  "Functions for canonical colored printing of EDN values."
+  (:require
+    [clojure.string :as string]
+    [fipp.printer :refer [defprinter]]
+    (puget
+      [ansi :as ansi]
+      [data :as data])))
 
 
 ;; CONTROL VARS
@@ -134,7 +136,7 @@
     assoc ::tagged-value true))
 
 
-(defn- tagged-value-doc?
+(defn tagged-value-doc?
   [doc]
   (::tagged-value (meta doc)))
 
@@ -150,6 +152,7 @@
      (color-text ">" :blue)]))
 
 
+
 ;; PRINT FUNCTIONS
 
 (defprinter pprint canonize {:width 80})
@@ -163,19 +166,3 @@
   ([value opts]
    (binding [*colored-output* true]
      (pprint value opts))))
-
-
-(defn edn-blob
-  "Returns a canonical EDN representation suitable for serializing to a blob."
-  [value]
-  (let [doc (binding [*colored-output* false
-                      *strict-mode* true]
-              (canonize value))
-        doc (if (tagged-value-doc? doc)
-              (let [[op tag sep & more] doc]
-                `[~op ~tag :line ~@more])
-              doc)]
-    (-> doc
-        (pprint-document {:width 100})
-        with-out-str
-        string/trim)))

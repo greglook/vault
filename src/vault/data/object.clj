@@ -2,8 +2,7 @@
   "Object handling functions."
   (:require
     (vault
-      [blob :as blob]
-      [data :as data])))
+      [blob :as blob])))
 
 
 
@@ -13,8 +12,8 @@
 (defrecord ObjectUpdate [time past updates])
 
 
-(data/extend-tagged-map ObjectRoot   vault/object.root)
-(data/extend-tagged-map ObjectUpdate vault/object.update)
+;(data/extend-tagged-map ObjectRoot   vault/object.root)
+;(data/extend-tagged-map ObjectUpdate vault/object.update)
 
 
 ; TODO: 'reducing' function which takes an object root and a sequence of

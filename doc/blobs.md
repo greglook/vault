@@ -1,10 +1,10 @@
 # Blob Storage
 
-One of the core pieces of the system is the storage of 'blobs', addressed by
+One of the core pieces of the system is the storage of 'blobs', identified by
 the cryptographic hash of their contents. This scheme is known as _content
-addressable storage_: a given hash addresses an immutable piece of data, as a
-change in the content results in a change in the address. This has several nice
-properties:
+addressable storage_: a given hash identifies an immutable piece of data, as a
+change in the content results in a change in the identifier. This has several
+interesting properties:
 - Data is immutable, so there's no concern over having the 'latest version' of
   something - you either have it, or you don't.
 - Synchronizing data between stores only requires enumerating the stored blobs
@@ -28,10 +28,10 @@ urn:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 urn:hash:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 </pre>
 
-These strings are _hash addresses_; more generally, the pairing of an algorithm
+These strings are _hash identifiers_; more generally, the pairing of an algorithm
 and hex digest is known as a _blobref_. In practice, the shorter _algo:digest_
 form will probably be used internally for brevity. External representations of
-the address can add the 'urn' components as desired.
+the identifier can add the 'urn' components as desired.
 
 ## Storage Interface
 

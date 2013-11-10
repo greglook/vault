@@ -1,12 +1,15 @@
-(ns vault.print-test
-  (:require [clojure.test :refer :all]
-            [vault.data :as data]
-            [vault.print :refer :all]))
+(ns puget.printer-test
+  (:require
+    [clojure.string :as string]
+    [clojure.test :refer :all]
+    (puget
+      [data :as data]
+      [printer :refer :all])))
 
 
 (deftest canonical-primitives
   (testing "Primitive values"
-    (are [v text] (= text (edn-blob v))
+    (are [v text] (= text (-> v pprint with-out-str string/trim))
          nil     "nil"
          true    "true"
          false   "false"
@@ -26,7 +29,7 @@
 
 (deftest canonical-collections
   (testing "Collections"
-    (are [v text] (= text (edn-blob v))
+    (are [v text] (= text (-> v pprint with-out-str string/trim))
          '(foo :bar)            "(foo :bar)"
          '(1 2 3)               "(1 2 3)"
          [4 "five" 6.0]         "[4 \"five\" 6.0]"
@@ -39,26 +42,26 @@
 (deftest canonical-records
   (testing "Records"
     (let [r (->TestRecord \x \y)]
-      (is (thrown? IllegalArgumentException (edn-blob r))
-          "should not print non-EDN representation")
+      (binding [*strict-mode* true]
+        (is (thrown? IllegalArgumentException (pprint r))
+            "should not print non-EDN representation"))
       (is (= (with-out-str (pprint r))
-             "#vault.print_test.TestRecord{:bar \\y, :foo \\x}\n")))))
+             "#puget.printer_test.TestRecord{:bar \\y, :foo \\x}\n")))))
 
 
 (deftest default-canonize
   (testing "Unknown values"
     (let [usd (java.util.Currency/getInstance "USD")]
-      (is (thrown? IllegalArgumentException
-                   (edn-blob usd))
-                   "should not print non-EDN representation")
+      (binding [*strict-mode* true]
+        (is (thrown? IllegalArgumentException
+                     (pprint usd))
+                     "should not print non-EDN representation"))
       (is (= (with-out-str (pprint usd))
              "#<java.util.Currency USD>\n")))))
 
 
-(deftest special-blob-format
-  (let [tv (reify data/TaggedValue
-             (edn-tag [this] 'my-app/type)
-             (edn-value [this] {:alpha 'foo :omega 1234}))]
-    (is (= (edn-blob tv)
-           "#my-app/type\n{:alpha foo, :omega 1234}")
-        "top-level tagged values in blob should print tag on separate line")))
+(deftest colored-printing
+  (let [value [nil 1.0 true "foo" :bar]
+        bw-str (with-out-str (pprint value))
+        colored-str (with-out-str (cprint value))]
+    (is (> (count colored-str) (count bw-str)))))

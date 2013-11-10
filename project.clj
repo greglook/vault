@@ -7,6 +7,6 @@
                  [org.clojure/data.codec "0.1.0"]
                  [org.clojure/tools.cli "0.2.4"]
                  [org.bouncycastle/bcpg-jdk15on "1.49"]
-                 [digest "1.4.3"] ; TODO: replace with bouncycastle
+                 [digest "1.4.3"]
                  [fipp "0.4.1"]]
   :main vault.tool)
