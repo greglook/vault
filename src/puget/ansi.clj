@@ -1,4 +1,4 @@
-(ns ansi
+(ns puget.ansi
   (:require [clojure.string :as string]))
 
 
@@ -53,13 +53,3 @@
   the graphics."
   [string & codes]
   (str (esc codes) string (escape :none)))
-
-
-(defmacro with-sgr
-  "Takes a sequence of SGR keys or codes, followed by a body of forms which
-  print out some text to be colored."
-  [& args]
-  (let [[codes forms] (split-with #(or (keyword? %) (number? %)) args)]
-    `(do (print (escape ~@codes))
-         ~@forms
-         (print (escape :none)))))

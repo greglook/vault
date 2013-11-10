@@ -1,7 +1,6 @@
 (ns vault.tool
   (:require
-    [clojure.edn :as edn]
-    [vault.print :refer [pprint cprint]]
+    [puget.printer :refer [pprint cprint]]
     (vault.tool
       [command :refer [command execute]]
       [config :as config]
