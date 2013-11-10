@@ -1,6 +1,6 @@
 (ns vault.tool.blob
   (:require [clojure.java.io :as io]
-            [vault.store :as blobs]
+            [vault.blob :as blob]
             [vault.print :refer [cprint]]))
 
 
@@ -19,12 +19,12 @@
   "Lists stored blobs with references matching the given prefixes.
   Automatically prepends the store's algorithm if none is given."
   ([store]
-   (blobs/enumerate store))
+   (blob/list store {}))
   ([store prefix]
    (->> prefix
         (prefix-address (:algorithm store)) ; FIXME: assumption about store type
         (hash-map :prefix)
-        (blobs/enumerate store)))
+        (blob/list store)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))
 
@@ -36,7 +36,7 @@
   [opts args]
   (let [store (:store opts)
         controls (select-keys opts [:count :prefix :start])
-        blobs (blobs/enumerate store controls)]
+        blobs (blob/list store controls)]
     (doseq [blobref blobs]
       (println (str blobref)))))
 
@@ -45,7 +45,7 @@
   [opts args]
   (let [store (:store opts)]
     (doseq [blobref (apply enumerate-prefix store args)]
-      (let [info (blobs/stat store blobref)]
+      (let [info (blob/stat store blobref)]
         (if (:pretty opts)
           (do
             (println (str blobref))
@@ -68,11 +68,11 @@
       (doseq [blobref blobrefs]
         (println (str blobref)))
       (System/exit 1))
-    (with-open [stream (blobs/open store (first blobrefs))]
+    (with-open [stream (blob/open store (first blobrefs))]
       (io/copy stream *out*))))
 
 
 (defn put-blob
   [opts args]
-  (let [blobref (blobs/store! (:store opts) *in*)]
+  (let [blobref (blob/store! (:store opts) *in*)]
     (println (str blobref))))

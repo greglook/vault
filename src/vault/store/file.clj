@@ -1,10 +1,8 @@
 (ns vault.store.file
   (:require
     [clojure.java.io :as io]
-    [clojure.java.shell :as shell]
     [clojure.string :as string]
-    [vault.blob :refer :all]
-    [vault.store :refer :all]))
+    [vault.blob :as blob :refer [BlobStore]]))
 
 
 ;; HELPER FUNCTIONS
@@ -12,7 +10,7 @@
 (defn- blobref->file
   ^java.io.File
   [root blobref]
-  (let [blobref (->blobref blobref)
+  (let [blobref (blob/ref blobref)
         {:keys [algorithm digest]} blobref]
     (io/file root
              (name algorithm)
@@ -31,7 +29,7 @@
     (let [[algorithm & digest] (-> file
                                    (subs (inc (count root)))
                                    (string/split #"/"))]
-      (->blobref algorithm (string/join digest)))))
+      (blob/ref algorithm (string/join digest)))))
 
 
 (defn- probe-content-type
@@ -73,13 +71,10 @@
     algorithm)
 
 
-  (enumerate [this]
-    (enumerate this {}))
-
-  (enumerate [this opts]
+  (list [this opts]
     (->> (enumerate-files root)
          (map (partial file->blobref root))
-         (select-blobrefs opts)))
+         (blob/select-refs opts)))
 
 
   (stat [this blobref]
@@ -102,7 +97,7 @@
                        (str "landing-" (System/currentTimeMillis)))]
       (io/make-parents tmp)
       (io/copy content tmp)
-      (let [blobref (hash-content algorithm tmp)
+      (let [blobref (blob/hash-content algorithm tmp)
             file (blobref->file root blobref)]
         (io/make-parents file)
         (when-not (.renameTo tmp file)

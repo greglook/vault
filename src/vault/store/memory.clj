@@ -1,8 +1,7 @@
 (ns vault.store.memory
   (:require
     [clojure.java.io :as io]
-    [vault.blob :refer :all]
-    [vault.store :refer :all]))
+    [vault.blob :as blob :refer [BlobStore]]))
 
 
 ;; IN-MEMORY STORE
@@ -16,11 +15,8 @@
     algorithm)
 
 
-  (enumerate [this]
-    (enumerate this {}))
-
-  (enumerate [this opts]
-    (select-blobrefs opts (keys @store)))
+  (list [this opts]
+    (blob/select-refs opts (keys @store)))
 
 
   (stat [this blobref]
@@ -37,7 +33,7 @@
     (with-open [buffer (java.io.ByteArrayOutputStream.)]
       (io/copy content buffer)
       (let [data (.toByteArray buffer)
-            blobref (hash-content algorithm data)]
+            blobref (blob/hash-content algorithm data)]
         (swap! store assoc blobref data)
         blobref)))
 
