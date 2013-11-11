@@ -1,6 +1,6 @@
 (ns vault.tool
   (:require
-    [mvxcvi.cli :refer [command execute]]
+    [mvxcvi.directive :refer [command execute]]
     [puget.printer :refer [pprint cprint]]
     (vault.tool
       [config :as config]
