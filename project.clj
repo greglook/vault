@@ -1,4 +1,4 @@
-(defproject vault "0.3.0-SNAPSHOT"
+(defproject mvxcvi/vault "0.3.0-SNAPSHOT"
   :description "Content-addressible datastore."
   :url "https://github.com/greglook/vault"
   :license {:name "Public Domain"
@@ -7,6 +7,7 @@
                  [org.clojure/data.codec "0.1.0"]
                  [org.clojure/tools.cli "0.2.4"]
                  [org.bouncycastle/bcpg-jdk15on "1.49"]
+                 [mvxcvi/puget "0.1.0"]
                  [digest "1.4.3"]
                  [fipp "0.4.1"]]
   :main vault.tool)
