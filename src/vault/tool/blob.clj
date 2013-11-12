@@ -19,12 +19,11 @@
   "Lists stored blobs with references matching the given prefixes.
   Automatically prepends the store's algorithm if none is given."
   ([store]
-   (blob/list store {}))
+   (blob/list store))
   ([store prefix]
    (->> prefix
         (prefix-identifier (:algorithm store)) ; FIXME: assumption about store type
-        (hash-map :prefix)
-        (blob/list store)))
+        (blob/list store :prefix)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))
 

@@ -71,7 +71,7 @@
     algorithm)
 
 
-  (list [this opts]
+  (enumerate [this opts]
     (->> (enumerate-files root)
          (map (partial file->blobref root))
          (blob/select-refs opts)))

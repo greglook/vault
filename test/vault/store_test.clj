@@ -54,16 +54,16 @@
     (let [store (store-factory algo)]
       (testing (str (-> store class .getSimpleName) " with " (name algo))
         (is (= algo (blob/algorithm store)) "reports algorithm correctly")
-        (is (empty? (blob/list store nil)) "starts empty")
+        (is (empty? (blob/list store)) "starts empty")
         (let [blobs (store-test-blobs! store)]
-          (is (= (keys blobs) (blob/list store nil))
+          (is (= (keys blobs) (blob/list store {}))
               "enumerates all blobrefs in sorted order")
           ; TODO: test expected subsequences? e.g. options to `enumerate`
           (doseq [[blobref data] blobs]
             (testing (str "for blob " blobref)
               (test-stored-blob store blobref data)
               (is (blob/remove! store blobref) "remove returns true")))
-          (is (empty? (blob/list store nil)) "ends empty")
+          (is (empty? (blob/list store)) "ends empty")
           (is (not (blob/remove! store (first (keys blobs))))
               "gives false when removing a nonexistent blob"))))))
 

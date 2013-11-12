@@ -4,6 +4,27 @@
             digest))
 
 
+(def ^:private digest-functions
+  "Map of content hashing algorithms to functional implementations."
+  {:md5    digest/md5
+   :sha1   digest/sha-1
+   :sha256 digest/sha-256})
+
+
+(def digest-algorithms
+  "Set of available content hashing algorithms."
+  (into #{} (keys digest-functions)))
+
+
+(defn- assert-valid-digest
+  [algorithm]
+  (when-not (digest-functions algorithm)
+    (throw (IllegalArgumentException.
+             (str "Unsupported digest algorithm: " algorithm
+                  ", must be one of: " (string/join ", " digest-algorithms))))))
+
+
+
 ;; BLOB REFERENCE
 
 (defrecord BlobRef
@@ -28,6 +49,29 @@
 ;(data/extend-tagged-str BlobRef vault/ref)
 
 
+(defn parse-identifier
+  "Parses a hash identifier string into a blobref. Accepts either a hash URN
+  or the shorter \"algo:digest\" format."
+  [id]
+  (let [id (if (re-find #"^urn:" id) (subs id 4) id)
+        id (if (re-find #"^hash:" id) (subs id 5) id)
+        [algorithm digest] (string/split id #":" 2)
+        algorithm (keyword algorithm)]
+    (assert-valid-digest algorithm)
+    (BlobRef. algorithm digest)))
+
+
+(defn ref
+  "Constructs a BlobRef out of the arguments."
+  ([x]
+   (if (instance? BlobRef x) x
+     (parse-identifier (str x))))
+  ([algorithm digest]
+   (let [algorithm (keyword algorithm)]
+     (assert-valid-digest algorithm)
+     (BlobRef. algorithm digest))))
+
+
 
 ;; BLOB STORE PROTOCOL
 
@@ -36,7 +80,7 @@
     [this]
     "Returns the algorithm in use by the blob store.")
 
-  (list
+  (enumerate
     [this opts]
     "Enumerates the stored blobs, returning a sequence of BlobRefs.
     Options should be keyword/value pairs from the following:
@@ -69,62 +113,21 @@
     contained the blob when this method was called."))
 
 
-
-;; CONTENT HASHING
-
-(def ^:private digest-functions
-  "Map of content hashing algorithms to functional implementations."
-  {:md5    digest/md5
-   :sha1   digest/sha-1
-   :sha256 digest/sha-256})
-
-
-(def digest-algorithms
-  "Set of available content hashing algorithms."
-  (into #{} (keys digest-functions)))
-
-
-(defn- assert-valid-digest
-  [algorithm]
-  (when-not (digest-functions algorithm)
-    (throw (IllegalArgumentException.
-             (str "Unsupported digest algorithm: " algorithm
-                  ", must be one of: " (string/join ", " digest-algorithms))))))
-
-
-(defn digest
-  "Calculates the blob reference for the given content."
-  [algorithm content]
-  (assert-valid-digest algorithm)
-  (let [hashfn (digest-functions algorithm)
-        digest ^String (hashfn content)]
-    (BlobRef. algorithm (.toLowerCase digest))))
-
-
-
-;; HELPER FUNCTIONS
-
-(defn parse-identifier
-  "Parses a hash identifier string into a blobref. Accepts either a hash URN
-  or the shorter \"algo:digest\" format."
-  [id]
-  (let [id (if (re-find #"^urn:" id) (subs id 4) id)
-        id (if (re-find #"^hash:" id) (subs id 5) id)
-        [algorithm digest] (string/split id #":" 2)
-        algorithm (keyword algorithm)]
-    (assert-valid-digest algorithm)
-    (BlobRef. algorithm digest)))
-
-
-(defn ref
-  "Constructs a BlobRef out of the arguments."
-  ([x]
-   (if (instance? BlobRef x) x
-     (parse-identifier (str x))))
-  ([algorithm digest]
-   (let [algorithm (keyword algorithm)]
-     (assert-valid-digest algorithm)
-     (BlobRef. algorithm digest))))
+(defn list
+  "Enumerates the stored blobs, returning a sequence of BlobRefs.
+  Options should be keyword/value pairs from the following:
+  * :start - start enumerating blobrefs lexically following this string
+  * :prefix - only return blobrefs matching the given string
+  * :count - limit the number of results returned"
+  ([store]
+   (enumerate store nil))
+  ([store opts]
+   (enumerate store opts))
+  ([store first-opt & opts]
+   (->> (cons first-opt opts)
+        (partition 2)
+        (into {})
+        (enumerate store))))
 
 
 (defn contains-blob?
@@ -147,3 +150,15 @@
                    (take n blobrefs)
                    blobrefs)]
     blobrefs))
+
+
+
+;; CONTENT HASHING
+
+(defn digest
+  "Calculates the blob reference for the given content."
+  [algorithm content]
+  (assert-valid-digest algorithm)
+  (let [hashfn (digest-functions algorithm)
+        digest ^String (hashfn content)]
+    (BlobRef. algorithm (.toLowerCase digest))))

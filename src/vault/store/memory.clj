@@ -15,7 +15,7 @@
     algorithm)
 
 
-  (list [this opts]
+  (enumerate [this opts]
     (blob/select-refs opts (keys @store)))
 
 
