@@ -1,11 +1,11 @@
 (ns vault.data-test
   (:require [clojure.test :refer :all]
-            [puget.data :as data]
+            [puget.data]
             [vault.data :refer :all]))
 
 
 (deftest special-blob-format
-  (let [tv (reify data/TaggedValue
+  (let [tv (reify puget.data/TaggedValue
              (edn-tag [this] 'my-app/type)
              (edn-value [this] {:alpha 'foo :omega 1234}))]
     (is (= (edn-blob tv)
