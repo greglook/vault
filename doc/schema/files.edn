@@ -1,7 +1,7 @@
 ; Vault should be able to represent filesystem hierarchies succinctly.
 
 ; common metadata
-{:permissions "0755" ; octal string TODO: integer representation?
+{:permissions "0755" ; octal string
  :owner-id 1000
  :owner "greglook"
  :group-id 500
@@ -10,18 +10,34 @@
  :modify-time #inst "2013-10-25T09:13:24.000-00:00"}
 
 
-#vault/fs.directory
+#vault/data
+^{:type :vault/fs.directory}
 {; common metadata...
  :entries #vault/ref "algo:digest"} ; reference to static set
 
 
-#vault/fs.file
+#vault/data
+^{:type :vault/fs.file}
 {; common metadata...
  ; Files contain ONE of the two following entries:
  :data #vault/ref "algo:digest" ; direct reference to file content blob
  :parts #vault/ref "algo:digest"}  ; reference to a bytes structure
 
 
-#vault/fs.symlink
+#vault/data
+^{:type :vault/fs.symlink}
 {; common metadata...
  :target "../foo/bar"} ; symlinked path
+
+
+; Full example:
+#vault/data
+^{:type :vault/fs.file}
+{:change-time #inst "2013-10-23T20:06:13.000-00:00",
+ :data #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75",
+ :group "users",
+ :group-id 500,
+ :modify-time #inst "2013-10-25T09:13:24.000-00:00",
+ :owner "greglook",
+ :owner-id 1000,
+ :permissions "0755"}

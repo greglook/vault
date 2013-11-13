@@ -31,10 +31,11 @@
 
 ; Example (mostly empty) ~1.5 MB sequence:
 
-#vault/bytes
+#vault/data
+^{:type :vault/bytes}
 [{:size 1000000}
- {:data #vault/ref "algo:digest"
+ {:data #vault/ref "algo:digest",
   :size 1024}
- {:parts #vault/ref "algo:digest"
-  :size 500000
-  :offset 492}]
+ {:offset 492,
+  :parts #vault/ref "algo:digest",
+  :size 500000}]

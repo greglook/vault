@@ -1,18 +1,42 @@
-# Structured Data
+Structured Data
+===============
 
-Data blobs:
-- MUST be UTF-8 encoded text
-- MUST contain EDN formatted data
-- SHOULD NOT contain leading or trailing whitespace
-- MUST contain at least one value ('primary' value)
+Higher-level data in Vault is represented by blobs containing EDN values. These
+are known as _data blobs_ and form the _blob graph_. Data blobs:
+- MUST consist of UTF-8 encoded text
+- MUST contain EDN-formatted data
+- SHOULD NOT contain trailing whitespace
+- MUST start with the characters `#vault/data`
+- MUST contain at least one 'primary' value
+- MAY assign metadata to this value
 - MAY contain additional special values
     - only signatures, so far
+
+Data blobs are recognized by the 'magic header' EDN tag prefix. The value
+following the header is the _primary_ value of the blob. Additional EDN values
+may follow in order to provide things such as content signatures. To specify a
+'type' for the data, values can use the standard metadata syntax. An example
+data blob:
+
+```clojure
+#vault/data
+^{:type :vault/bytes, :vault/version 1}
+[{:size 1000}]
+```
+
+## EDN Tags
+
+Vault provides a few EDN value tags for special types:
+
+- `#vault/ref` : marks a hash identifier as a blobref
+- `#vault/data` : identifies the primary value in a data blob
+- `#vault/signature` : parses a signature map and resolves the signature target
 
 ## The Blob Graph
 
 There are two classes of reference to other blobs. Either the data structure is
 _including_ the referenced blob as a part of the data, or it is _linking_ to an
-entity represented by a permanode.
+entity represented by an object.
 
 A data structure should be split into multiple blobs if a part of the data is
 very large and will change less frequently than other parts of the data, or
