@@ -11,13 +11,13 @@
 ; part. The part size must be a positive integer.
 ;
 ; If no other keys are present, the part represents an all-zero region of bytes,
-; such as in a sparse file. Otherwise, the part must contain a :data or :parts
-; key. It is an error for a part to contain both. A :data key specifies a
+; such as in a sparse file. Otherwise, the part must contain a :bytes or :parts
+; key. It is an error for a part to contain both. A :bytes key specifies a
 ; reference to a blob whose content should be used directly as byte data. A
 ; :parts key refers to another bytes structure with further sub-parts.
 ;
-; For either :data or :parts sources, the :size key gives the number of bytes to
-; take from the source. If the part size is smaller than the size of the
+; For either :bytes or :parts sources, the :size key gives the number of bytes
+; to take from the source. If the part size is smaller than the size of the
 ; source, extra bytes are omitted. The part size SHOULD NOT be larger than the
 ; source, but if so the part is padded with trailing zero bytes.
 ;
@@ -32,9 +32,9 @@
 ; Example (mostly empty) ~1.5 MB sequence:
 
 #vault/data
-^{:type :vault/bytes}
+^{:type :vault/byte-seq}
 [{:size 1000000}
- {:data #vault/ref "algo:digest",
+ {:bytes #vault/ref "algo:digest",
   :size 1024}
  {:offset 492,
   :parts #vault/ref "algo:digest",
