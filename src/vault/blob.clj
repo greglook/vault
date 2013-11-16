@@ -123,9 +123,10 @@
    (enumerate store nil))
   ([store opts]
    (enumerate store opts))
-  ([store first-opt & opts]
-   (->> (cons first-opt opts)
+  ([store opt-key opt-val & opts]
+   (->> opts
         (partition 2)
+        (cons [opt-key opt-val])
         (into {})
         (enumerate store))))
 
