@@ -13,7 +13,7 @@
 
 (def digest-algorithms
   "Set of available content hashing algorithms."
-  (into #{} (keys digest-functions)))
+  (set (keys digest-functions)))
 
 
 (defn- assert-valid-digest
@@ -142,7 +142,7 @@
   [opts blobrefs]
   (let [{:keys [start prefix]} opts
         blobrefs (if-let [start (or start prefix)]
-                   (drop-while #(< 0 (compare start (str %))) blobrefs)
+                   (drop-while #(pos? (compare start (str %))) blobrefs)
                    blobrefs)
         blobrefs (if prefix
                    (take-while #(.startsWith (str %) prefix) blobrefs)

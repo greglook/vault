@@ -80,8 +80,9 @@
   [keyring-file id]
   (with-open [input (PGPUtil/getDecoderStream
                       (io/input-stream keyring-file))]
-    (-> (PGPSecretKeyRingCollection. input)
-        (.getSecretKey (key-id id)))))
+    (.getSecretKey
+      (PGPSecretKeyRingCollection. input)
+      (key-id id))))
 
 
 (defn- extract-private-key
@@ -115,7 +116,7 @@
     (with-open [data (io/input-stream data-source)]
       (let [buffer (byte-array 1024)]
         (loop [n (.read data buffer)]
-          (when (> n 0)
+          (when (pos? n)
             (.update generator buffer 0 n)
             (recur (.read data buffer))))))
     (.generate generator)))
@@ -144,7 +145,7 @@
   (with-open [data (io/input-stream data-source)]
     (let [buffer (byte-array 1024)]
       (loop [n (.read data buffer)]
-        (when (> n 0)
+        (when (pos? n)
           (.update signature buffer 0 n)
           (recur (.read data buffer))))))
   (.verify signature))

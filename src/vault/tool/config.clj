@@ -38,8 +38,9 @@
   "Reads an EDN configuration file."
   [path]
   (try
-    (->> (slurp path)
-         (edn/read-string {:readers config-readers}))
+    (edn/read-string
+      (slurp path)
+      {:readers config-readers})
     (catch Exception e
       (println "Error loading config file" (str path))
       (.printStackTrace e)
