@@ -7,33 +7,72 @@
               [file :refer [file-store]])))
 
 
-(deftest blob-containment
-  (let [blobref (blob/digest :sha1 "foo bar")]
-    (is (false? (blob/contains? (reify BlobStore (-stat [this blobref] nil)) blobref)))
-    (is (true? (blob/contains? (reify BlobStore (-stat [this blobref] {:size 1})) blobref)))))
+;; STORAGE INTERFACE TESTS
+
+(deftest list-wrapper
+  (let [store (reify BlobStore (-list [this opts] (vector :list opts)))]
+    (blob/with-blob-store store
+      (is (= [:list nil]
+             (blob/list)
+             (blob/list store)
+             (blob/list nil)))
+      (is (= [:list {:foo "bar" :baz 3}]
+             (blob/list {:foo "bar" :baz 3})
+             (blob/list store :foo "bar" :baz 3))))))
 
 
-(deftest blobref-selection
-  (let [a (blob/ref :md5 "37b51d194a7513e45b56f6524f2d51f2")
-        b (blob/ref :md5 "73fcffa4b7f6bb68e44cf984c85f6e88")
-        c (blob/ref :md5 "73fe285cedef654fccc4a4d818db4cc2")
-        d (blob/ref :md5 "acbd18db4cc2f85cedef654fccc4a4d8")
-        e (blob/ref :md5 "c3c23db5285662ef7172373df0003206")
-        blobrefs [a b c d e]]
-    (are [brs opts] (= brs (blob/select-refs opts blobrefs))
-         blobrefs {}
-         [c d e]  {:start "md5:73fd2"}
-         [b c]    {:prefix "md5:73"}
-         [a b]    {:count 2})))
+(deftest stat-wrapper
+  (let [store (reify BlobStore (-stat [this blobref] (vector :stat blobref)))]
+    (blob/with-blob-store store
+      (is (= [:stat :blobref]
+             (blob/stat store :blobref)
+             (blob/stat :blobref))))))
 
+
+(deftest contains?-wrapper
+  (let [store (reify BlobStore (-stat [this blobref] nil))]
+    (blob/with-blob-store store
+      (is (false? (blob/contains? store :blobref)))
+      (is (false? (blob/contains? :blobref)))))
+  (let [store (reify BlobStore (-stat [this blobref] {:size 1}))]
+    (is (true? (blob/contains? store :blobref)))))
+
+
+(deftest open-wrapper
+  (let [store (reify BlobStore (-open [this blobref] (vector :open blobref)))]
+    (blob/with-blob-store store
+      (is (= [:open :blobref]
+             (blob/open store :blobref)
+             (blob/open :blobref))))))
+
+
+(deftest store!-wrapper
+  (let [store (reify BlobStore (-store! [this content] (vector :store content)))]
+    (blob/with-blob-store store
+      (is (= [:store :content]
+             (blob/store! store :content)
+             (blob/store! :content))))))
+
+
+(deftest remove!-wrapper
+  (let [store (reify BlobStore (-remove! [this blobref] (vector :remove blobref)))]
+    (blob/with-blob-store store
+      (is (= [:remove :blobref]
+             (blob/remove! store :blobref)
+             (blob/remove! :blobref))))))
+
+
+
+;; INTEGRATION TESTS
 
 (defn- store-test-blobs!
   "Stores some test blobs in the given blob store and returns a map of the
   blobrefs to the original string values."
-  [store]
-  (->> ["foo" "bar" "baz" "foobar" "barbaz"]
-       (map (juxt (partial blob/store! store) identity))
-       (into (sorted-map))))
+  [store algorithm]
+  (blob/with-digest-algorithm algorithm
+    (->> ["foo" "bar" "baz" "foobar" "barbaz"]
+         (map (juxt (partial blob/store! store) identity))
+         (into (sorted-map)))))
 
 
 (defn- test-stored-blob
@@ -49,13 +88,12 @@
 
 (defn test-blob-store
   "Tests a blob store implementation."
-  [store-factory]
-  (doseq [algo blob/digest-algorithms]
-    (let [store (store-factory algo)]
+  [store]
+  (blob/with-blob-store store
+    (is (empty? (blob/list store)) "starts empty")
+    (doseq [algo blob/digest-algorithms]
       (testing (str (-> store class .getSimpleName) " with " (name algo))
-        (is (= algo (blob/algorithm store)) "reports algorithm correctly")
-        (is (empty? (blob/list store)) "starts empty")
-        (let [blobs (store-test-blobs! store)]
+        (let [blobs (store-test-blobs! store algo)]
           (is (= (keys blobs) (blob/list store {}))
               "enumerates all blobrefs in sorted order")
           ; TODO: test expected subsequences? e.g. options to `enumerate`
@@ -69,7 +107,7 @@
 
 
 (deftest memory-blob-store
-  (test-blob-store memory-store))
+  (test-blob-store (memory-store)))
 
 
 (deftest file-blob-store
@@ -77,4 +115,4 @@
                         (str "file-blob-store."
                              (System/currentTimeMillis)))]
     (.mkdirs tmpdir)
-    (test-blob-store #(file-store % tmpdir))))
+    (test-blob-store (file-store tmpdir))))

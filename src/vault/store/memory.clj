@@ -7,13 +7,9 @@
 ;; IN-MEMORY STORE
 
 (defrecord MemoryBlobStore
-  [algorithm store]
+  [store]
 
   BlobStore
-
-  (-algorithm [this]
-    algorithm)
-
 
   (-list [this opts]
     (blob/select-refs opts (keys @store)))
@@ -33,7 +29,7 @@
     (with-open [buffer (java.io.ByteArrayOutputStream.)]
       (io/copy content buffer)
       (let [data (.toByteArray buffer)
-            blobref (blob/digest algorithm data)]
+            blobref (blob/digest data)]
         (swap! store assoc blobref data)
         blobref)))
 
@@ -46,6 +42,5 @@
 
 (defn memory-store
   "Creates a new in-memory blob store."
-  [algorithm]
-  (MemoryBlobStore. algorithm
-                    (atom (sorted-map) :validator map?)))
+  []
+  (MemoryBlobStore. (atom (sorted-map) :validator map?)))

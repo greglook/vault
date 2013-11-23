@@ -30,13 +30,11 @@
 (defprotocol BlobStore
   "Protocol for content storage providers, keyed by blobrefs."
 
-  (-algorithm [this])
-
   (-list [this opts])
 
   (-stat [this blobref])
 
-  (-open ^java.io.InputStream [this blobref])
+  (-open [this blobref])
 
   (-store! [this content])
 
@@ -58,7 +56,12 @@
   (set (keys digest-functions)))
 
 
-(defn- assert-valid-digest
+(def ^:dynamic *digest-algorithm*
+  "Default digest algorithm to use when content hashing."
+  :sha256)
+
+
+(defn assert-valid-digest
   [algorithm]
   (when-not (digest-functions algorithm)
     (throw (IllegalArgumentException.
@@ -66,13 +69,23 @@
                   ", must be one of: " (string/join ", " digest-algorithms))))))
 
 
+(defmacro with-digest-algorithm
+  "Executes a body of expressions with the given default digest algorithm."
+  [algorithm & body]
+  `(binding [*digest-algorithm* ~algorithm]
+     (assert-valid-digest *digest-algorithm*)
+     ~@body))
+
+
 (defn digest
   "Calculates the blob reference for the given content."
-  [algorithm content]
-  (assert-valid-digest algorithm)
-  (let [hashfn (digest-functions algorithm)
-        digest ^String (hashfn content)]
-    (BlobRef. algorithm (.toLowerCase digest))))
+  ([content]
+   (digest *digest-algorithm* content))
+  ([algorithm content]
+   (assert-valid-digest algorithm)
+   (let [hashfn (digest-functions algorithm)
+         digest ^String (hashfn content)]
+     (BlobRef. algorithm (.toLowerCase digest)))))
 
 
 
@@ -131,15 +144,6 @@
      ~@body))
 
 
-(defn algorithm ; TODO: replace with dynamic var?
-  "Returns the algorithm in use by the blob store."
-  ([]
-   (algorithm *blob-store*))
-  ([store]
-   (or (:algorithm store)
-       (-algorithm store))))
-
-
 (defn list
   "Enumerates the stored blobs, returning a sequence of BlobRefs.
   Options should be keyword/value pairs from the following:
@@ -155,7 +159,7 @@
   ([store opts]
    (-list store opts))
   ([store opt-key opt-val & opts]
-   (-list store (hash-map (list* opt-key opt-val opts)))))
+   (-list store (apply hash-map opt-key opt-val opts))))
 
 
 (defn stat
@@ -182,9 +186,11 @@
 
 (defn open
   "Opens a stream of byte content for the referenced blob, if it is stored."
-  ([blobref]
+  (^java.io.InputStream
+   [blobref]
    (-open *blob-store* blobref))
-  ([store blobref]
+  (^java.io.InputStream
+   [store blobref]
    (-open store blobref)))
 
 

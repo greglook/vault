@@ -87,14 +87,9 @@
 ;; FILE STORE
 
 (defrecord FileBlobStore
-  [algorithm
-   ^java.io.File root]
+  [^java.io.File root]
 
   BlobStore
-
-  (-algorithm [this]
-    algorithm)
-
 
   (-list [this opts]
     (->> (enumerate-files root)
@@ -119,7 +114,7 @@
 
   (-store! [this content]
     (let [tmp (spool-tmp-file! root content)
-          blobref (blob/digest algorithm tmp)
+          blobref (blob/digest tmp)
           file (blobref->file root blobref)]
       (if (.exists file)
         (.delete tmp)
@@ -135,6 +130,5 @@
 
 (defn file-store
   "Creates a new local file-based blob store."
-  [algorithm root]
-  (FileBlobStore. algorithm
-                  (io/file root)))
+  [root]
+  (FileBlobStore. (io/file root)))
