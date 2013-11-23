@@ -32,6 +32,31 @@
       (blob/ref algorithm (string/join digest)))))
 
 
+; As a long-term idea, this could try to buffer in memory up to a certain
+; threshold before spooling to disk.
+(defn- spool-tmp-file!
+  "Spool input stream to a temporary landing file."
+  ^java.io.File
+  [root content]
+  (let [tmp-file (io/file root "tmp" (str "landing-" (System/currentTimeMillis)))]
+    (io/make-parents tmp-file)
+    (io/copy content tmp-file)
+    tmp-file))
+
+
+(defn- store-blob-file!
+  "Integrates a landing file into the blob store."
+  ^java.io.File
+  [^java.io.File tmp
+   ^java.io.File file]
+  (io/make-parents file)
+  (when-not (.renameTo tmp file)
+    (throw (RuntimeException.
+             (str "Failed to rename landing file " tmp
+                  " to stored blob " file))))
+  (.setWritable file false false))
+
+
 (defn- probe-content-type
   "Attempts to provide content-type information for a stored blob. Returns a
   MIME string on success."
@@ -93,18 +118,13 @@
 
 
   (store! [this content]
-    (let [tmp (io/file root "tmp"
-                       (str "landing-" (System/currentTimeMillis)))]
-      (io/make-parents tmp)
-      (io/copy content tmp)
-      (let [blobref (blob/digest algorithm tmp)
-            file (blobref->file root blobref)]
-        (io/make-parents file)
-        (when-not (.renameTo tmp file)
-          (throw (RuntimeException.
-                   (str "Failed to rename landing file " tmp
-                        " to stored blob " file))))
-        blobref)))
+    (let [tmp (spool-tmp-file! root content)
+          blobref (blob/digest algorithm tmp)
+          file (blobref->file root blobref)]
+      (if (.exists file)
+        (.delete tmp)
+        (store-blob-file! tmp file))
+      blobref))
 
 
   (remove! [this blobref]
