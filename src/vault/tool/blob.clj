@@ -4,7 +4,6 @@
             [vault.blob :as blob]))
 
 
-
 ;; HELPER FUNCTIONS
 
 (defn- prefix-identifier
@@ -22,7 +21,7 @@
    (blob/list store))
   ([store prefix]
    (->> prefix
-        (prefix-identifier (:algorithm store)) ; FIXME: assumption about store type
+        (prefix-identifier blob/*digest-algorithm*)
         (blob/list store :prefix)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))

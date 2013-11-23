@@ -16,8 +16,8 @@
 
 (def ^:private config-readers
   "Map of EDN readers for supported types in config files."
-  {'vault/file-store (partial apply file-store)
-   'vault/memory-store (partial apply memory-store)})
+  {'vault/file-store file-store
+   'vault/memory-store (fn [_] (memory-store))})
 
 
 (defn- find-configs
@@ -39,8 +39,8 @@
   [path]
   (try
     (edn/read-string
-      (slurp path)
-      {:readers config-readers})
+      {:readers config-readers}
+      (slurp path))
     (catch Exception e
       (println "Error loading config file" (str path))
       (.printStackTrace e)
