@@ -1,8 +1,50 @@
 (ns vault.blob
-  (:refer-clojure :exclude [list ref])
+  (:refer-clojure :exclude [contains? list ref])
   (:require [clojure.string :as string]
             digest))
 
+
+;; RECORDS & PROTOCOLS
+
+(defrecord BlobRef
+  [algorithm digest]
+
+  Comparable
+
+  (compareTo [this that]
+    (if (= this that)
+      0
+      (->> [this that]
+           (map (juxt :algorithm :digest))
+           (apply compare))))
+
+  Object
+
+  (toString [this]
+    (str (name algorithm) ":" digest)))
+
+; FIXME: this doesn't need to be here, could be declared later to remove dependency on vault.data
+;(data/extend-tagged-str BlobRef vault/ref)
+
+
+(defprotocol BlobStore
+  "Protocol for content storage providers, keyed by blobrefs."
+
+  (-algorithm [this])
+
+  (-list [this opts])
+
+  (-stat [this blobref])
+
+  (-open ^java.io.InputStream [this blobref])
+
+  (-store! [this content])
+
+  (-remove! [this blobref]))
+
+
+
+;; CONTENT HASHING
 
 (def ^:private digest-functions
   "Map of content hashing algorithms to functional implementations."
@@ -24,30 +66,17 @@
                   ", must be one of: " (string/join ", " digest-algorithms))))))
 
 
-
-;; BLOB REFERENCE
-
-(defrecord BlobRef
-  [algorithm digest]
-
-  Comparable
-
-  (compareTo [this that]
-    (if (= this that)
-      0
-      (->> [this that]
-           (map (juxt :algorithm :digest))
-           (apply compare))))
-
-  Object
-
-  (toString [this]
-    (str (name algorithm) ":" digest)))
+(defn digest
+  "Calculates the blob reference for the given content."
+  [algorithm content]
+  (assert-valid-digest algorithm)
+  (let [hashfn (digest-functions algorithm)
+        digest ^String (hashfn content)]
+    (BlobRef. algorithm (.toLowerCase digest))))
 
 
-; FIXME: this doesn't need to be here, could be declared later to remove dependency on vault.data
-;(data/extend-tagged-str BlobRef vault/ref)
 
+;; BLOBREF FUNCTIONS
 
 (defn parse-identifier
   "Parses a hash identifier string into a blobref. Accepts either a hash URN
@@ -72,71 +101,6 @@
      (BlobRef. algorithm digest))))
 
 
-
-;; BLOB STORE PROTOCOL
-
-(defprotocol BlobStore
-  (algorithm
-    [this]
-    "Returns the algorithm in use by the blob store.")
-
-  (enumerate
-    [this opts]
-    "Enumerates the stored blobs, returning a sequence of BlobRefs.
-    Options should be keyword/value pairs from the following:
-    * :start - start enumerating blobrefs lexically following this string
-    * :prefix - only return blobrefs matching the given string
-    * :count - limit the number of results returned")
-
-  (stat
-    [this blobref]
-    "Returns a map of metadata about the blob, if it is stored. Properties are
-    implementation-specific, but should include:
-    * :size - blob size in bytes
-    * :since - date blob was added to store
-    Optionally, other attributes may also be included:
-    * :content-type - a guess at the type of content stored in the blob
-    * :location - a resource location for the blob")
-
-  (open
-    ^java.io.InputStream
-    [this blobref]
-    "Opens a stream of byte content for the referenced blob, if it is stored.")
-
-  (store!
-    [this content]
-    "Stores the given byte stream and returns the blob reference.")
-
-  (remove!
-    [this blobref]
-    "Remove the referenced blob from this store. Returns true if the store
-    contained the blob when this method was called."))
-
-
-(defn list
-  "Enumerates the stored blobs, returning a sequence of BlobRefs.
-  Options should be keyword/value pairs from the following:
-  * :start - start enumerating blobrefs lexically following this string
-  * :prefix - only return blobrefs matching the given string
-  * :count - limit the number of results returned"
-  ([store]
-   (enumerate store nil))
-  ([store opts]
-   (enumerate store opts))
-  ([store opt-key opt-val & opts]
-   (->> opts
-        (partition 2)
-        (cons [opt-key opt-val])
-        (into {})
-        (enumerate store))))
-
-
-(defn contains-blob?
-  "Determines whether the store contains the referenced blob."
-  [store blobref]
-  (not (nil? (stat store blobref))))
-
-
 (defn select-refs
   "Selects blobrefs from a lazy sequence based on input criteria."
   [opts blobrefs]
@@ -154,12 +118,88 @@
 
 
 
-;; CONTENT HASHING
+;; STORAGE FUNCTIONS
 
-(defn digest
-  "Calculates the blob reference for the given content."
-  [algorithm content]
-  (assert-valid-digest algorithm)
-  (let [hashfn (digest-functions algorithm)
-        digest ^String (hashfn content)]
-    (BlobRef. algorithm (.toLowerCase digest))))
+(def ^:dynamic *blob-store*
+  "Default blob-store to use with the storage functions.")
+
+
+(defmacro with-blob-store
+  "Executes a body of expressions with the given default blob store."
+  [store & body]
+  `(binding [*blob-store* ~store]
+     ~@body))
+
+
+(defn algorithm ; TODO: replace with dynamic var?
+  "Returns the algorithm in use by the blob store."
+  ([]
+   (algorithm *blob-store*))
+  ([store]
+   (or (:algorithm store)
+       (-algorithm store))))
+
+
+(defn list
+  "Enumerates the stored blobs, returning a sequence of BlobRefs.
+  Options should be keyword/value pairs from the following:
+  * :start - start enumerating blobrefs lexically following this string
+  * :prefix - only return blobrefs matching the given string
+  * :count - limit the number of results returned"
+  ([]
+   (-list *blob-store* nil))
+  ([store-or-opts]
+   (if (satisfies? BlobStore store-or-opts)
+     (-list store-or-opts nil)
+     (-list *blob-store* store-or-opts)))
+  ([store opts]
+   (-list store opts))
+  ([store opt-key opt-val & opts]
+   (-list store (hash-map (list* opt-key opt-val opts)))))
+
+
+(defn stat
+  "Returns a map of metadata about the blob, if it is stored. Properties are
+  implementation-specific, but should include:
+  * :size - blob size in bytes
+  * :since - date blob was added to store
+  Optionally, other attributes may also be included:
+  * :content-type - a guess at the type of content stored in the blob
+  * :location - a resource location for the blob"
+  ([blobref]
+   (-stat *blob-store* blobref))
+  ([store blobref]
+   (-stat store blobref)))
+
+
+(defn contains?
+  "Determines whether the store contains the referenced blob."
+  ([blobref]
+   (contains? *blob-store* blobref))
+  ([store blobref]
+   (not (nil? (-stat store blobref)))))
+
+
+(defn open
+  "Opens a stream of byte content for the referenced blob, if it is stored."
+  ([blobref]
+   (-open *blob-store* blobref))
+  ([store blobref]
+   (-open store blobref)))
+
+
+(defn store!
+  "Stores the given byte stream and returns the blob reference."
+  ([content]
+   (-store! *blob-store* content))
+  ([store content]
+   (-store! store content)))
+
+
+(defn remove!
+  "Remove the referenced blob from this store. Returns true if the store
+  contained the blob when this method was called."
+  ([blobref]
+   (-remove! *blob-store* blobref))
+  ([store blobref]
+   (-remove! store blobref)))

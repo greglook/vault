@@ -11,25 +11,25 @@
 
   BlobStore
 
-  (algorithm [this]
+  (-algorithm [this]
     algorithm)
 
 
-  (enumerate [this opts]
+  (-list [this opts]
     (blob/select-refs opts (keys @store)))
 
 
-  (stat [this blobref]
+  (-stat [this blobref]
     (when-let [blob (@store blobref)]
       {:size (count blob)}))
 
 
-  (open [this blobref]
+  (-open [this blobref]
     (when-let [blob (@store blobref)]
       (io/input-stream blob)))
 
 
-  (store! [this content]
+  (-store! [this content]
     (with-open [buffer (java.io.ByteArrayOutputStream.)]
       (io/copy content buffer)
       (let [data (.toByteArray buffer)
@@ -38,7 +38,7 @@
         blobref)))
 
 
-  (remove! [this blobref]
+  (-remove! [this blobref]
     (when (contains? @store blobref)
       (swap! store dissoc blobref)
       true)))

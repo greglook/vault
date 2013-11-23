@@ -92,17 +92,17 @@
 
   BlobStore
 
-  (algorithm [this]
+  (-algorithm [this]
     algorithm)
 
 
-  (enumerate [this opts]
+  (-list [this opts]
     (->> (enumerate-files root)
          (map (partial file->blobref root))
          (blob/select-refs opts)))
 
 
-  (stat [this blobref]
+  (-stat [this blobref]
     (let [file (blobref->file root blobref)]
       (when (.exists file)
         {:size (.length file)
@@ -111,13 +111,13 @@
          :location (.toURI file)})))
 
 
-  (open [this blobref]
+  (-open [this blobref]
     (let [file (blobref->file root blobref)]
       (when (.exists file)
         (io/input-stream file))))
 
 
-  (store! [this content]
+  (-store! [this content]
     (let [tmp (spool-tmp-file! root content)
           blobref (blob/digest algorithm tmp)
           file (blobref->file root blobref)]
@@ -127,7 +127,7 @@
       blobref))
 
 
-  (remove! [this blobref]
+  (-remove! [this blobref]
     (let [file (blobref->file root blobref)]
       (when (.exists file)
         (.delete file)))))
