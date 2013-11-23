@@ -44,11 +44,6 @@
     (string/join \newline lines)))
 
 
-(def data-readers
-  {'bin puget/read-bin
-   'uri puget/read-uri})
-
-
 (defn read-data
   "Reads the given input stream and attempts to parse it as an EDN data
   structure. If the data is not EDN, it returns a byte array of the blob

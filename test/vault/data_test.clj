@@ -9,5 +9,5 @@
              (edn-tag [this] 'my-app/type)
              (edn-value [this] {:alpha 'foo :omega 1234}))]
     (is (= (edn-blob tv)
-           "#my-app/type\n{:alpha foo, :omega 1234}")
-        "top-level tagged values in blob should print tag on separate line")))
+           "#vault/data\n#my-app/type {:alpha foo, :omega 1234}")
+        "Blob should start with data header.")))
