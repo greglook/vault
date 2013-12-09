@@ -1,13 +1,25 @@
 (ns vault.data-test
-  (:require [clojure.test :refer :all]
-            [puget.data]
-            [vault.data :refer :all]))
+  (:require
+    [clojure.test :refer :all]
+    [vault.data :refer :all])
+  (:import
+    java.io.ByteArrayInputStream))
 
 
-(deftest special-blob-format
-  (let [tv (reify puget.data/TaggedValue
-             (edn-tag [this] 'my-app/type)
-             (edn-value [this] {:alpha 'foo :omega 1234}))]
-    (is (= (edn-blob tv)
-           "#vault/data\n#my-app/type {:alpha foo, :omega 1234}")
-        "Blob should start with data header.")))
+(defn string-input
+  "Creates an InputStream which reads bytes from a string."
+  [string]
+  (ByteArrayInputStream. (.getBytes string "UTF-8")))
+
+
+(deftest read-non-data-blob
+  (let [content "foobarbaz not a data blob"
+        result (read-data (string-input content))]
+    (is (instance? java.io.InputStream result))
+    (is (= content (slurp result)))))
+
+
+(deftest read-data-blob
+  (let [content "#vault/data\n[:foo]"
+        result (read-data (string-input content))]
+    (is (= [:foo] result))))

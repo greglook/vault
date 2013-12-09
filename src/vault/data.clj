@@ -1,14 +1,19 @@
 (ns vault.data
-  "Code to handle structured data, usually represented as EDN."
+  "Functions to handle structured data represented as EDN."
   (:require
+    [clojure.edn :as edn]
     [clojure.string :as string]
     [fipp.printer :refer [pprint-document]]
     [puget.printer :as puget])
   (:import
+    java.io.InputStreamReader
+    java.io.PushbackReader
     java.nio.charset.Charset))
 
 
-(def ^:private ^:const blob-charset
+;; CONSTANTS & CONFIGURATION
+
+(def ^:private blob-charset
   (Charset/forName "UTF-8"))
 
 
@@ -19,8 +24,11 @@
 
 (def ^:private ^:const blob-header
   "Magic header which must appear as the first characters in a data blob."
-  "#vault/data")
+  "#vault/data\n")
 
+
+
+;; SERIALIZATION
 
 (defn- serialize-value
   "Returns the canonical EDN representation for the given Clojure value."
@@ -44,18 +52,33 @@
     (string/join \newline lines)))
 
 
+
+;; DESERIALIZATION
+
+(defn- read-header!
+  "Reads the first few bytes from an input stream to determine whether it is a
+  data blob. The result is true if the header matches, and the stream is left
+  positioned after the header bytes. Otherwise, it is reset back to the start of
+  the stream."
+  [input]
+  (let [magic-bytes (.getBytes blob-header blob-charset)
+        magic-len (count magic-bytes)
+        header-bytes (byte-array magic-len)]
+    (.mark input magic-len)
+    (.read input header-bytes 0 magic-len)
+    (if (= (seq magic-bytes) (seq header-bytes))
+      true
+      (do
+        (.reset input)
+        false))))
+
+
 (defn read-data
   "Reads the given input stream and attempts to parse it as an EDN data
-  structure. If the data is not EDN, it returns a byte array of the blob
+  structure. If the data is not EDN, it returns an input stream of the blob
   contents."
   [input]
-  ; input > capturing proxy > InputStreamReader > PushbackReader
-  ; input > PushbackInputStream > capturing proxy > InputStreamReader > PushbackReader
-  ; - read first (count blob-header) bytes from the stream
-  ; - if no match, unread the bytes before returning the PushbackInputStream
-  ; - otherwise, read remainder of stream and parse out EDN value(s)
-  ; - first value is primary value - then save the output of the capturing proxy
-  ;     - ideally, disable it
-  ; - read remaining values (just signatures?)
-  ;     - attach as value metadata?
-  nil)
+  (if (read-header! input)
+    (let [reader (PushbackReader. (InputStreamReader. input blob-charset))]
+      (edn/read reader))
+    input))

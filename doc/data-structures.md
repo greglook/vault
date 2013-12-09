@@ -6,8 +6,9 @@ are known as _data blobs_ and form the _blob graph_. Data blobs:
 - MUST consist of UTF-8 encoded text
 - MUST contain EDN-formatted data
 - SHOULD NOT contain trailing whitespace
-- MUST start with the characters `#vault/data`
+- MUST start with the line `#vault/data`
 - MUST contain at least one 'primary' value
+    - this value SHOULD satisfy IMeta
 - MAY assign metadata to this value
 - MAY contain additional special values
     - only signatures, so far
