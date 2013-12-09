@@ -6,10 +6,11 @@
     [fipp.printer :refer [pprint-document]]
     [puget.printer :as puget])
   (:import
-    clojure.lang.LineNumberingPushbackReader
     java.io.ByteArrayOutputStream
-    java.io.FilterInputStream
+    java.io.FilterReader
     java.io.InputStreamReader
+    java.io.OutputStreamWriter
+    java.io.PushbackReader
     java.nio.charset.Charset))
 
 
@@ -75,27 +76,40 @@
         false))))
 
 
-(defn- capturing-input-stream
-  "Wraps the given input stream with a proxy which will record the bytes read
-  to the given output stream."
-  [input output]
-  (proxy [FilterInputStream] [input]
-    (read
-      ([]
-       (let [b (.read input)]
-         (.write output b)
-         b))
-      ([buf off len]
-       (let [n (.read input buf off len)]
-         (.write output buf off n)
-         n)))))
-
-
 (def ^:dynamic *primary-bytes*
   "If bound when `read-data` is called, this var is set to an array containing
   the bytes which comprise the 'primary' EDN value in a data blob. These bytes
   are the target for inline signatures."
   nil)
+
+
+(defn- capturing-reader
+  "Wraps the given reader with a proxy which records the characters read to the
+  given output stream."
+  [input output]
+  (proxy [FilterReader] [input]
+    (read
+      ([]
+       (let [c (.read input)]
+         (.write output c)
+         c)))))
+
+
+(defn- read-primary-value!
+  "Reads the primary EDN value from a data blob. If *primary-bytes* is
+  thread-bound, it will be set to an array of bytes which form the value. This
+  is accomplished by copying the read characters into a byte array as they are
+  consumed by the EDN parser. Returns the parsed value."
+  [reader]
+  (let [copy-bytes (ByteArrayOutputStream.)
+        copy-writer (OutputStreamWriter. copy-bytes blob-charset)
+        reader (PushbackReader. (capturing-reader reader copy-writer))
+        ; TODO: specify readers? {:readers puget.data/data-readers}
+        value (edn/read reader)]
+    (when (thread-bound? #'*primary-bytes*)
+      (.flush copy-writer)
+      (set! *primary-bytes* (.toByteArray copy-bytes)))
+    value))
 
 
 (defn read-data
@@ -105,15 +119,8 @@
   [input]
   ; TODO: ensure `mark` is supported
   (if (read-header! input)
-    (let [primary-bytes (ByteArrayOutputStream.)
-          reader (-> input
-                     (capturing-input-stream primary-bytes)
-                     (InputStreamReader. blob-charset)
-                     LineNumberingPushbackReader.)
-          primary-value (edn/read reader)]
-      ; TODO: specify readers? {:readers puget.data/data-readers}
-      (when (thread-bound? #'*primary-bytes*)
-        (set! *primary-bytes* (.toByteArray primary-bytes)))
+    (let [reader (InputStreamReader. input blob-charset)
+          primary-value (read-primary-value! reader)]
       ; TODO: read remaining values from the stream
       primary-value)
     input))
