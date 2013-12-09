@@ -23,3 +23,12 @@
   (let [content "#vault/data\n[:foo]"
         result (read-data (string-input content))]
     (is (= [:foo] result))))
+
+
+(deftest read-data-blob-with-primary-bytes
+  (binding [*primary-bytes* nil]
+    (let [primary-content "#{:bar \"baz\"}"
+          content (str "#vault/data\n" primary-content "\n\n:frobble")
+          result (read-data (string-input content))]
+      (is (not (nil? *primary-bytes*)))
+      (is (= (seq (.getBytes primary-content "UTF-8")) (seq *primary-bytes*))))))
