@@ -16,8 +16,13 @@
 
 ;; CONSTANTS & CONFIGURATION
 
-(def ^:private blob-charset
+(def blob-charset
   (Charset/forName "UTF-8"))
+
+
+(def ^:const blob-header
+  "Magic header which must appear as the first characters in a data blob."
+  "#vault/data\n")
 
 
 (def ^:private ^:const blob-width
@@ -25,9 +30,13 @@
   100)
 
 
-(def ^:private ^:const blob-header
-  "Magic header which must appear as the first characters in a data blob."
-  "#vault/data\n")
+
+;; HELPER FUNCTIONS
+
+(defn bytes=
+  "Tests whether two byte arrays are equivalent."
+  [a b]
+  (= (seq a) (seq b)))
 
 
 
@@ -58,6 +67,13 @@
 
 ;; DESERIALIZATION
 
+(def ^:dynamic *primary-bytes*
+  "If bound when `read-data` is called, this var is set to an array containing
+  the bytes which comprise the 'primary' EDN value in a data blob. These bytes
+  are the target for inline signatures."
+  nil)
+
+
 (defn- read-header!
   "Reads the first few bytes from an input stream to determine whether it is a
   data blob. The result is true if the header matches, and the stream is left
@@ -69,18 +85,11 @@
         header-bytes (byte-array magic-len)]
     (.mark input magic-len)
     (.read input header-bytes 0 magic-len)
-    (if (= (seq magic-bytes) (seq header-bytes))
+    (if (bytes= magic-bytes header-bytes)
       true
       (do
         (.reset input)
         false))))
-
-
-(def ^:dynamic *primary-bytes*
-  "If bound when `read-data` is called, this var is set to an array containing
-  the bytes which comprise the 'primary' EDN value in a data blob. These bytes
-  are the target for inline signatures."
-  nil)
 
 
 (defn- capturing-reader
