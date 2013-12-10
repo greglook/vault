@@ -67,11 +67,15 @@
 
 ;; DESERIALIZATION
 
-(def ^:dynamic *primary-bytes*
-  "If bound when `read-data` is called, this var is set to an array containing
-  the bytes which comprise the 'primary' EDN value in a data blob. These bytes
-  are the target for inline signatures."
-  nil)
+(defn- capturing-reader
+  "Wraps the given reader with a proxy which records the characters read to the
+  given writer."
+  [input output]
+  (proxy [FilterReader] [input]
+    (read []
+      (let [c (.read input)]
+        (.write output c)
+        c))))
 
 
 (defn- read-header!
@@ -92,44 +96,47 @@
         false))))
 
 
-(defn- capturing-reader
-  "Wraps the given reader with a proxy which records the characters read to the
-  given output stream."
-  [input output]
-  (proxy [FilterReader] [input]
-    (read
-      ([]
-       (let [c (.read input)]
-         (.write output c)
-         c)))))
-
-
 (defn- read-primary-value!
   "Reads the primary EDN value from a data blob. If *primary-bytes* is
   thread-bound, it will be set to an array of bytes which form the value. This
   is accomplished by copying the read characters into a byte array as they are
-  consumed by the EDN parser. Returns the parsed value."
+  consumed by the EDN parser. Returns a vector of the parsed value and the
+  array of bytes which form it."
   [reader]
   (let [copy-bytes (ByteArrayOutputStream.)
         copy-writer (OutputStreamWriter. copy-bytes blob-charset)
         reader (PushbackReader. (capturing-reader reader copy-writer))
-        ; TODO: specify readers? {:readers puget.data/data-readers}
         value (edn/read reader)]
-    (when (thread-bound? #'*primary-bytes*)
-      (.flush copy-writer)
-      (set! *primary-bytes* (.toByteArray copy-bytes)))
-    value))
+    (.flush copy-writer)
+    (vector value (.toByteArray copy-bytes))))
+
+
+(defn- read-secondary-values!
+  "Reads the secondary EDN values from a data blob. Returns a seq of the values
+  read."
+  [reader]
+  (let [opts {:eof ::end-stream}
+        reader (PushbackReader. reader)
+        read-stream (partial edn/read opts reader)
+        edn-stream (repeatedly read-stream)
+        not-eos? (partial not= ::end-stream)]
+    (doall (take-while not-eos? edn-stream))))
 
 
 (defn read-data
   "Reads the given input stream and attempts to parse it as an EDN data
   structure. If the data is not EDN, it returns an input stream of the blob
-  contents."
+  contents. Otherwise, it returns a sequence of the parsed values.
+
+  The returned sequence will have attached metadata giving the bytes which
+  comprise the first value in the sequence."
   [input]
   ; TODO: ensure `mark` is supported
+  ; TODO: support tag-readers e.g. {:readers puget.data/data-readers}
   (if (read-header! input)
     (let [reader (InputStreamReader. input blob-charset)
-          primary-value (read-primary-value! reader)]
-      ; TODO: read remaining values from the stream
-      primary-value)
+          [primary-value primary-bytes] (read-primary-value! reader)
+          secondary-values (read-secondary-values! reader)
+          edn-seq (cons primary-value secondary-values)]
+      (vary-meta edn-seq assoc ::primary-bytes primary-bytes))
     input))

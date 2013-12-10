@@ -6,6 +6,12 @@
     java.io.ByteArrayInputStream))
 
 
+(defn data-fixture
+  "Builds a string representing a data blob from the given sequence of values."
+  [& values]
+  (apply str blob-header (interpose "\n\n" values)))
+
+
 (defn read-data-string
   "Reads data from bytes from a string."
   [string]
@@ -15,6 +21,17 @@
       read-data))
 
 
+
+;; SERIALIZATION
+
+(deftest write-data-blob
+  ; ...
+  )
+
+
+
+;; DESERIALIZATION
+
 (deftest read-non-data-blob
   (let [content "foobarbaz not a data blob"
         result (read-data-string content)]
@@ -23,26 +40,24 @@
 
 
 (deftest read-data-blob
-  (let [content "#vault/data\n[:foo]"
+  (let [content (data-fixture "[:foo]")
         result (read-data-string content)]
-    (is (= [:foo] result))))
+    (is (= '([:foo]) result))))
 
 
 (deftest read-primary-bytes
-  (binding [*primary-bytes* nil]
-    (let [primary-content "[\\x \\y \\z]"
-          content (str "#vault/data\n" primary-content)
-          result (read-data-string content)]
-      (is (= [\x \y \z] result))
-      (is (not (nil? *primary-bytes*)))
-      (is (bytes= (.getBytes primary-content blob-charset) *primary-bytes*)))))
+  (let [primary-content "[1 \\2 :three]"
+        content (data-fixture primary-content)
+        result (read-data-string content)]
+    (is (= '([1 \2 :three]) result))
+    (is (not (nil? (meta result))))
+    (is (bytes= (.getBytes primary-content blob-charset) (:vault.data/primary-bytes (meta result))))))
 
 
 (deftest read-primary-bytes-with-extra-values
-  (binding [*primary-bytes* nil]
-    (let [primary-content "#{:bar \"baz\"}"
-          content (str "#vault/data\n" primary-content "\n\n:frobble")
-          result (read-data-string content)]
-      (is (= #{:bar "baz"} result))
-      (is (not (nil? *primary-bytes*)))
-      (is (bytes= (.getBytes primary-content blob-charset) *primary-bytes*)))))
+  (let [primary-content "#{:bar \"baz\"}"
+        content (data-fixture primary-content ":frobble")
+        result (read-data-string content)]
+    (is (= '(#{:bar "baz"} :frobble) result))
+    (is (not (nil? (meta result))))
+    (is (bytes= (.getBytes primary-content blob-charset) (:vault.data/primary-bytes (meta result))))))
