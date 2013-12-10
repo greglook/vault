@@ -3,7 +3,7 @@
   (:require
     [clojure.edn :as edn]
     [clojure.string :as string]
-    [fipp.printer :refer [pprint-document]]
+    [puget.data]
     [puget.printer :as puget])
   (:import
     java.io.ByteArrayOutputStream
@@ -41,6 +41,9 @@
 
 
 ;; SERIALIZATION
+
+; TODO: pretty-printing version?
+
 
 (defn- serialize-value
   "Returns the canonical EDN representation for the given Clojure value."
@@ -102,11 +105,11 @@
   is accomplished by copying the read characters into a byte array as they are
   consumed by the EDN parser. Returns a vector of the parsed value and the
   array of bytes which form it."
-  [reader]
+  [tag-readers reader]
   (let [copy-bytes (ByteArrayOutputStream.)
         copy-writer (OutputStreamWriter. copy-bytes blob-charset)
         reader (PushbackReader. (capturing-reader reader copy-writer))
-        value (edn/read reader)]
+        value (edn/read {:readers tag-readers} reader)]
     (.flush copy-writer)
     (vector value (.toByteArray copy-bytes))))
 
@@ -114,8 +117,9 @@
 (defn- read-secondary-values!
   "Reads the secondary EDN values from a data blob. Returns a seq of the values
   read."
-  [reader]
-  (let [opts {:eof ::end-stream}
+  [tag-readers reader]
+  (let [opts {:eof ::end-stream
+              :readers tag-readers}
         reader (PushbackReader. reader)
         read-stream (partial edn/read opts reader)
         edn-stream (repeatedly read-stream)
@@ -130,13 +134,22 @@
 
   The returned sequence will have attached metadata giving the bytes which
   comprise the first value in the sequence."
-  [input]
-  ; TODO: ensure `mark` is supported
-  ; TODO: support tag-readers e.g. {:readers puget.data/data-readers}
-  (if (read-header! input)
-    (let [reader (InputStreamReader. input blob-charset)
-          [primary-value primary-bytes] (read-primary-value! reader)
-          secondary-values (read-secondary-values! reader)
-          edn-seq (cons primary-value secondary-values)]
-      (vary-meta edn-seq assoc ::primary-bytes primary-bytes))
-    input))
+  ([input]
+   (read-data nil input))
+  ([tag-readers input]
+   ; TODO: ensure `mark` is supported
+   (if (read-header! input)
+     (let [reader (InputStreamReader. input blob-charset)
+           tag-readers (merge puget.data/data-readers tag-readers)
+           [primary-value primary-bytes] (read-primary-value! tag-readers reader)
+           secondary-values (read-secondary-values! tag-readers reader)
+           edn-seq (cons primary-value secondary-values)]
+       (vary-meta edn-seq assoc ::primary-bytes primary-bytes))
+     input)))
+
+
+(defn primary-bytes
+  "Retrieves the array of bytes comprising the primary data value from the
+  metadata on a value sequence."
+  [data]
+  (::primary-bytes (meta data)))

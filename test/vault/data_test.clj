@@ -45,13 +45,20 @@
     (is (= '([:foo]) result))))
 
 
+(deftest read-custom-tag
+  (let [content (data-fixture "{:foo #my/tag :bar}")
+        input (ByteArrayInputStream. (.getBytes content blob-charset))
+        result (read-data {'my/tag str} input)]
+    (is (= '({:foo ":bar"}) result))))
+
+
 (deftest read-primary-bytes
   (let [primary-content "[1 \\2 :three]"
         content (data-fixture primary-content)
         result (read-data-string content)]
     (is (= '([1 \2 :three]) result))
     (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content blob-charset) (:vault.data/primary-bytes (meta result))))))
+    (is (bytes= (.getBytes primary-content blob-charset) (primary-bytes result)))))
 
 
 (deftest read-primary-bytes-with-extra-values
@@ -60,4 +67,4 @@
         result (read-data-string content)]
     (is (= '(#{:bar "baz"} :frobble) result))
     (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content blob-charset) (:vault.data/primary-bytes (meta result))))))
+    (is (bytes= (.getBytes primary-content blob-charset) (primary-bytes result)))))
