@@ -42,29 +42,32 @@
 
 ;; SERIALIZATION
 
-; TODO: pretty-printing version?
-
-
-(defn- serialize-value
-  "Returns the canonical EDN representation for the given Clojure value."
+(defn- print-value
+  "Prints the canonical EDN representation for the given Clojure value."
   [value]
-  (binding [puget/*colored-output* false
-            puget/*strict-mode* true]
-    (-> value
-        (puget/pprint {:width blob-width})
-        with-out-str
-        string/trim)))
+  (let [print-opts {:width blob-width}
+        metadata (meta value)]
+    (when-not (empty? metadata)
+      (print (puget/color-text :delimiter \^))
+      (puget/pprint metadata print-opts))
+    (puget/pprint value print-opts)))
 
 
-(defn edn-blob
-  "Returns a canonical EDN representation suitable for serializing to a blob."
-  [value]
-  (let [edn (serialize-value value)
-        metadata (select-keys (meta value) [:type :vault/version])
-        lines (if (empty? metadata)
-                [blob-header edn]
-                [blob-header (str \^ (serialize-value metadata)) edn])]
-    (string/join \newline lines)))
+(defn print-data
+  "Prints the given data value(s) as canonical EDN in a data blob."
+  [value & more]
+  (binding [puget/*strict-mode* true]
+    (print (puget/color-text :tag blob-header))
+    (print-value value)
+    (dorun (map #(do (print "\n") (print-value %)) more))))
+
+
+(defn print-data-str
+  "Prints a canonical EDN representation to a string and returns it. This
+  function disables colorization."
+  [value & more]
+  (binding [puget/*colored-output* false]
+    (string/trim (with-out-str (apply print-data value more)))))
 
 
 

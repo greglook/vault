@@ -9,7 +9,7 @@
 (defn data-fixture
   "Builds a string representing a data blob from the given sequence of values."
   [& values]
-  (apply str blob-header (interpose "\n\n" values)))
+  (apply str "#vault/data\n" (interpose "\n\n" values)))
 
 
 (defn read-data-string
@@ -24,9 +24,14 @@
 
 ;; SERIALIZATION
 
-(deftest write-data-blob
-  ; ...
-  )
+(deftest print-data-blob
+  (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}"
+         (print-data-str {:omega "bar" :alpha "foo"})))
+  (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz"
+         (print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz)))
+  (testing "with metadata"
+    (is (= "#vault/data\n^{:type :bytes}\n[{:size 100}]"
+           (print-data-str ^{:type :bytes} [{:size 100}])))))
 
 
 
