@@ -6,17 +6,21 @@
     [puget.data]
     [puget.printer :as puget])
   (:import
-    java.io.ByteArrayOutputStream
-    java.io.FilterReader
-    java.io.InputStreamReader
-    java.io.OutputStreamWriter
-    java.io.PushbackReader
+    (java.io
+      ByteArrayOutputStream
+      FilterReader
+      InputStream
+      InputStreamReader
+      OutputStreamWriter
+      PushbackReader
+      Reader
+      Writer)
     java.nio.charset.Charset))
 
 
 ;; CONSTANTS & CONFIGURATION
 
-(def blob-charset
+(def ^Charset blob-charset
   (Charset/forName "UTF-8"))
 
 
@@ -76,11 +80,12 @@
 (defn- capturing-reader
   "Wraps the given reader with a proxy which records the characters read to the
   given writer."
-  [input output]
-  (proxy [FilterReader] [input]
+  [^Reader reader
+   ^Writer writer]
+  (proxy [FilterReader] [reader]
     (read []
-      (let [c (.read input)]
-        (.write output c)
+      (let [c (.read reader)]
+        (.write writer c)
         c))))
 
 
@@ -89,7 +94,7 @@
   data blob. The result is true if the header matches, and the stream is left
   positioned after the header bytes. Otherwise, it is reset back to the start of
   the stream."
-  [input]
+  [^InputStream input]
   (let [magic-bytes (.getBytes blob-header blob-charset)
         magic-len (count magic-bytes)
         header-bytes (byte-array magic-len)]
@@ -137,9 +142,10 @@
 
   The returned sequence will have attached metadata giving the bytes which
   comprise the first value in the sequence."
-  ([input]
+  ([^InputStream input]
    (read-data nil input))
-  ([tag-readers input]
+  ([tag-readers
+    ^InputStream input]
    ; TODO: ensure `mark` is supported
    (if (read-header! input)
      (let [reader (InputStreamReader. input blob-charset)
