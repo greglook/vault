@@ -16,36 +16,6 @@ further _update blobs_ to the store. These blobs specify accumulating
 modifications to the object, thus the 'current' state of the object can be
 determined by applying the full sequence of updates made to it.
 
-Updates must include a reference to 'past' update blobs which affected the
-object(s) being updated. This gives version-control semantics and lets branches
-and merges happen, in addition to providing causal ordering of the updates to
-any given object.
-
-## Attributes and Content
-
-Objects act much like a map, containing various named attributes. These mutable
-properties are specified directly by update blobs, and generally support
-_metadata_ about the entity represented by the object. Some common attributes:
-- `title`: string naming the object
-- `description`: longer string describing the object
-- `content-type`: MIME type for the object's content
-- `tags`: set of string tags labeling the object
-
-Objects can also have a _content value_, which is considered to be the 'state'
-of the object. Whether to assign content to an object or use the attributes
-depends on the nature of the data.
-
-## Resolving State
-
-Since each update blob references its 'past' updates, these blobs form a tree
-descending from the object root. The 'current' state of the object is determined
-by the tip of the tree with the longest history.
-
-When an update is merging branches (i.e. there are multiple paths back to the
-root) and there are conflicts, the merge update SHOULD explicitly specify the
-desired state for the conflicting attribute or content. If not specified, then
-the first lineage in the sequence of past updates which affects the value wins.
-
 ## Motivation
 
 When data includes a reference to an _identity_, the attribute should refer to a
@@ -59,3 +29,37 @@ is to store transactions which refer to the object representing the entities
 in question, which can then be updated at will. If necessary, the state of the
 entity at an arbitrary time can be recovered by replaying the updates up to
 then.
+
+## Attributes and Content
+
+Objects act much like a map, containing various named attributes. These mutable
+properties are specified directly by update blobs, and generally support
+_metadata_ about the entity represented by the object. Some common attributes:
+- `identity`: a (unique) symbolic shortcut to give to the object
+- `content`: the 'state value' of the object
+- `title`: string naming the object
+- `description`: longer string describing the object
+- `tags`: set of string tags labeling the object
+- `http/content-type`: MIME type for the object's content
+
+## Causal Ordering
+
+There are two approaches to ordering updates. The simple version is to
+associate a timestamp with each update blob, and order all updates by time.
+This has the advantage that it is simple, and the timestamp is a natural way
+to associate time with all values by default. This is the approach taken by
+Datomic and Camlistore.
+
+Another approach is to treat updates more like commits in git. Updates would
+include a reference to 'past' update blobs which modified the object(s) being
+updated. This gives updates version-control semantics and lets branches and
+merges happen, though it's unclear how desirable this is in practice. The other
+advantage this scheme provides is strict causal ordering of updates. Since each
+update includes 'past' pointers, the hash of that update securely names an
+immutable history for the object.
+
+One downside of this second approach is that it is unclear how to resolve the
+state of the object when there are multiple history 'tips'. In git, this is
+solved by having mutable symbolic pointers, e.g. `HEAD`. Unfortunately this
+approach is less viable with an immutable storage system! The branch pointers
+could be maintained locally, but that's probably too complex to be worth it.

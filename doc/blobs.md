@@ -36,8 +36,7 @@ the identifier can add the 'urn' components as desired.
 ## Storage Interface
 
 The interface to a blob store is relatively simple:
-- `algorithm`: get the store's configured hashing algorithm
-- `enumerate`: list the stored blobs
+- `list`: enumerate the stored blobs
 - `stat`: get metadata about a stored blob
 - `open`: return the bytes comprising the blob contents
 - `store!`: store byte content and return the blobref
@@ -57,7 +56,7 @@ implementation. Here's some ideas:
 - `sftp`: store blobs on a remote host accessible via ssh
 - `s3`: persist blobs in cloud storage service
 
-Blob stores can also be composed with intermediate layers. Some ideas:
+Blob stores can also be composed with intermediate _encoding_ layers. Some ideas:
 - `compress`: compress blobs to save space (may not be effective on all files)
 - `encrypt`: encrypt blobs (perhaps stored in untrusted third-party services)
 - `shard`: distribute blobs across different stores (why would you do this?)

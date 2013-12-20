@@ -5,10 +5,55 @@ A Clojure library and application to store documents in a content-addressable
 datastore while maintaining a secure history of entity values. See the docs for
 more detailed explanations of the various pieces.
 
-This is heavily inspired by the [Camlistore](http://camlistore.org/) project.
-Vault does not aim to be (directly) compatible with Camlistore, but many of the
-concepts are similar, and the stored metadata would probably not be that hard
-to convert.
+This is heavily inspired by both [Camlistore](http://camlistore.org/) and
+[Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
+compatible with either, though many of the concepts are similar.
+
+## Concepts
+
+This is a rough outline of the concepts developing in Vault.
+
+### Blob Layer
+
+At the lowest level, vault is built on [content-addressable
+storage](docs/blobs.md). Data is stored in _blobs_, which are addressed by a
+secure hash of their contents.
+- A _blob_ is simply an opaque byte sequence
+- A _blobref_ is a hash identifier of the form `algorithm:hex-digest`
+- A _blob store_ is a system which can store and retrieve blob data
+- An _encoder_ is an intermediate layer which can process blobs as they are
+  stored and retrieved from a blob store.
+
+### Data Layer
+
+The [data layer](doc/objects.md) is built on the blob storage layer. Vault data
+is stored as [EDN](https://github.com/edn-format/edn) in UTF-8 text. It is
+recognized by a magic header sequence: `#vault/data\n`. This has the advantage
+of still being a legal EDN tag, though it should be a no-op and is stripped in
+practice.
+
+Blob references provide a secure way to link to immutable data, so it is simple
+to build persistent data structures which automatically deduplicate shared data.
+In order to represent mutable entities, vault uses _objects_ and _updates_.
+- An _object root_ serves as the static identifier of an entity
+- An _attribute_ is an object property which may have an associated value
+- An _update_ applies modifications to objects' attributes at some time
+
+Identity in vault is provided by [cryptographic signatures](doc/signatures.md).
+These provide trust to data that is present in the blob layer.
+
+Finally, the data layer implements efficient querying by
+[indexing](docs/indexing.md) objects and their attributes.
+
+### Application Layer
+
+At the top level, applications can be built on top of vault's data layer. Some
+example usages:
+- Maintain personal tracking data (Quantified Self)
+- Archive messages such as email, chat, social media posts
+- Snapshot filesystems for backup
+- Draw relations between many different kinds of data
+- Flexible information modeling
 
 ## Usage
 
@@ -72,7 +117,7 @@ is to specify blob stores in `$HOME/.config/vault/blob-stores.edn`:
 {:default :local
 
  :local
- #vault/file-store [:sha256 "/home/USER/var/vault"]}
+ #vault/file-store "/home/USER/var/vault"}
 ```
 
 ## License
