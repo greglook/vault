@@ -11,34 +11,39 @@ compatible with either, though many of the concepts are similar.
 
 ## Concepts
 
-This is a rough outline of the concepts developing in Vault.
+This is a rough outline of the concepts developing in Vault. For more details,
+follow the links or browse around the [doc](doc/) folder.
 
 ### Blob Layer
 
 At the lowest level, vault is built on [content-addressable
-storage](doc/blobs.md). Data is stored in _blobs_, which are addressed by a
-secure hash of their contents.
-- A _blob_ is simply an opaque byte sequence.
-- A _blobref_ is a hash identifier like `sha256:2f72cc11a6fcd0271ecef8c61056ee1eb1243be3805bf9a9df98f92f7636b05c`.
-- A _blob store_ is a system which can store and retrieve blob data.
-- An _encoder_ is an intermediate layer which can process blobs as they are
-  stored and retrieved from a blob store.
+storage](doc/blobs.md). Data is stored in _blobs_, which are some sequence of
+bytes addressed by a secure hash of their contents. The combination of a hash
+algorithm and the corresponding digest is enough information to securely and
+uniquely identify a blob. These _blobrefs_ are formatted like a URN:
+
+`sha256:2f72cc11a6fcd0271ecef8c61056ee1eb1243be3805bf9a9df98f92f7636b05c`
+
+A _blob store_ is a system which can store and retrieve blob data by address.
+Blobs can be _encoded_ before being stored, performing operations like
+compression and encryption.
 
 ### Data Layer
 
-The [data layer](doc/entities.md) is built on the blob storage layer. Vault data
-is stored as [EDN](https://github.com/edn-format/edn) in UTF-8 text. It is
-recognized by a magic header sequence: `#vault/data\n`. This has the advantage
-of still being a legal EDN tag, though it is stripped in practice.
+The [data layer](doc/data-structures.md) is built on the blob storage layer.
+Vault data is stored as [EDN](https://github.com/edn-format/edn) in UTF-8 text.
+It is recognized by a magic header sequence: `#vault/data\n`. This has the
+advantage of still being a legal EDN tag, though it is stripped in practice.
 
 Blob references provide a secure way to link to immutable data, so it is simple
 to build data structures which automatically deduplicate shared data. These are
 similar to Clojure's persistent collections; see the schema for [hierarchical
 byte sequences](doc/schema/bytes.edn) for an example.
 
-In order to represent mutable entities, vault uses _entities_ and _updates_.
+In order to represent mutable entities, vault uses the idea of
+[entities](doc/entities.md).
 - A _root blob_ serves as the static identifier of an entity.
-- An _attribute_ is an entity property which is associated with a value.
+- An _attribute_ is an entity property which is associated with one or more values.
 - An _update blob_ modifies entities' attributes at some point in time.
 
 Identity and ownership in vault is provided by [cryptographic
