@@ -1,15 +1,18 @@
-(ns vault.data.object
-  "Object handling functions."
+(ns vault.data.entity
+  "Entity handling functions."
   (:require
     (vault
       [blob :as blob])))
 
 
 
-(defrecord ObjectRoot [id time owner content attributes])
+(defrecord EntityRoot [owner id time attributes])
 
 
-(defrecord ObjectUpdate [time past updates])
+(defrecord EntityUpdate [time updates])
+
+
+(defrecord EntityDeletion [time target])
 
 
 ;(data/extend-tagged-map ObjectRoot   vault/object.root)

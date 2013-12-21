@@ -3,9 +3,9 @@
 
 
 ^{:type :vault.entity/root}
-{:owner #vault/ref "algo:digest"             ; public key ref
+{:id "a123d1c0f82f2ea1"                      ; random string by deault
+ :owner #vault/ref "algo:digest"             ; public key ref
  :time #inst "2013-10-23T20:06:13.000-00:00" ; current time by default
- :id "a123d1c0f82f2ea1"                      ; random string by deault
  :attributes                                 ; optional initial attributes
  {:name "Example Entity"
   :content #vault/ref "algo:digest"}}

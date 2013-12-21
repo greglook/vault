@@ -36,7 +36,7 @@
 
   (-open [this blobref])
 
-  (-store! [this content])
+  (-store! [this content])  ; TODO: this should be [this blobref content]
 
   (-remove! [this blobref]))
 
