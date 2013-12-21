@@ -1,7 +1,7 @@
-(ns vault.data-test
+(ns vault.data.io-test
   (:require
     [clojure.test :refer :all]
-    [vault.data :refer :all])
+    [vault.data.io :as io])
   (:import
     java.io.ByteArrayInputStream))
 
@@ -16,9 +16,9 @@
   "Reads data from bytes from a string."
   [string]
   (-> string
-      (.getBytes blob-charset)
+      (.getBytes io/blob-charset)
       ByteArrayInputStream.
-      read-data))
+      io/read-data))
 
 
 
@@ -26,12 +26,12 @@
 
 (deftest print-data-blob
   (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}"
-         (print-data-str {:omega "bar" :alpha "foo"})))
+         (io/print-data-str {:omega "bar" :alpha "foo"})))
   (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz"
-         (print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz)))
+         (io/print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz)))
   (testing "with metadata"
     (is (= "#vault/data\n^{:type :bytes}\n[{:size 100}]"
-           (print-data-str ^{:type :bytes} [{:size 100}])))))
+           (io/print-data-str ^{:type :bytes} [{:size 100}])))))
 
 
 
@@ -52,8 +52,8 @@
 
 (deftest read-custom-tag
   (let [content (data-fixture "{:foo #my/tag :bar}")
-        input (ByteArrayInputStream. (.getBytes content blob-charset))
-        result (read-data {'my/tag str} input)]
+        input (ByteArrayInputStream. (.getBytes content io/blob-charset))
+        result (io/read-data {'my/tag str} input)]
     (is (= '({:foo ":bar"}) result))))
 
 
@@ -63,7 +63,7 @@
         result (read-data-string content)]
     (is (= '([1 \2 :three]) result))
     (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content blob-charset) (primary-bytes result)))))
+    (is (io/bytes= (.getBytes primary-content io/blob-charset) (io/primary-bytes result)))))
 
 
 (deftest read-primary-bytes-with-extra-values
@@ -72,4 +72,4 @@
         result (read-data-string content)]
     (is (= '(#{:bar "baz"} :frobble) result))
     (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content blob-charset) (primary-bytes result)))))
+    (is (io/bytes= (.getBytes primary-content io/blob-charset) (io/primary-bytes result)))))
