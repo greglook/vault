@@ -1,0 +1,42 @@
+; An entity root blob must contain two EDN values - the root node, and a
+; signature by the owner's key.
+
+^{:type :vault.entity/root}
+{:owner #vault/ref "algo:digest"             ; public key ref
+ :time #inst "2013-10-23T20:06:13.000-00:00" ; current time by default
+ :id "a123d1c0f82f2ea1"                      ; random string by deault
+ :attributes {:title "Example Entity"        ; optional initial attributes
+              :content #vault/ref "algo:digest"}}
+
+
+; Update blob as a map from entity to updates.
+^{:type :vault.entity/update}
+{:time #inst "2013-10-25T09:13:24.000-00:00"
+ :updates
+ {#vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+  [[:set-attribute :title "Foo"]
+   [:add-attribute :tags "things"]],
+  #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+  [[:set-attribute :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}}
+
+
+; Alternately, a list with explicit entities each time:
+^{:type :vault.entity/update}
+{:time #inst "2013-10-25T09:13:24.000-00:00"
+ :updates
+ [[:set-attribute
+   #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+   :content
+   #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]
+  [:add-attribute
+   #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+   :tags "foo"]
+  [:remove-attribute
+   #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+   :notes "bar"]]}
+
+
+; A removal/deletion:
+^{:type :vault.entity/delete}
+{:time #inst "2013-10-25T09:13:24.000-00:00"
+ :target #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"}

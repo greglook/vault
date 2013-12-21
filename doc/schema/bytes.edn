@@ -1,6 +1,6 @@
 ; Large binary data is represented by a tree structure in order to share
 ; subsegments of the byte sequence. This lets a section of the data change
-; without having to re-store the unchanged sections
+; without having to re-store the unchanged sections.
 ;
 ; A byte sequence is a vector of _parts_, each of which may be a reference to
 ; a nested bytes structure, a reference to a blob of byte data, or a sequence of
