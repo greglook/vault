@@ -1,7 +1,7 @@
-(ns vault.data.io-test
+(ns vault.data.format-test
   (:require
     [clojure.test :refer :all]
-    [vault.data.io :as io])
+    [vault.data.format :as format])
   (:import
     java.io.ByteArrayInputStream))
 
@@ -16,9 +16,9 @@
   "Reads data from bytes from a string."
   [string]
   (-> string
-      (.getBytes io/blob-charset)
+      (.getBytes format/blob-charset)
       ByteArrayInputStream.
-      io/read-data))
+      format/read-data))
 
 
 
@@ -26,12 +26,12 @@
 
 (deftest print-data-blob
   (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}"
-         (io/print-data-str {:omega "bar" :alpha "foo"})))
+         (format/print-data-str {:omega "bar" :alpha "foo"})))
   (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz"
-         (io/print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz)))
+         (format/print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz)))
   (testing "with metadata"
     (is (= "#vault/data\n^{:type :bytes}\n[{:size 100}]"
-           (io/print-data-str ^{:type :bytes} [{:size 100}])))))
+           (format/print-data-str ^{:type :bytes} [{:size 100}])))))
 
 
 
@@ -52,8 +52,8 @@
 
 (deftest read-custom-tag
   (let [content (data-fixture "{:foo #my/tag :bar}")
-        input (ByteArrayInputStream. (.getBytes content io/blob-charset))
-        result (io/read-data {'my/tag str} input)]
+        input (ByteArrayInputStream. (.getBytes content format/blob-charset))
+        result (format/read-data {'my/tag str} input)]
     (is (= '({:foo ":bar"}) result))))
 
 
@@ -63,7 +63,7 @@
         result (read-data-string content)]
     (is (= '([1 \2 :three]) result))
     (is (not (nil? (meta result))))
-    (is (io/bytes= (.getBytes primary-content io/blob-charset) (io/primary-bytes result)))))
+    (is (format/bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
 
 
 (deftest read-primary-bytes-with-extra-values
@@ -72,4 +72,4 @@
         result (read-data-string content)]
     (is (= '(#{:bar "baz"} :frobble) result))
     (is (not (nil? (meta result))))
-    (is (io/bytes= (.getBytes primary-content io/blob-charset) (io/primary-bytes result)))))
+    (is (format/bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
