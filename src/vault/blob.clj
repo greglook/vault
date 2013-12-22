@@ -1,7 +1,7 @@
 (ns vault.blob
   (:refer-clojure :exclude [contains? list ref])
   (:require [clojure.string :as string]
-            digest))
+            [vault.digest :as digest]))
 
 
 ;; RECORDS & PROTOCOLS
@@ -23,7 +23,8 @@
   (toString [this]
     (str (name algorithm) ":" digest)))
 
-; FIXME: this doesn't need to be here, could be declared later to remove dependency on vault.data
+
+; FIXME: figure out where to put this
 ;(data/extend-tagged-str BlobRef vault/ref)
 
 
@@ -36,56 +37,9 @@
 
   (-open [this blobref])
 
-  (-store! [this content])  ; TODO: this should be [this blobref content]
+  (-store! [this blobref content])
 
   (-remove! [this blobref]))
-
-
-
-;; CONTENT HASHING
-
-(def ^:private digest-functions
-  "Map of content hashing algorithms to functional implementations."
-  {:md5    digest/md5
-   :sha1   digest/sha-1
-   :sha256 digest/sha-256})
-
-
-(def digest-algorithms
-  "Set of available content hashing algorithms."
-  (set (keys digest-functions)))
-
-
-(def ^:dynamic *digest-algorithm*
-  "Default digest algorithm to use when content hashing."
-  :sha256)
-
-
-(defn assert-valid-digest
-  [algorithm]
-  (when-not (digest-functions algorithm)
-    (throw (IllegalArgumentException.
-             (str "Unsupported digest algorithm: " algorithm
-                  ", must be one of: " (string/join ", " digest-algorithms))))))
-
-
-(defmacro with-digest-algorithm
-  "Executes a body of expressions with the given default digest algorithm."
-  [algorithm & body]
-  `(binding [*digest-algorithm* ~algorithm]
-     (assert-valid-digest *digest-algorithm*)
-     ~@body))
-
-
-(defn digest
-  "Calculates the blob reference for the given content."
-  ([content]
-   (digest *digest-algorithm* content))
-  ([algorithm content]
-   (assert-valid-digest algorithm)
-   (let [hashfn (digest-functions algorithm)
-         digest ^String (hashfn content)]
-     (BlobRef. algorithm (.toLowerCase digest)))))
 
 
 
@@ -110,7 +64,6 @@
      (parse-identifier (str x))))
   ([algorithm digest]
    (let [algorithm (keyword algorithm)]
-     (assert-valid-digest algorithm)
      (BlobRef. algorithm digest))))
 
 
@@ -133,29 +86,14 @@
 
 ;; STORAGE FUNCTIONS
 
-(def ^:dynamic *blob-store*
-  "Default blob-store to use with the storage functions.")
-
-
-(defmacro with-blob-store
-  "Executes a body of expressions with the given default blob store."
-  [store & body]
-  `(binding [*blob-store* ~store]
-     ~@body))
-
-
 (defn list
   "Enumerates the stored blobs, returning a sequence of BlobRefs.
   Options should be keyword/value pairs from the following:
-  * :start - start enumerating blobrefs lexically following this string
+  * :start  - start enumerating blobrefs lexically following this string
   * :prefix - only return blobrefs matching the given string
-  * :count - limit the number of results returned"
-  ([]
-   (-list *blob-store* nil))
-  ([store-or-opts]
-   (if (satisfies? BlobStore store-or-opts)
-     (-list store-or-opts nil)
-     (-list *blob-store* store-or-opts)))
+  * :count  - limit the number of results returned"
+  ([store]
+   (-list store nil))
   ([store opts]
    (-list store opts))
   ([store opt-key opt-val & opts]
@@ -164,48 +102,43 @@
 
 (defn stat
   "Returns a map of metadata about the blob, if it is stored. Properties are
-  implementation-specific, but should include:
-  * :size - blob size in bytes
-  * :since - date blob was added to store
-  Optionally, other attributes may also be included:
-  * :content-type - a guess at the type of content stored in the blob
-  * :location - a resource location for the blob"
-  ([blobref]
-   (-stat *blob-store* blobref))
-  ([store blobref]
-   (-stat store blobref)))
+  implementation-specific, but may include:
+  * :size         - blob size in bytes
+  * :since        - date blob was added to store
+  * :location     - a resource location for the blob
+  * :content-type - a guess at the type of content stored in the blob"
+  [store blobref]
+  (-stat store blobref))
 
 
 (defn contains?
   "Determines whether the store contains the referenced blob."
-  ([blobref]
-   (contains? *blob-store* blobref))
-  ([store blobref]
-   (not (nil? (-stat store blobref)))))
+  [store blobref]
+  (not (nil? (-stat store blobref))))
 
 
 (defn open
   "Opens a stream of byte content for the referenced blob, if it is stored."
   (^java.io.InputStream
-   [blobref]
-   (-open *blob-store* blobref))
-  (^java.io.InputStream
    [store blobref]
+   ; TODO: decoders
    (-open store blobref)))
 
 
 (defn store!
   "Stores the given byte stream and returns the blob reference."
-  ([content]
-   (-store! *blob-store* content))
-  ([store content]
-   (-store! store content)))
+  ([store input]
+   (store! store [] input-stream))
+   ; TODO: this should serialize the content through some streams into an in-memory buffer.
+   ; InputStream > pump > MessageDigestOutputStream > GZIPOutputStream > EncryptionOutputStream > ByteArrayOutputStream
+   ; Create a blobref with the digest value, then pass to the blob store.
+  ([store encoders input-stream]
+   (let [blobref nil]
+     (-store! store blobref input-stream))))
 
 
 (defn remove!
   "Remove the referenced blob from this store. Returns true if the store
   contained the blob when this method was called."
-  ([blobref]
-   (-remove! *blob-store* blobref))
-  ([store blobref]
-   (-remove! store blobref)))
+  [store blobref]
+  (-remove! store blobref))
