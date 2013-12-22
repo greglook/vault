@@ -1,7 +1,7 @@
-(ns vault.blob
+(ns vault.blob.core
   (:refer-clojure :exclude [contains? list ref])
   (:require [clojure.string :as string]
-            [vault.digest :as digest]))
+            [vault.blob.digest :as digest]))
 
 
 ;; RECORDS & PROTOCOLS
@@ -37,7 +37,7 @@
 
   (-open [this blobref])
 
-  (-store! [this blobref content])
+  (-store! [this blobref input-stream status])
 
   (-remove! [this blobref]))
 
@@ -127,7 +127,7 @@
 
 (defn store!
   "Stores the given byte stream and returns the blob reference."
-  ([store input]
+  ([store input-stream]
    (store! store [] input-stream))
    ; TODO: this should serialize the content through some streams into an in-memory buffer.
    ; InputStream > pump > MessageDigestOutputStream > GZIPOutputStream > EncryptionOutputStream > ByteArrayOutputStream

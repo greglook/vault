@@ -1,4 +1,4 @@
-(ns vault.digest
+(ns vault.blob.digest
   (:require [clojure.string :as string]
             digest))
 
@@ -36,11 +36,6 @@
   `(binding [*algorithm* ~algorithm]
      (assert-valid-digest *algorithm*)
      ~@body))
-
-
-(defn digest-stream
-  "Wraps the given output stream in ..."
-  )
 
 
 (defn digest
