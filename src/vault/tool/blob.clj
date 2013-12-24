@@ -1,7 +1,10 @@
 (ns vault.tool.blob
-  (:require [clojure.java.io :as io]
-            [puget.printer :refer [cprint]]
-            [vault.blob :as blob]))
+  (:require
+    [clojure.java.io :as io]
+    [puget.printer :refer [cprint]]
+    (vault.blob
+      [core :as blob]
+      [digest :as digest])))
 
 
 ;; HELPER FUNCTIONS
@@ -21,7 +24,7 @@
    (blob/list store))
   ([store prefix]
    (->> prefix
-        (prefix-identifier blob/*digest-algorithm*)
+        (prefix-identifier digest/*algorithm*)
         (blob/list store :prefix)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))

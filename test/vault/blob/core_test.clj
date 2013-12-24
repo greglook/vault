@@ -1,7 +1,7 @@
-(ns vault.blob-test
+(ns vault.blob.core-test
   (:require
     [clojure.test :refer :all]
-    [vault.blob :as blob]))
+    [vault.blob.core :as blob]))
 
 
 (def blob-content
@@ -42,12 +42,6 @@
          (str "urn:" blob-id)
          blob-id)
     (is (thrown? IllegalArgumentException (blob/parse-identifier "abc1:a19d14f8e")))))
-
-
-(deftest content-hashing
-  (testing "digest"
-    (is (= (blob/digest :sha256 blob-content) blob-ref))
-    (is (thrown? IllegalArgumentException (blob/digest :sha4 "xyz")))))
 
 
 (deftest blobref-coercion

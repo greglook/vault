@@ -1,20 +1,22 @@
 (ns vault.blob.digest
-  (:require [clojure.string :as string]
-            digest))
+  (:refer-clojure :exclude [hash])
+  (:require
+    [clojure.string :as string])
+  (:import
+    (java.security
+      MessageDigest)))
 
 
-;; CONTENT HASHING
-
-(def ^:private hashing-functions
+(def ^:private algorithm-names
   "Map of content hashing algorithms to functional implementations."
-  {:md5    digest/md5
-   :sha1   digest/sha-1
-   :sha256 digest/sha-256})
+  {:md5    "MD5"
+   :sha1   "SHA-1"
+   :sha256 "SHA-256"})
 
 
 (def algorithms
   "Set of available content hashing algorithms."
-  (set (keys hashing-functions)))
+  (set (keys algorithm-names)))
 
 
 (def ^:dynamic *algorithm*
@@ -22,28 +24,34 @@
   :sha256)
 
 
-(defn assert-valid-digest
-  [algorithm]
-  (when-not (hashing-functions algorithm)
+(defn check-algorithm
+  "Throws an exception if the given keyword is not a valid algorithm
+  identifier."
+  [id]
+  (when-not (contains? algorithms id)
     (throw (IllegalArgumentException.
-             (str "Unsupported digest algorithm: " algorithm
-                  ", must be one of: " (string/join ", " algorithms))))))
+             (str "Unsupported digest algorithm: " id
+                  ", must be one of: " (string/join " " algorithms))))))
 
 
 (defmacro with-algorithm
   "Executes a body of expressions with the given default digest algorithm."
   [algorithm & body]
   `(binding [*algorithm* ~algorithm]
-     (assert-valid-digest *algorithm*)
+     (check-algorithm *algorithm*)
      ~@body))
 
 
-(defn digest
-  "Calculates the hash of the given content."
-  ([content]
-   (digest *algorithm* content))
-  ([algorithm content]
-   (assert-valid-digest algorithm)
-   (let [hashfn (hashing-functions algorithm)
-         digest ^String (hashfn content)]
-     (.toLowerCase digest))))
+(defn hash
+  "Calculates the hash digest of the given byte array. Returns a vector of the
+  algorithm id and the hash hex string."
+  ([data]
+   (hash *algorithm* data))
+  ([id data]
+   (check-algorithm id)
+   (let [algorithm (MessageDigest/getInstance (algorithm-names id))
+         length (* 2 (.getDigestLength algorithm))
+         digest (.digest algorithm data)
+         hex (-> (BigInteger. 1 digest) (.toString 16) .toLowerCase)
+         padding (apply str (repeat (- length (count hex)) "0"))]
+     [id (str padding hex)])))

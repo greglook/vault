@@ -1,7 +1,10 @@
 (ns vault.blob.core
   (:refer-clojure :exclude [contains? list ref])
-  (:require [clojure.string :as string]
-            [vault.blob.digest :as digest]))
+  (:require
+    [clojure.string :as string]
+    (vault.blob
+      [digest :as digest]
+      [store :as blobs])))
 
 
 ;; RECORDS & PROTOCOLS
@@ -28,31 +31,10 @@
 ;(data/extend-tagged-str BlobRef vault/ref)
 
 
-(defprotocol BlobStore
-  "Protocol for content storage providers, keyed by blobrefs."
-
-  (-list [this opts]
-    "Enumerates the stored blobs with some filtering options.")
-
-  (-stat [this blobref]
-    "Returns the stored status metadata for a blob.")
-
-  (-open [this blobref]
-    "Returns a vector of the blob status and an open input stream of the
-    stored data.")
-
-  (-store! [this blobref input-stream status]
-    "Stores the contents of the input stream for the blob, optionally with
-    associated status metadata.")
-
-  (-remove! [this blobref]
-    "Returns true if the store contained the blob."))
-
-
 
 ;; BLOBREF FUNCTIONS
 
-(defn parse-identifier
+(defn- parse-identifier
   "Parses a hash identifier string into a blobref. Accepts either a hash URN
   or the shorter \"algo:digest\" format."
   [id]
@@ -60,7 +42,6 @@
         id (if (re-find #"^hash:" id) (subs id 5) id)
         [algorithm digest] (string/split id #":" 2)
         algorithm (keyword algorithm)]
-    (assert-valid-digest algorithm)
     (BlobRef. algorithm digest)))
 
 
@@ -74,22 +55,6 @@
      (BlobRef. algorithm digest))))
 
 
-(defn select-refs
-  "Selects blobrefs from a lazy sequence based on input criteria."
-  [opts blobrefs]
-  (let [{:keys [start prefix]} opts
-        blobrefs (if-let [start (or start prefix)]
-                   (drop-while #(pos? (compare start (str %))) blobrefs)
-                   blobrefs)
-        blobrefs (if prefix
-                   (take-while #(.startsWith (str %) prefix) blobrefs)
-                   blobrefs)
-        blobrefs (if-let [n (:count opts)]
-                   (take n blobrefs)
-                   blobrefs)]
-    blobrefs))
-
-
 
 ;; STORAGE FUNCTIONS
 
@@ -100,11 +65,11 @@
   * :prefix - only return blobrefs matching the given string
   * :count  - limit the number of results returned"
   ([store]
-   (-list store nil))
+   (blobs/-list store nil))
   ([store opts]
-   (-list store opts))
+   (blobs/-list store opts))
   ([store opt-key opt-val & opts]
-   (-list store (apply hash-map opt-key opt-val opts))))
+   (blobs/-list store (apply hash-map opt-key opt-val opts))))
 
 
 (defn stat
@@ -115,13 +80,13 @@
   * :location     - a resource location for the blob
   * :content-type - a guess at the type of content stored in the blob"
   [store blobref]
-  (-stat store blobref))
+  (blobs/-stat store blobref))
 
 
 (defn contains?
   "Determines whether the store contains the referenced blob."
   [store blobref]
-  (not (nil? (-stat store blobref))))
+  (not (nil? (blobs/-stat store blobref))))
 
 
 (defn open
@@ -129,23 +94,23 @@
   (^java.io.InputStream
    [store blobref]
    ; TODO: decoders
-   (-open store blobref)))
+   (blobs/-open store blobref)))
 
 
 (defn store!
   "Stores the given byte stream and returns the blob reference."
-  ([store input-stream]
-   (store! store [] input-stream))
+  ([store stream]
+   (store! store [] stream))
    ; TODO: this should serialize the content through some streams into an in-memory buffer.
    ; InputStream > pump > MessageDigestOutputStream > GZIPOutputStream > EncryptionOutputStream > ByteArrayOutputStream
    ; Create a blobref with the digest value, then pass to the blob store.
   ([store encoders input-stream]
    (let [blobref nil]
-     (-store! store blobref input-stream))))
+     (blobs/-store! store blobref nil input-stream))))
 
 
 (defn remove!
   "Remove the referenced blob from this store. Returns true if the store
   contained the blob when this method was called."
   [store blobref]
-  (-remove! store blobref))
+  (blobs/-remove! store blobref))

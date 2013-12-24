@@ -48,10 +48,9 @@ The blob storage interface is straightforward:
 Status metadata is a simple map of information about the stored blob. The
 information present is largely implementation-specific, but may include some
 common information:
-- `:original-length` - the number of bytes in the raw blob
-- `:content-length` - the number of bytes stored for the blob
+- `:size` - the number of bytes stored for the blob
+- `:since` - time the blob was added to the store
 - `:content-type` - a MIME type for the data in the blob
-- `:stored-at` - time the blob was added to the store
 - `:location` - an optional URI giving a path to the stored resource
 - `:codecs` - an array of codec filters which were applied to the data
 

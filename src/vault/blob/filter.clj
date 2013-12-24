@@ -22,7 +22,7 @@
   present."
   [codec-map names]
   (let [missing (->> names
-                     (map #(if-not (codecs %) %))
+                     (map #(if-not (codec-map %) %))
                      (remove nil?))]
     (when (seq missing)
       (throw (RuntimeException.
@@ -40,7 +40,7 @@
                (let [[codec-status stream] (wrap-output codec stream)
                      status (merge status codec-status)]
                  [status stream]))
-        [status stream] (reduce wrap [{} output-stream] (reverse codecs))
+        [status stream] (reduce wrap [{} stream] (reverse codecs))
         status (assoc status :codecs names)]
     [status stream]))
 

@@ -1,10 +1,18 @@
-(ns vault.store.memory
+(ns vault.blob.store.memory
   (:require
     [clojure.java.io :as io]
-    [vault.blob :as blob :refer [BlobStore]]))
+    [vault.blob.store :as store :refer [BlobStore]])
+  (:import
+    (java.io
+      ByteArrayInputStream
+      ByteArrayOutputStream)))
 
 
-;; IN-MEMORY STORE
+(defn- blob-status
+  [blob]
+  (let [{:keys [status data]} blob]
+    (merge status {:size (count data)})))
+
 
 (defrecord MemoryBlobStore
   [store]
@@ -12,25 +20,26 @@
   BlobStore
 
   (-list [this opts]
-    (blob/select-refs opts (keys @store)))
+    (store/select-refs opts (keys @store)))
 
 
   (-stat [this blobref]
     (when-let [blob (@store blobref)]
-      {:size (count blob)}))
+      (blob-status blob)))
 
 
   (-open [this blobref]
     (when-let [blob (@store blobref)]
-      (io/input-stream blob)))
+      [(blob-status blob)
+       (ByteArrayInputStream. (:data blob))]))
 
 
-  (-store! [this content]
-    (with-open [buffer (java.io.ByteArrayOutputStream.)]
-      (io/copy content buffer)
+  (-store! [this blobref stream status]
+    (with-open [buffer (ByteArrayOutputStream.)]
+      (io/copy stream buffer)
       (let [data (.toByteArray buffer)
-            blobref (blob/digest data)]
-        (swap! store assoc blobref data)
+            blob {:data data, :status status}]
+        (swap! store assoc blobref blob)
         blobref)))
 
 

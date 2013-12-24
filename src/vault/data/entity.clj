@@ -1,8 +1,5 @@
 (ns vault.data.entity
-  "Entity handling functions."
-  (:require
-    (vault
-      [blob :as blob])))
+  "Entity handling functions.")
 
 
 
