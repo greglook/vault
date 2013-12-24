@@ -2,10 +2,29 @@
   (:require
     [clojure.java.io :as io]
     [clojure.test :refer :all]
-    [vault.blob.core :as blob :refer [BlobStore]]
+    (vault.blob
+      [core :as blob]
+      [store :as blobs :refer [BlobStore]])
     (vault.blob.store
       [memory :refer [memory-store]]
       [file :refer [file-store]])))
+
+
+;; UTILITY FUNCTION TESTS
+
+(deftest blobref-selection
+  (let [a (blob/ref :md5 "37b51d194a7513e45b56f6524f2d51f2")
+        b (blob/ref :md5 "73fcffa4b7f6bb68e44cf984c85f6e88")
+        c (blob/ref :md5 "73fe285cedef654fccc4a4d818db4cc2")
+        d (blob/ref :md5 "acbd18db4cc2f85cedef654fccc4a4d8")
+        e (blob/ref :md5 "c3c23db5285662ef7172373df0003206")
+        blobrefs [a b c d e]]
+    (are [brs opts] (= brs (blobs/select-refs opts blobrefs))
+         blobrefs {}
+         [c d e]  {:start "md5:73fd2"}
+         [b c]    {:prefix "md5:73"}
+         [a b]    {:count 2})))
+
 
 
 ;; STORAGE INTERFACE TESTS

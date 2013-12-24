@@ -37,11 +37,10 @@
 
 (deftest identifier-parsing
   (testing "parse-identifier"
-    (are [addr] (= (blob/parse-identifier addr) blob-ref)
+    (are [addr] (= (blob/ref addr) blob-ref)
          (str "urn:hash:" blob-id)
          (str "urn:" blob-id)
-         blob-id)
-    (is (thrown? IllegalArgumentException (blob/parse-identifier "abc1:a19d14f8e")))))
+         blob-id)))
 
 
 (deftest blobref-coercion
@@ -49,17 +48,3 @@
     (is (identical? (blob/ref blob-ref) blob-ref))
     (is (= (blob/ref blob-id) blob-ref))
     (is (= (blob/ref :sha256 (:digest blob-ref)) blob-ref))))
-
-
-(deftest blobref-selection
-  (let [a (blob/ref :md5 "37b51d194a7513e45b56f6524f2d51f2")
-        b (blob/ref :md5 "73fcffa4b7f6bb68e44cf984c85f6e88")
-        c (blob/ref :md5 "73fe285cedef654fccc4a4d818db4cc2")
-        d (blob/ref :md5 "acbd18db4cc2f85cedef654fccc4a4d8")
-        e (blob/ref :md5 "c3c23db5285662ef7172373df0003206")
-        blobrefs [a b c d e]]
-    (are [brs opts] (= brs (blob/select-refs opts blobrefs))
-         blobrefs {}
-         [c d e]  {:start "md5:73fd2"}
-         [b c]    {:prefix "md5:73"}
-         [a b]    {:count 2})))
