@@ -35,17 +35,41 @@ the identifier can add the 'urn' components as desired.
 
 ## Storage Interface
 
-The interface to a blob store is relatively simple:
-- `list`: enumerate the stored blobs
-- `stat`: get metadata about a stored blob
-- `open`: return the bytes comprising the blob contents
-- `store!`: store byte content and return the blobref
-- `remove!`: drop a blob from the store
+Blobs are stored as immutable byte sequences with some optional associated
+_status_ metadata. The only way to reference a blob is by its hash identifier.
 
-The interface should be fairly self explanatory. The `stat` command is mostly
-useful as a quick presence check - if information is returned, the store has
-the blob in question. Other than blob size, `stat` could also return some
-other info, such as timestamps, content type, location, etc.
+The blob storage interface is straightforward:
+- `list` - enumerate the stored blobs
+- `stat` - get metadata about a stored blob
+- `open` - return a stream of bytes stored for a blob
+- `store!` - store a stream of bytes for a blob
+- `remove!` - drop a blob from the store
+
+Status metadata is a simple map of information about the stored blob. The
+information present is largely implementation-specific, but may include some
+common information:
+- `:original-length` - the number of bytes in the raw blob
+- `:content-length` - the number of bytes stored for the blob
+- `:content-type` - a MIME type for the data in the blob
+- `:stored-at` - time the blob was added to the store
+- `:location` - an optional URI giving a path to the stored resource
+- `:codecs` - an array of codec filters which were applied to the data
+
+The `:codecs` field is especially important to ensure that changes to the blob
+store configuration don't break decoding of existing blobs. This should be set
+to the sequence of codecs applied, in order. Mostly this will probably be empty
+(equivalently, omitted), but suppose a user wanted to compress blobs, then
+encrypt them for storage by a third party. In that case, the status metadata
+could look like this:
+
+```clojure
+{:data-size 123,
+ :codecs [:compress/gzip :encrypt/pgp],
+ :location #uri "s3://greglook-storage/vault/data/sha256/53e/0b9/f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180",
+ :stored-at #inst "2013-12-01T18:23:48Z",
+ :stored-size 87,
+ :mime/content-type "text/plain"}
+```
 
 ## Implementations
 
@@ -54,11 +78,13 @@ implementation. Here's some ideas:
 - `memory`: transient in-memory blob storage
 - `file`: local filesystem blob storage
 - `sftp`: store blobs on a remote host accessible via ssh
-- `s3`: persist blobs in cloud storage service
+- `s3`: persist blobs in Amazon's cloud storage service
 
-Blob stores can also be composed with intermediate _encoding_ layers. Some ideas:
-- `compress`: compress blobs to save space (may not be effective on all files)
-- `encrypt`: encrypt blobs (perhaps stored in untrusted third-party services)
-- `shard`: distribute blobs across different stores (why would you do this?)
-- `replicate`: store blobs in multiple locations (should this just be a backup/sync job?)
+'Meta-stores' can also wrap multiple blob stores to give more complex storage
+systems:
+- `replicate`: store blobs in multiple locations
 - `cache`: keep a fixed size of local blobs, deferring to another authoritative store
+
+Blob stores can also be composed with _filter_ layers. Some ideas:
+- `compress`: compress blobs to save space
+- `encrypt`: encrypt blobs, perhaps stored in untrusted third-party services
