@@ -3,12 +3,13 @@
   (:require
     [clojure.string :as string])
   (:import
-    (java.security
-      MessageDigest)))
+    java.security.MessageDigest))
 
+
+;; CONSTANTS & CONFIGURATION
 
 (def ^:private algorithm-names
-  "Map of content hashing algorithms to functional implementations."
+  "Map of content hashing algorithms to system names."
   {:md5    "MD5"
    :sha1   "SHA-1"
    :sha256 "SHA-256"})
@@ -24,34 +25,108 @@
   :sha256)
 
 
-(defn check-algorithm
-  "Throws an exception if the given keyword is not a valid algorithm
-  identifier."
-  [id]
-  (when-not (contains? algorithms id)
-    (throw (IllegalArgumentException.
-             (str "Unsupported digest algorithm: " id
-                  ", must be one of: " (string/join " " algorithms))))))
-
-
 (defmacro with-algorithm
   "Executes a body of expressions with the given default digest algorithm."
   [algorithm & body]
   `(binding [*algorithm* ~algorithm]
-     (check-algorithm *algorithm*)
      ~@body))
 
 
+(defn- check-algorithm
+  "Throws an exception if the given keyword is not a valid algorithm
+  identifier."
+  [algo]
+  (when-not (contains? algorithms algo)
+    (throw (IllegalArgumentException.
+             (str "Unsupported digest algorithm: " algo
+                  ", must be one of: " (string/join " " algorithms))))))
+
+
+
+;; HASH IDENTIFIERS
+
+(defrecord HashID
+  [algorithm digest]
+
+  Comparable
+
+  (compareTo [this that]
+    (if (= this that)
+      0
+      (->> [this that]
+           (map (juxt :algorithm :digest))
+           (apply compare))))
+
+  Object
+
+  (toString [this]
+    (str (name algorithm) ":" digest)))
+
+; FIXME: figure out where to put this
+;(data/extend-tagged-str BlobRef vault/ref)
+
+
+(defn parse-id
+  "Parses a hash identifier string into a blobref. Accepts either a hash URN
+  or the shorter \"algo:digest\" format."
+  [id]
+  (let [id (if (re-find #"^urn:" id) (subs id 4) id)
+        id (if (re-find #"^hash:" id) (subs id 5) id)
+        [algorithm digest] (string/split id #":" 2)
+        algorithm (keyword algorithm)]
+    (->HashID algorithm digest)))
+
+
+(defn hash-id
+  "Coerces the argument to a HashID."
+  ([x]
+   (cond
+     (instance? HashID x) x
+     :else (parse-id (str x))))
+  ([algorithm digest]
+   (let [algo (keyword algorithm)]
+     (check-algorithm algo)
+     (->HashID algo digest))))
+
+
+(defn prefix-id
+  "Adds an algorithm to a hash identifier if none is specified."
+  ([id]
+   (prefix-id *algorithm* id))
+  ([algo id]
+   (if-not (some (partial = \:) id)
+     (str (name algo) \: id)
+     id)))
+
+
+(defn select-ids
+  "Selects hash identifiers from a lazy sequence based on input criteria."
+  [opts ids]
+  (let [{:keys [after prefix]} opts
+        ids (if-let [after (or after prefix)]
+              (drop-while #(pos? (compare after (str %))) ids)
+              ids)
+        ids (if prefix
+              (take-while #(.startsWith (str %) prefix) ids)
+              ids)
+        ids (if-let [n (:count opts)]
+              (take n ids)
+              ids)]
+    ids))
+
+
+
+;; CONTENT HASHING
+
 (defn hash
-  "Calculates the hash digest of the given byte array. Returns a vector of the
-  algorithm id and the hash hex string."
+  "Calculates the hash digest of the given byte array. Returns a HashID."
   ([data]
    (hash *algorithm* data))
-  ([id data]
-   (check-algorithm id)
-   (let [algorithm (MessageDigest/getInstance (algorithm-names id))
+  ([algo data]
+   (check-algorithm algo)
+   (let [algorithm (MessageDigest/getInstance (algorithm-names algo))
          length (* 2 (.getDigestLength algorithm))
          digest (.digest algorithm data)
          hex (-> (BigInteger. 1 digest) (.toString 16) .toLowerCase)
          padding (apply str (repeat (- length (count hex)) "0"))]
-     [id (str padding hex)])))
+     (->HashID algo (str padding hex)))))

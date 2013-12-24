@@ -1,62 +1,89 @@
 (ns vault.blob.core
   (:refer-clojure :exclude [contains? list ref])
   (:require
+    [clojure.java.io :as io]
     [clojure.string :as string]
     (vault.blob
-      [digest :as digest]
-      [store :as blobs])))
+      [digest :as digest]))
+  (:import
+    java.io.ByteArrayOutputStream))
 
 
-;; RECORDS & PROTOCOLS
+(defrecord BlobData
+  [ref status content])
 
-(defrecord BlobRef
-  [algorithm digest]
-
-  Comparable
-
-  (compareTo [this that]
-    (if (= this that)
-      0
-      (->> [this that]
-           (map (juxt :algorithm :digest))
-           (apply compare))))
-
-  Object
-
-  (toString [this]
-    (str (name algorithm) ":" digest)))
-
-
-; FIXME: figure out where to put this
-;(data/extend-tagged-str BlobRef vault/ref)
-
-
-
-;; BLOBREF FUNCTIONS
-
-(defn- parse-identifier
-  "Parses a hash identifier string into a blobref. Accepts either a hash URN
-  or the shorter \"algo:digest\" format."
-  [id]
-  (let [id (if (re-find #"^urn:" id) (subs id 4) id)
-        id (if (re-find #"^hash:" id) (subs id 5) id)
-        [algorithm digest] (string/split id #":" 2)
-        algorithm (keyword algorithm)]
-    (BlobRef. algorithm digest)))
 
 
 (defn ref
   "Constructs a BlobRef out of the arguments."
   ([x]
-   (if (instance? BlobRef x) x
-     (parse-identifier (str x))))
+   (cond
+     (instance? digest/HashIdentifier x) x
+     (instance? BlobData x) (:ref x)
+     :else (digest/parse-id (str x))))
   ([algorithm digest]
    (let [algorithm (keyword algorithm)]
-     (BlobRef. algorithm digest))))
+     (digest/->HashID algorithm digest))))
 
 
 
-;; STORAGE FUNCTIONS
+
+;; BLOB DATA
+
+(defmulti load-bytes
+  "Loads data from the given source into a byte array."
+  type)
+
+
+(defmethod load-bytes String
+  [^String source]
+  (.getBytes source "UTF-8"))
+
+
+(defmethod load-bytes java.io.InputStream
+  [^java.io.InputStream source]
+  (with-open [buffer (ByteArrayOutputStream.)]
+    (io/copy source buffer)
+    (.toByteArray buffer)))
+
+
+(defmethod load-bytes java.io.File
+  [^java.io.File source]
+  (with-open [stream (java.io.FileInputStream. source)]
+    (load-bytes stream)))
+
+
+(defn load-blob
+  "Buffers a blob in memory and calculates the hash digest. Returns a map with
+  :ref and :content keys."
+  [source]
+  (let [content (load-bytes source)
+        blobref (apply ->BlobRef (digest/hash content))]
+    (->BlobData blobref {} content)))
+
+
+
+;; BLOB STORAGE
+
+(defprotocol BlobStore
+  "Protocol for content storage providers, keyed by blobrefs."
+
+  (-list [this opts]
+    "Enumerates the stored blobs with some filtering options.")
+
+  (-stat [this blobref]
+    "Returns the stored status metadata for a blob.")
+
+  (-open [this blobref]
+    "Returns a vector of the blob status and an open input stream of the
+    stored data.")
+
+  (-store! [this data]
+    "Stores blob data content, optionally with associated status metadata.")
+
+  (-remove! [this blobref]
+    "Returns true if the store contained the blob."))
+
 
 (defn list
   "Enumerates the stored blobs, returning a sequence of BlobRefs.
@@ -102,7 +129,6 @@
   ([store stream]
    (store! store [] stream))
    ; TODO: this should serialize the content through some streams into an in-memory buffer.
-   ; InputStream > pump > MessageDigestOutputStream > GZIPOutputStream > EncryptionOutputStream > ByteArrayOutputStream
    ; Create a blobref with the digest value, then pass to the blob store.
   ([store encoders input-stream]
    (let [blobref nil]
