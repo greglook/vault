@@ -18,15 +18,27 @@
        (into (sorted-map))))
 
 
-(defn- test-stored-blob
-  "Determines whether the store contains the data for the given identifier"
-  [store id data]
+(defn- test-blob-content
+  "Determines whether the store contains the content for the given identifier."
+  [store id content]
   (let [status (blob/stat store id)
         stored-content (with-open [stream (blob/open store id)]
                          (slurp stream))]
     (is (and status stored-content) "returns info and content")
     (is (= (:size status) (count (.getBytes stored-content))) "stats contain size info")
-    (is (= data stored-content) "content matches data")))
+    (is (= content stored-content) "stored content matches input")))
+
+
+(defn- test-restore-blob
+  "Tests re-storing an existing blob."
+  [store id content]
+  (is (blob/contains? store id))
+  (let [status     (blob/stat store id)
+        new-id     (blob/store! store content)
+        new-status (blob/stat store id)]
+    (is (= id new-id))
+    (is (= (:created-at status)
+           (:created-at new-status)))))
 
 
 (defn test-blob-store
@@ -37,10 +49,12 @@
     (let [blobs (store-test-blobs! store)]
       (is (= (keys blobs) (blob/list store {}))
           "enumerates all ids in sorted order")
-      (doseq [[id data] blobs]
-        (testing (str "for blob " id)
-          (test-stored-blob store id data)
-          (is (blob/remove! store id) "remove returns true")))
+      (doseq [[id content] blobs]
+        (test-blob-content store id content))
+      (let [[id content] (first (seq blobs))]
+        (test-restore-blob store id content))
+      (doseq [id (keys blobs)]
+        (is (blob/remove! store id) "remove returns true"))
       (is (empty? (blob/list store)) "ends empty")
       (is (not (blob/remove! store (first (keys blobs))))
           "gives false when removing a nonexistent blob"))))
