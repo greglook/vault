@@ -1,22 +1,23 @@
 (ns vault.blob.store.file
   (:require
-    [clojure.edn :as edn]
     [clojure.java.io :as io]
     [clojure.string :as string]
     (vault.blob
-      [core :as blob]
-      [store :as store :refer [BlobStore]]))
+      [core :as blob :refer [BlobStore]]
+      [digest :as digest]))
   (:import
-    java.io.File))
+    (java.io
+      File
+      FileInputStream)))
 
 
 ;; HELPER FUNCTIONS
 
-(defn- blobref->file
+(defn- hashid->file
   ^File
-  [root blobref]
-  (let [blobref (blob/ref blobref)
-        {:keys [algorithm digest]} blobref]
+  [root id]
+  (let [id (digest/hash-id id)
+        {:keys [algorithm digest]} id]
     (io/file root
              (name algorithm)
              (subs digest 0 3)
@@ -24,7 +25,7 @@
              (subs digest 6))))
 
 
-(defn- file->blobref
+(defn- file->hashid
   [root file]
   (let [root (str root)
         file (str file)]
@@ -34,65 +35,7 @@
     (let [[algorithm & digest] (-> file
                                    (subs (inc (count root)))
                                    (string/split #"/"))]
-      (blob/ref algorithm (string/join digest)))))
-
-
-(defn- blob->status-file
-  ^File
-  [blob]
-  (io/file blob "status.edn"))
-
-
-(defn- blob->content-file
-  ^File
-  [blob]
-  (io/file blob "content"))
-
-
-(defn- has-content?
-  "Checks whether the given blob contains stored content."
-  [blob]
-  (.exists (blob->content-file blob)))
-
-
-(defn- blob-status
-  "Builds the status map for the given blob."
-  [blob]
-  (let [content-file (blob->content-file blob)
-        status-file (blob->status-file blob)
-        status (when (.exists status-file)
-                 (edn/read-string (slurp status-file)))]
-    (merge status
-      {:size (.length content-file)
-       :since (java.util.Date. (.lastModified content-file))
-       :location (.toURI content-file)})))
-
-
-; As a long-term idea, this could try to buffer in memory up to a certain
-; threshold before spooling to disk.
-(defn- spool-tmp-file!
-  "Spool input stream to a temporary landing file."
-  ^File
-  [root content]
-  (let [tmp-file (io/file root "tmp" (str "landing-" (System/currentTimeMillis)))]
-    (io/make-parents tmp-file)
-    (io/copy content tmp-file)
-    tmp-file))
-
-
-(defn- store-blob-files!
-  "Stores status and content for a blob. Returns the status map."
-  [^File blob
-   status
-   ^java.io.InputStream stream]
-  (let [content-file (blob->content-file blob)
-        status-file (blob->status-file blob)]
-    (io/make-parents content-file)
-    (when-not (empty? status)
-      (spit status-file (prn-str status))
-      (.setWritable status-file false false))
-    (io/copy stream content-file)
-    (.setWritable content-file false false)))
+      (digest/hash-id algorithm (string/join digest)))))
 
 
 (defmacro ^:private for-files
@@ -105,7 +48,7 @@
 (defn- enumerate-files
   "Generates a lazy sequence of file blobs contained in a root directory."
   [^File root]
-  ; TODO: intelligently skip entries based on 'start'
+  ; TODO: intelligently skip entries based on 'after'
   (flatten
     (for-files [algorithm-dir root]
       (for-files [prefix-dir algorithm-dir]
@@ -124,35 +67,37 @@
 
   (-list [this opts]
     (->> (enumerate-files root)
-         (map (partial file->blobref root))
-         (store/select-refs opts)))
+         (map (partial file->hashid root))
+         (digest/select-ids opts)))
 
 
-  (-stat [this blobref]
-    (let [blob (blobref->file root blobref)]
-      (when (has-content? blob)
-        (blob-status blob))))
+  (-stat [this id]
+    (let [file (hashid->file root id)]
+      (when (.exists file)
+        {:size (.length file)
+         :since (java.util.Date. (.lastModified file))
+         :location (.toURI file)})))
 
 
-  (-open [this blobref]
-    (let [blob (blobref->file root blobref)]
-      (when (has-content? blob)
-        [(blob-status blob)
-         (io/input-stream (blob->content-file blob))])))
+  (-open [this id]
+    (let [file (hashid->file root id)]
+      (when (.exists file)
+        (io/input-stream file))))
 
 
-  (-store! [this blobref status stream]
-    (let [blob (blobref->file root blobref)]
-      (if-not (has-content? blob)
-        (store-blob-files! blob status stream))))
+  (-store! [this blob]
+    (let [{:keys [id content]} blob
+          file (hashid->file root id)]
+      (when-not (.exists file)
+        (io/make-parents file)
+        (io/copy content file)
+        (.setWritable file false false))))
 
 
-  (-remove! [this blobref]
-    (let [blob (blobref->file root blobref)]
-      (when (.exists blob)
-        (.delete (blob->content-file blob))
-        (.delete (blob->status-file blob))
-        (.delete blob)))))
+  (-remove! [this id]
+    (let [file (hashid->file root id)]
+      (when (.exists file)
+        (.delete file)))))
 
 
 (defn file-store

@@ -1,27 +1,52 @@
 (ns vault.blob.core
   (:refer-clojure :exclude [contains? list])
   (:require
+    byte-streams
     [clojure.java.io :as io]
     [clojure.string :as string]
     (vault.blob
-      [digest :as digest]
-      [store :as blobs]))
+      [digest :as digest]))
   (:import
     java.io.ByteArrayOutputStream))
 
 
+;; BLOB STORAGE
+
+(defrecord BlobData
+  [id content])
+
+
+(defprotocol BlobStore
+  "Protocol for content storage providers, keyed by hash ids."
+
+  (-list [this opts]
+    "Enumerates the stored blobs with some filtering options.")
+
+  (-stat [this id]
+    "Returns the stored status metadata for a blob.")
+
+  (-open [this id]
+    "Returns a an open input stream of the stored data.")
+
+  (-store! [this blob]
+    "Persists blob content in the store.")
+
+  (-remove! [this id]
+    "Returns true if the store contained the blob."))
+
+
 (defn list
-  "Enumerates the stored blobs, returning a sequence of BlobRefs.
+  "Enumerates the stored blobs, returning a sequence of HashIDs.
   Options should be keyword/value pairs from the following:
-  * :start  - start enumerating blobrefs lexically following this string
-  * :prefix - only return blobrefs matching the given string
+  * :after  - start enumerating ids lexically following this string
+  * :prefix - only return ids matching the given string
   * :count  - limit the number of results returned"
   ([store]
-   (blobs/-list store nil))
+   (-list store nil))
   ([store opts]
-   (blobs/-list store opts))
+   (-list store opts))
   ([store opt-key opt-val & opts]
-   (blobs/-list store (apply hash-map opt-key opt-val opts))))
+   (-list store (apply hash-map opt-key opt-val opts))))
 
 
 (defn stat
@@ -30,37 +55,33 @@
   * :size         - blob size in bytes
   * :since        - date blob was added to store
   * :location     - a resource location for the blob"
-  [store blobref]
-  (blobs/-stat store blobref))
+  [store id]
+  (-stat store id))
 
 
 (defn contains?
   "Determines whether the store contains the referenced blob."
-  [store blobref]
-  (not (nil? (blobs/-stat store blobref))))
+  [store id]
+  (not (nil? (-stat store id))))
 
 
 (defn open
   "Opens a stream of byte content for the referenced blob, if it is stored."
   (^java.io.InputStream
-   [store blobref]
-   ; TODO: decoders
-   (blobs/-open store blobref)))
+   [store id]
+   (-open store id)))
 
 
 (defn store!
-  "Stores the given byte stream and returns the blob reference."
-  ([store stream]
-   (store! store [] stream))
-   ; TODO: this should serialize the content through some streams into an in-memory buffer.
-   ; Create a blobref with the digest value, then pass to the blob store.
-  ([store encoders stream]
-   (let [blob (blobs/load-blob stream)]
-     (blobs/-store! store blob))))
+  "Stores data from the given byte source and returns the blob's hash id."
+  ([store source]
+   (let [content (byte-streams/to-byte-array source)
+         id (digest/hash content)]
+     (-store! store (->BlobData id content)))))
 
 
 (defn remove!
   "Remove the referenced blob from this store. Returns true if the store
   contained the blob when this method was called."
   [store id]
-  (blobs/-remove! store id))
+  (-remove! store id))

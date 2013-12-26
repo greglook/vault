@@ -1,11 +1,12 @@
 (ns vault.blob.store.memory
   (:require
     [clojure.java.io :as io]
-    [vault.blob.store :as store :refer [BlobStore]])
+    (vault.blob
+      [core :as blob :refer [BlobStore]]
+      [digest :as digest]))
   (:import
     (java.io
-      ByteArrayInputStream
-      ByteArrayOutputStream)))
+      ByteArrayInputStream)))
 
 
 (defn- blob-status
@@ -20,32 +21,29 @@
   BlobStore
 
   (-list [this opts]
-    (store/select-refs opts (keys @store)))
+    (digest/select-ids opts (keys @store)))
 
 
-  (-stat [this blobref]
-    (when-let [blob (@store blobref)]
-      (blob-status blob)))
+  (-stat [this id]
+    (when-let [blob (@store id)]
+      {:size (count (:content blob))
+       :since (:since blob)}))
 
 
-  (-open [this blobref]
-    (when-let [blob (@store blobref)]
-      [(blob-status blob)
-       (ByteArrayInputStream. (:data blob))]))
+  (-open [this id]
+    (when-let [blob (@store id)]
+      (ByteArrayInputStream. (:content blob))))
 
 
-  (-store! [this blobref stream status]
-    (with-open [buffer (ByteArrayOutputStream.)]
-      (io/copy stream buffer)
-      (let [data (.toByteArray buffer)
-            blob {:data data, :status status}]
-        (swap! store assoc blobref blob)
-        blobref)))
+  (-store! [this blob]
+    (let [id (:id blob)]
+      (when-not (@store id)
+        (swap! store assoc id (assoc blob :since (java.util.Date.))))))
 
 
-  (-remove! [this blobref]
-    (when (contains? @store blobref)
-      (swap! store dissoc blobref)
+  (-remove! [this id]
+    (when (@store id)
+      (swap! store dissoc id)
       true)))
 
 
