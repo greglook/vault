@@ -10,6 +10,21 @@
     java.io.ByteArrayOutputStream))
 
 
+;; CONFIGURATION
+
+(def ^:dynamic *digest-algorithm*
+  "Default digest algorithm to use for content hashing."
+  :sha256)
+
+
+(defmacro with-algorithm
+  "Executes a body of expressions with the given default digest algorithm."
+  [algorithm & body]
+  `(binding [*digest-algorithm* ~algorithm]
+     ~@body))
+
+
+
 ;; BLOB STORAGE
 
 (defrecord BlobData
@@ -76,7 +91,7 @@
   "Stores data from the given byte source and returns the blob's hash id."
   ([store source]
    (let [content (byte-streams/to-byte-array source)
-         id (digest/hash content)]
+         id (digest/hash *digest-algorithm* content)]
      (-store! store (->BlobData id content))
      id)))
 

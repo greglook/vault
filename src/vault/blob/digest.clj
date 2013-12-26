@@ -7,7 +7,7 @@
     java.security.MessageDigest))
 
 
-;; CONSTANTS & CONFIGURATION
+;; DIGEST ALGORITHMS
 
 (def ^:private algorithm-names
   "Map of content hashing algorithms to system names."
@@ -19,18 +19,6 @@
 (def algorithms
   "Set of available content hashing algorithms."
   (set (keys algorithm-names)))
-
-
-(def ^:dynamic *algorithm*
-  "Default digest algorithm to use for content hashing."
-  :sha256)
-
-
-(defmacro with-algorithm
-  "Executes a body of expressions with the given default digest algorithm."
-  [algorithm & body]
-  `(binding [*algorithm* ~algorithm]
-     ~@body))
 
 
 (defn- check-algorithm
@@ -90,16 +78,6 @@
      (->HashID algo digest))))
 
 
-(defn prefix-id
-  "Adds an algorithm to a hash identifier if none is specified."
-  ([id]
-   (prefix-id *algorithm* id))
-  ([algo id]
-   (if-not (some (partial = \:) id)
-     (str (name algo) \: id)
-     id)))
-
-
 (defn select-ids
   "Selects hash identifiers from a lazy sequence based on input criteria.
   Available options:
@@ -120,19 +98,14 @@
     ids))
 
 
-
-;; CONTENT HASHING
-
 (defn hash
   "Calculates the hash digest of the given byte array. Returns a HashID."
-  ([content]
-   (hash *algorithm* content))
-  ([algo content]
-   (check-algorithm algo)
-   (let [algorithm (MessageDigest/getInstance (algorithm-names algo))
-         length (* 2 (.getDigestLength algorithm))
-         data (byte-streams/to-byte-array content)
-         digest (.digest algorithm data)
-         hex (-> (BigInteger. 1 digest) (.toString 16) .toLowerCase)
-         padding (apply str (repeat (- length (count hex)) "0"))]
-     (->HashID algo (str padding hex)))))
+  [algo content]
+  (check-algorithm algo)
+  (let [algorithm (MessageDigest/getInstance (algorithm-names algo))
+        length (* 2 (.getDigestLength algorithm))
+        data (byte-streams/to-byte-array content)
+        digest (.digest algorithm data)
+        hex (-> (BigInteger. 1 digest) (.toString 16) .toLowerCase)
+        padding (apply str (repeat (- length (count hex)) "0"))]
+    (->HashID algo (str padding hex))))

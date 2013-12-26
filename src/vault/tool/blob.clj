@@ -9,7 +9,7 @@
 
 ;; HELPER FUNCTIONS
 
-(defn- prefix-identifier
+(defn- prefix-id
   "Adds the given algorithm to a blobref if none is specified."
   [algorithm id]
   (if-not (some (partial = \:) id)
@@ -23,9 +23,7 @@
   ([store]
    (blob/list store))
   ([store prefix]
-   (->> prefix
-        (prefix-identifier digest/*algorithm*)
-        (blob/list store :prefix)))
+   (blob/list store :prefix (prefix-id *digest-algorithm* prefix)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))
 
