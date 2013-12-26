@@ -76,7 +76,7 @@
     (let [file (hashid->file (:root this) id)]
       (when (.exists file)
         {:size (.length file)
-         :since (java.util.Date. (.lastModified file))
+         :stored-at (java.util.Date. (.lastModified file))
          :location (.toURI file)})))
 
 

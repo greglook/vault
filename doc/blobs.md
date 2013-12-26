@@ -50,8 +50,8 @@ Status metadata is a simple map of information about the stored blob. The
 metadata present is largely implementation-specific, but may include some
 common information:
 - `:size` - the number of bytes stored for the blob
+- `:stored-at` - time the blob was added to the store
 - `:location` - an optional URI giving a path to the stored resource
-- `:created-at` - time the blob was added to the store
 
 An example status map from a blob stored in S3 might look like:
 

@@ -21,7 +21,7 @@
   (-stat [this id]
     (when-let [blob (@store id)]
       {:size (count (:content blob))
-       :since (:since blob)}))
+       :stored-at (:since blob)}))
 
 
   (-open [this id]
