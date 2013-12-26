@@ -64,9 +64,9 @@ could look like this:
 ```clojure
 {:data-size 123,
  :codecs [:compress/gzip :encrypt/pgp],
- :location #uri "s3://greglook-storage/vault/data/sha256/53e/0b9/f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180",
+ :location #uri "s3://user-storage/vault/data/sha256/53e/0b9/f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180",
+ :size 87,
  :stored-at #inst "2013-12-01T18:23:48Z",
- :stored-size 87,
  :mime/content-type "text/plain"}
 ```
 

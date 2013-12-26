@@ -1,5 +1,14 @@
-(ns vault.blob.store)
+(ns vault.blob.core
+  (:refer-clojure :exclude [contains? list])
+  (:require
+    [clojure.java.io :as io]
+    [clojure.string :as string]
+    [vault.blob.digest :as digest])
+  (:import
+    java.io.ByteArrayOutputStream))
 
+
+;; BLOB STORAGE
 
 (defprotocol BlobStore
   "Protocol for content storage providers, keyed by blobrefs."
@@ -7,35 +16,54 @@
   (-list [this opts]
     "Enumerates the stored blobs with some filtering options.")
 
-  (-stat [this blobref]
+  (-stat [this id]
     "Returns the stored status metadata for a blob.")
 
-  (-open [this blobref]
+  (-open [this id]
     "Returns a vector of the blob status and an open input stream of the
     stored data.")
 
-  (-store! [this blobref status stream]
-    "Stores the contents of the input stream for the blob, optionally with
-    associated status metadata.")
+  (-store! [this data]
+    "Stores blob data content, optionally with associated status metadata.")
 
-  (-remove! [this blobref]
+  (-remove! [this id]
     "Returns true if the store contained the blob."))
 
 
 
-;; UTILITY FUNCTIONS
+;; BLOB DATA
 
-(defn select-refs
-  "Selects blobrefs from a lazy sequence based on input criteria."
-  [opts blobrefs]
-  (let [{:keys [start prefix]} opts
-        blobrefs (if-let [start (or start prefix)]
-                   (drop-while #(pos? (compare start (str %))) blobrefs)
-                   blobrefs)
-        blobrefs (if prefix
-                   (take-while #(.startsWith (str %) prefix) blobrefs)
-                   blobrefs)
-        blobrefs (if-let [n (:count opts)]
-                   (take n blobrefs)
-                   blobrefs)]
-    blobrefs))
+(defrecord BlobData
+  [id status content])
+
+
+(defmulti load-bytes
+  "Loads data from the given source into a byte array."
+  type)
+
+
+(defmethod load-bytes String
+  [^String source]
+  (.getBytes source "UTF-8"))
+
+
+(defmethod load-bytes java.io.InputStream
+  [^java.io.InputStream source]
+  (with-open [buffer (ByteArrayOutputStream.)]
+    (io/copy source buffer)
+    (.toByteArray buffer)))
+
+
+(defmethod load-bytes java.io.File
+  [^java.io.File source]
+  (with-open [stream (java.io.FileInputStream. source)]
+    (load-bytes stream)))
+
+
+(defn load-blob
+  "Buffers a blob in memory and calculates the hash digest. Returns a map with
+  :ref and :content keys."
+  [source]
+  (let [content (load-bytes source)
+        blobref (apply ->BlobRef (digest/hash content))]
+    (->BlobData blobref {} content)))
