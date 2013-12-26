@@ -10,5 +10,4 @@
                  [mvxcvi/directive "0.1.0"]
                  [mvxcvi/puget "0.3.0-SNAPSHOT"]
                  [digest "1.4.3"]
-                 [fipp "0.4.1"]]
-  :main vault.tool)
+                 [fipp "0.4.1"]])
