@@ -60,18 +60,20 @@
 ;; FILE STORE
 
 (defrecord FileBlobStore
-  [^File root]
+  [^File root])
 
-  BlobStore
+
+(extend-protocol BlobStore
+  FileBlobStore
 
   (-list [this opts]
-    (->> (enumerate-files root)
-         (map (partial file->hashid root))
+    (->> (enumerate-files (:root this))
+         (map (partial file->hashid (:root this)))
          (digest/select-ids opts)))
 
 
   (-stat [this id]
-    (let [file (hashid->file root id)]
+    (let [file (hashid->file (:root this) id)]
       (when (.exists file)
         {:size (.length file)
          :since (java.util.Date. (.lastModified file))
@@ -79,14 +81,14 @@
 
 
   (-open [this id]
-    (let [file (hashid->file root id)]
+    (let [file (hashid->file (:root this) id)]
       (when (.exists file)
         (io/input-stream file))))
 
 
   (-store! [this blob]
     (let [{:keys [id content]} blob
-          file (hashid->file root id)]
+          file (hashid->file (:root this) id)]
       (when-not (.exists file)
         (io/make-parents file)
         (io/copy content file)
@@ -94,7 +96,7 @@
 
 
   (-remove! [this id]
-    (let [file (hashid->file root id)]
+    (let [file (hashid->file (:root this) id)]
       (when (.exists file)
         (.delete file)))))
 
@@ -102,4 +104,4 @@
 (defn file-store
   "Creates a new local file-based blob store."
   [root]
-  (FileBlobStore. (io/file root)))
+  (->FileBlobStore (io/file root)))

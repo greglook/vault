@@ -9,12 +9,6 @@
       ByteArrayInputStream)))
 
 
-(defn- blob-status
-  [blob]
-  (let [{:keys [status data]} blob]
-    (merge status {:size (count data)})))
-
-
 (defrecord MemoryBlobStore
   [store]
 
