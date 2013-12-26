@@ -1,6 +1,7 @@
 (ns vault.data.format
   "Functions to handle structured data formatted as EDN."
   (:require
+    [byte-streams :refer [bytes=]]
     [clojure.edn :as edn]
     [clojure.string :as string]
     [puget.data]
@@ -15,7 +16,8 @@
       PushbackReader
       Reader
       Writer)
-    java.nio.charset.Charset))
+    java.nio.charset.Charset
+    java.nio.ByteBuffer))
 
 
 ;; CONSTANTS & CONFIGURATION
@@ -32,15 +34,6 @@
 (def ^:private ^:const blob-width
   "Width of text to use in serialized blobs."
   100)
-
-
-
-;; HELPER FUNCTIONS
-
-(defn bytes=
-  "Tests whether two byte arrays are equivalent."
-  [a b]
-  (= (seq a) (seq b)))
 
 
 
@@ -90,36 +83,33 @@
 
 
 (defn- read-header!
-  "Reads the first few bytes from an input stream to determine whether it is a
-  data blob. The result is true if the header matches, and the stream is left
-  positioned after the header bytes. Otherwise, it is reset back to the start of
-  the stream."
-  [^InputStream input]
+  "Reads the first few bytes from a data source to determine whether it is a
+  data blob. The result is true if the header matches, otherwise false."
+  [source]
   (let [magic-bytes (.getBytes blob-header blob-charset)
         magic-len (count magic-bytes)
-        header-bytes (byte-array magic-len)]
-    (.mark input magic-len)
+        header-bytes (byte-array magic-len)
+        ^InputStream input (byte-streams/convert source InputStream)]
     (.read input header-bytes 0 magic-len)
-    (if (bytes= magic-bytes header-bytes)
-      true
-      (do
-        (.reset input)
-        false))))
+    (bytes= magic-bytes header-bytes)))
 
 
 (defn- read-primary-value!
   "Reads the primary EDN value from a data blob. If *primary-bytes* is
   thread-bound, it will be set to an array of bytes which form the value. This
   is accomplished by copying the read characters into a byte array as they are
-  consumed by the EDN parser. Returns a vector of the parsed value and the
-  array of bytes which form it."
+  consumed by the EDN parser. Returns a vector of the parsed value and a buffer
+  of the bytes which form it."
   [tag-readers reader]
   (let [copy-bytes (ByteArrayOutputStream.)
         copy-writer (OutputStreamWriter. copy-bytes blob-charset)
         reader (PushbackReader. (capturing-reader reader copy-writer))
         value (edn/read {:readers tag-readers} reader)]
     (.flush copy-writer)
-    (vector value (.toByteArray copy-bytes))))
+    (vector value (-> copy-bytes
+                      .toByteArray
+                      ByteBuffer/wrap
+                      .asReadOnlyBuffer))))
 
 
 (defn- read-secondary-values!
@@ -136,25 +126,28 @@
 
 
 (defn read-data
-  "Reads the given input stream and attempts to parse it as an EDN data
-  structure. If the data is not EDN, it returns an input stream of the blob
+  "Reads the given data sourceand attempts to parse it as an EDN data
+  structure. If the data is not EDN, it returns a buffer of the blob
   contents. Otherwise, it returns a sequence of the parsed values.
 
   The returned sequence will have attached metadata giving the bytes which
   comprise the first value in the sequence."
-  ([^InputStream input]
-   (read-data nil input))
-  ([tag-readers
-    ^InputStream input]
-   ; TODO: ensure `mark` is supported
-   (if (read-header! input)
-     (let [reader (InputStreamReader. input blob-charset)
-           tag-readers (merge puget.data/data-readers tag-readers)
-           [primary-value primary-bytes] (read-primary-value! tag-readers reader)
-           secondary-values (read-secondary-values! tag-readers reader)
-           edn-seq (cons primary-value secondary-values)]
-       (vary-meta edn-seq assoc ::primary-bytes primary-bytes))
-     input)))
+  ([source]
+   (read-data nil source))
+  ([tag-readers source]
+   (let [data (byte-streams/convert source ByteBuffer)]
+    (if (read-header! data)
+     (let [^InputStream input (byte-streams/convert data InputStream)
+           reader (InputStreamReader. input blob-charset)
+           tag-readers (merge puget.data/data-readers
+                              {'vault/data identity}
+                              tag-readers)]
+       (.skip reader (count blob-header))
+       (let [[primary-value primary-bytes] (read-primary-value! tag-readers reader)
+             secondary-values (read-secondary-values! tag-readers reader)
+             edn-seq (cons primary-value secondary-values)]
+         (vary-meta edn-seq assoc ::primary-bytes primary-bytes)))
+     data))))
 
 
 (defn primary-bytes

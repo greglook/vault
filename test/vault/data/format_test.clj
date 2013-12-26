@@ -1,5 +1,6 @@
 (ns vault.data.format-test
   (:require
+    [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
     [vault.data.format :as format])
   (:import
@@ -10,15 +11,6 @@
   "Builds a string representing a data blob from the given sequence of values."
   [& values]
   (apply str "#vault/data\n" (interpose "\n\n" values)))
-
-
-(defn read-data-string
-  "Reads data from bytes from a string."
-  [string]
-  (-> string
-      (.getBytes format/blob-charset)
-      ByteArrayInputStream.
-      format/read-data))
 
 
 
@@ -39,37 +31,35 @@
 
 (deftest read-non-data-blob
   (let [content "foobarbaz not a data blob"
-        result (read-data-string content)]
-    (is (instance? java.io.InputStream result))
-    (is (= content (slurp result)))))
+        result (format/read-data content)]
+    (is (= content (byte-streams/convert result String)))))
 
 
 (deftest read-data-blob
   (let [content (data-fixture "[:foo]")
-        result (read-data-string content)]
+        result (format/read-data content)]
     (is (= '([:foo]) result))))
 
 
 (deftest read-custom-tag
   (let [content (data-fixture "{:foo #my/tag :bar}")
-        input (ByteArrayInputStream. (.getBytes content format/blob-charset))
-        result (format/read-data {'my/tag str} input)]
+        result (format/read-data {'my/tag str} content)]
     (is (= '({:foo ":bar"}) result))))
 
 
 (deftest read-primary-bytes
   (let [primary-content "[1 \\2 :three]"
         content (data-fixture primary-content)
-        result (read-data-string content)]
+        result (format/read-data content)]
     (is (= '([1 \2 :three]) result))
     (is (not (nil? (meta result))))
-    (is (format/bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
+    (is (bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
 
 
 (deftest read-primary-bytes-with-extra-values
   (let [primary-content "#{:bar \"baz\"}"
         content (data-fixture primary-content ":frobble")
-        result (read-data-string content)]
+        result (format/read-data content)]
     (is (= '(#{:bar "baz"} :frobble) result))
     (is (not (nil? (meta result))))
-    (is (format/bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
+    (is (bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
