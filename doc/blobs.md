@@ -13,14 +13,15 @@ interesting properties:
   example, a file's contents can be referenced by different versions of
   metadata without duplicating the file data.
 
-## Referring to Blobs
+## Hash Identifiers
 
-Blobs are referenced by URN-like strings which specify the content's _digest_.
-This can be represented a few different ways, with varying levels of verbosity.
-The most succinct is to just prepend the shortened code for the algorithm which
-produced the hash. Other components could include the leading 'urn' scheme, and
-a fully-specified version could use the 'hash' URN namespace. For example, the
-SHA-256 algorithm hashes the string "foobarbaz" to the following digest:
+Blobs are referenced by URN-like strings which specify the _cryptographic
+digest_ of the blob's contents. This can be represented a few different ways,
+with varying levels of verbosity.  The most succinct is to just prepend the
+shortened code for the algorithm which produced the hash. Other components could
+include the leading 'urn' scheme, and a fully-specified version could use the
+'hash' URN namespace. For example, the SHA-256 algorithm hashes the string
+"foobarbaz" to the following digest:
 
 <pre>
 sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
@@ -35,17 +36,30 @@ the identifier can add the 'urn' components as desired.
 
 ## Storage Interface
 
-The interface to a blob store is relatively simple:
-- `list`: enumerate the stored blobs
-- `stat`: get metadata about a stored blob
-- `open`: return the bytes comprising the blob contents
-- `store!`: store byte content and return the blobref
-- `remove!`: drop a blob from the store
+Blobs are stored as immutable byte sequences with some optional associated
+_status_ metadata. The only way to reference a blob is by its hash identifier.
 
-The interface should be fairly self explanatory. The `stat` command is mostly
-useful as a quick presence check - if information is returned, the store has
-the blob in question. Other than blob size, `stat` could also return some
-other info, such as timestamps, content type, location, etc.
+The blob storage interface is straightforward:
+- `list` - enumerate the stored blobs
+- `stat` - get metadata about a stored blob
+- `open` - return a stream of bytes stored for a blob
+- `store!` - store a stream of bytes for a blob
+- `remove!` - drop a blob from the store
+
+Status metadata is a simple map of information about the stored blob. The
+metadata present is largely implementation-specific, but may include some
+common information:
+- `:size` - the number of bytes stored for the blob
+- `:location` - an optional URI giving a path to the stored resource
+- `:created-at` - time the blob was added to the store
+
+An example status map from a blob stored in S3 might look like:
+
+```clojure
+{:created-at #inst "2013-12-01T18:23:48Z",
+ :location #uri "s3://user-storage/vault/data/sha256/53e/0b9/f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180",
+ :size 123}
+```
 
 ## Implementations
 
@@ -54,11 +68,18 @@ implementation. Here's some ideas:
 - `memory`: transient in-memory blob storage
 - `file`: local filesystem blob storage
 - `sftp`: store blobs on a remote host accessible via ssh
-- `s3`: persist blobs in cloud storage service
+- `s3`: persist blobs in Amazon's cloud storage service
 
-Blob stores can also be composed with intermediate _encoding_ layers. Some ideas:
-- `compress`: compress blobs to save space (may not be effective on all files)
-- `encrypt`: encrypt blobs (perhaps stored in untrusted third-party services)
-- `shard`: distribute blobs across different stores (why would you do this?)
-- `replicate`: store blobs in multiple locations (should this just be a backup/sync job?)
+'Meta-stores' can also wrap multiple blob stores to give more complex storage
+systems:
+- `replicate`: store blobs in multiple locations
 - `cache`: keep a fixed size of local blobs, deferring to another authoritative store
+
+Blob stores can also be composed with _filter_ layers. Some ideas:
+- `compress`: compress blobs to save space
+- `encrypt`: encrypt blobs, perhaps stored in untrusted third-party services
+One issue with transforming filters like this is that the bytes stored in a
+location no longer match the hash identifier they are stored under. This may not
+be a problem as long as you ensure correctness at some higher level; for
+example, you could run a file store on top of an encrypted volume. Alternately,
+you can use two stores with one containing the metadata for the other.

@@ -1,12 +1,15 @@
 (ns vault.tool.blob
-  (:require [clojure.java.io :as io]
-            [puget.printer :refer [cprint]]
-            [vault.blob :as blob]))
+  (:require
+    [clojure.java.io :as io]
+    [puget.printer :refer [cprint]]
+    (vault.blob
+      [core :as blob]
+      [digest :as digest])))
 
 
 ;; HELPER FUNCTIONS
 
-(defn- prefix-identifier
+(defn- prefix-id
   "Adds the given algorithm to a blobref if none is specified."
   [algorithm id]
   (if-not (some (partial = \:) id)
@@ -20,9 +23,7 @@
   ([store]
    (blob/list store))
   ([store prefix]
-   (->> prefix
-        (prefix-identifier blob/*digest-algorithm*)
-        (blob/list store :prefix)))
+   (blob/list store :prefix (prefix-id blob/*digest-algorithm* prefix)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))
 
@@ -33,7 +34,7 @@
 (defn list-blobs
   [opts args]
   (let [store (:store opts)
-        controls (select-keys opts [:count :prefix :start])
+        controls (select-keys opts [:after :prefix :limit])
         blobs (blob/list store controls)]
     (doseq [blobref blobs]
       (println (str blobref)))))

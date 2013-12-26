@@ -1,10 +1,11 @@
 (ns vault.tool.config
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [puget.printer :refer [cprint]]
-            (vault.store
-              [file :refer [file-store]]
-              [memory :refer [memory-store]])))
+  (:require
+    [clojure.edn :as edn]
+    [clojure.java.io :as io]
+    [puget.printer :refer [cprint]]
+    (vault.blob.store
+      [file :refer [file-store]]
+      [memory :refer [memory-store]])))
 
 
 ;; CONFIGURATION FILE LOADING
