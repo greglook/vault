@@ -1,7 +1,9 @@
 (ns vault.blob.core-test
   (:require
     [clojure.test :refer :all]
-    [vault.blob.core :as blob :refer [BlobStore]]))
+    [vault.blob.core :as blob :refer [BlobStore]])
+  (:import
+    vault.blob.core.HashID))
 
 
 (deftest list-wrapper
@@ -29,7 +31,7 @@
 
 (deftest store!-wrapper
   (let [store (reify BlobStore (-store! [this blob] (vector :store (str (:id blob)))))]
-    (is (instance? vault.blob.digest.HashID (blob/store! store "foobarbaz")))))
+    (is (instance? HashID (blob/store! store "foobarbaz")))))
 
 
 (deftest remove!-wrapper

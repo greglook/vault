@@ -2,9 +2,7 @@
   (:require
     [clojure.java.io :as io]
     [puget.printer :refer [cprint]]
-    (vault.blob
-      [core :as blob]
-      [digest :as digest])))
+    [vault.blob.core :as blob]))
 
 
 ;; HELPER FUNCTIONS

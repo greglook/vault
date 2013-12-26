@@ -1,9 +1,7 @@
 (ns vault.blob.store.memory
   (:require
     [clojure.java.io :as io]
-    (vault.blob
-      [core :as blob :refer [BlobStore]]
-      [digest :as digest]))
+    [vault.blob.core :as blob :refer [BlobStore]])
   (:import
     (java.io
       ByteArrayInputStream)))
@@ -15,7 +13,7 @@
   BlobStore
 
   (-list [this opts]
-    (digest/select-ids opts (keys @store)))
+    (blob/select-ids opts (keys @store)))
 
 
   (-stat [this id]
