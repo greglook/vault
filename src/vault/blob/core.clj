@@ -40,7 +40,7 @@
   Options should be keyword/value pairs from the following:
   * :after  - start enumerating ids lexically following this string
   * :prefix - only return ids matching the given string
-  * :count  - limit the number of results returned"
+  * :limit  - limit the number of results returned"
   ([store]
    (-list store nil))
   ([store opts]

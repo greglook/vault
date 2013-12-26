@@ -1,6 +1,7 @@
 (ns vault.blob.digest
   (:refer-clojure :exclude [hash])
   (:require
+    byte-streams
     [clojure.string :as string])
   (:import
     java.security.MessageDigest))
@@ -100,7 +101,11 @@
 
 
 (defn select-ids
-  "Selects hash identifiers from a lazy sequence based on input criteria."
+  "Selects hash identifiers from a lazy sequence based on input criteria.
+  Available options:
+  * :after  - start enumerating ids lexically following this string
+  * :prefix - only return ids matching the given string
+  * :limit  - limit the number of results returned"
   [opts ids]
   (let [{:keys [after prefix]} opts
         ids (if-let [after (or after prefix)]
@@ -109,7 +114,7 @@
         ids (if prefix
               (take-while #(.startsWith (str %) prefix) ids)
               ids)
-        ids (if-let [n (:count opts)]
+        ids (if-let [n (:limit opts)]
               (take n ids)
               ids)]
     ids))
@@ -120,12 +125,13 @@
 
 (defn hash
   "Calculates the hash digest of the given byte array. Returns a HashID."
-  ([data]
-   (hash *algorithm* data))
-  ([algo data]
+  ([content]
+   (hash *algorithm* content))
+  ([algo content]
    (check-algorithm algo)
    (let [algorithm (MessageDigest/getInstance (algorithm-names algo))
          length (* 2 (.getDigestLength algorithm))
+         data (byte-streams/to-byte-array content)
          digest (.digest algorithm data)
          hex (-> (BigInteger. 1 digest) (.toString 16) .toLowerCase)
          padding (apply str (repeat (- length (count hex)) "0"))]

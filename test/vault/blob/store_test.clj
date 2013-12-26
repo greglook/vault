@@ -3,67 +3,11 @@
     [clojure.java.io :as io]
     [clojure.test :refer :all]
     (vault.blob
-      [core :as blob]
-      [store :as blobs :refer [BlobStore]])
+      [core :as blob])
     (vault.blob.store
       [memory :refer [memory-store]]
       [file :refer [file-store]])))
 
-
-;; UTILITY FUNCTION TESTS
-
-(deftest blobref-selection
-  (let [a (blob/ref :md5 "37b51d194a7513e45b56f6524f2d51f2")
-        b (blob/ref :md5 "73fcffa4b7f6bb68e44cf984c85f6e88")
-        c (blob/ref :md5 "73fe285cedef654fccc4a4d818db4cc2")
-        d (blob/ref :md5 "acbd18db4cc2f85cedef654fccc4a4d8")
-        e (blob/ref :md5 "c3c23db5285662ef7172373df0003206")
-        blobrefs [a b c d e]]
-    (are [brs opts] (= brs (blobs/select-refs opts blobrefs))
-         blobrefs {}
-         [c d e]  {:start "md5:73fd2"}
-         [b c]    {:prefix "md5:73"}
-         [a b]    {:count 2})))
-
-
-
-;; STORAGE INTERFACE TESTS
-
-(deftest list-wrapper
-  (let [store (reify BlobStore (-list [this opts] (vector :list opts)))]
-    (is (= [:list nil] (blob/list store)))
-    (is (= [:list {:foo "bar" :baz 3}] (blob/list store :foo "bar" :baz 3)))))
-
-
-(deftest stat-wrapper
-  (let [store (reify BlobStore (-stat [this blobref] (vector :stat blobref)))]
-    (is (= [:stat :blobref] (blob/stat store :blobref)))))
-
-
-(deftest contains?-wrapper
-  (let [store (reify BlobStore (-stat [this blobref] nil))]
-    (is (false? (blob/contains? store :blobref))))
-  (let [store (reify BlobStore (-stat [this blobref] {:size 1}))]
-    (is (true? (blob/contains? store :blobref)))))
-
-
-(deftest open-wrapper
-  (let [store (reify BlobStore (-open [this blobref] (vector :open blobref)))]
-    (is (= [:open :blobref] (blob/open store :blobref)))))
-
-
-(deftest store!-wrapper
-  (let [store (reify BlobStore (-store! [this blobref status stream] (vector :store stream)))]
-    (is (= [:store :content] (blob/store! store :content)))))
-
-
-(deftest remove!-wrapper
-  (let [store (reify BlobStore (-remove! [this blobref] (vector :remove blobref)))]
-    (is (= [:remove :blobref] (blob/remove! store :blobref)))))
-
-
-
-;; INTEGRATION TESTS
 
 (defn- store-test-blobs!
   "Stores some test blobs in the given blob store and returns a map of the

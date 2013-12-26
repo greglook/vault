@@ -1,50 +1,38 @@
 (ns vault.blob.core-test
   (:require
     [clojure.test :refer :all]
-    [vault.blob.core :as blob]))
+    [vault.blob.core :as blob :refer [BlobStore]]))
 
 
-(def blob-content
-  "foobarbaz")
-
-(def blob-ref
-  (blob/->BlobRef :sha256 "97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"))
-
-(def blob-id
-  "sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d")
+(deftest list-wrapper
+  (let [store (reify BlobStore (-list [this opts] (vector :list opts)))]
+    (is (= [:list nil] (blob/list store)))
+    (is (= [:list {:foo "bar" :baz 3}] (blob/list store :foo "bar" :baz 3)))))
 
 
-(deftest blobref-comparison
-  (let [br1 (blob/ref :sha1 "33655e63cafac69a5287e96f71457bbfa6d7deec")
-        br2 (blob/ref :sha256 "14ea6507645c2ba7e973ea87444bf0470fc2e1f4b64f4f692f736acf9a4dec8a")
-        br3 (blob/ref :sha256 "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9")]
-    (testing "comparison"
-      (is (= 0 (compare br1 br1)) "is reflexive")
-      (is (= 0 (compare br2 (blob/ref (:algorithm br2) (:digest br2))))
-          "gives zero for equal blobrefs")
-      (testing "between algorithms"
-        (is (> 0 (compare br1 br2)))
-        (is (< 0 (compare br2 br1))))
-      (testing "between digests"
-        (is (> 0 (compare br2 br3)))
-        (is (< 0 (compare br3 br2)))))))
+(deftest stat-wrapper
+  (let [store (reify BlobStore (-stat [this id] (vector :stat id)))]
+    (is (= [:stat :id] (blob/stat store :id)))))
 
 
-(deftest blobref-strings
-  (testing "string representation"
-    (is (= (str blob-ref) blob-id))))
+(deftest contains?-wrapper
+  (let [store (reify BlobStore (-stat [this id] nil))]
+    (is (false? (blob/contains? store :id))))
+  (let [store (reify BlobStore (-stat [this id] {:size 1}))]
+    (is (true? (blob/contains? store :id)))))
 
 
-(deftest identifier-parsing
-  (testing "parse-identifier"
-    (are [addr] (= (blob/ref addr) blob-ref)
-         (str "urn:hash:" blob-id)
-         (str "urn:" blob-id)
-         blob-id)))
+(deftest open-wrapper
+  (let [store (reify BlobStore (-open [this id] (vector :open id)))]
+    (is (= [:open :id] (blob/open store :id)))))
 
 
-(deftest blobref-coercion
-  (testing "blob/ref"
-    (is (identical? (blob/ref blob-ref) blob-ref))
-    (is (= (blob/ref blob-id) blob-ref))
-    (is (= (blob/ref :sha256 (:digest blob-ref)) blob-ref))))
+(deftest store!-wrapper
+  (let [store (reify BlobStore (-store! [this blob] (vector :store (str (:id blob)))))]
+    (is (= [:store "sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"]
+           (blob/store! store "foobarbaz")))))
+
+
+(deftest remove!-wrapper
+  (let [store (reify BlobStore (-remove! [this id] (vector :remove id)))]
+    (is (= [:remove :id] (blob/remove! store :id)))))
