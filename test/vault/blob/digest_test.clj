@@ -52,7 +52,8 @@
 
 (deftest content-hashing
   (testing "digest/hash"
-    (is (= blob-id (digest/hash :sha256 blob-content)))))
+    (is (= blob-id (digest/hash :sha256 blob-content)))
+    (is (thrown? IllegalArgumentException (digest/hash :foo blob-content)))))
 
 
 (deftest hash-id-selection
