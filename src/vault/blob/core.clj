@@ -2,9 +2,9 @@
   (:refer-clojure :exclude [contains? hash list])
   (:require
     byte-streams
-    [clojure.java.io :as io]
     [clojure.string :as string])
   (:import
+    java.nio.ByteBuffer
     java.security.MessageDigest))
 
 
@@ -111,25 +111,45 @@
     ids))
 
 
+(defn- hex-signature
+  "Formats a sequence of bytes into a hexadecimal string."
+  [^bytes digest]
+  (let [length (* 2 (count digest))
+        hex (-> (BigInteger. 1 digest)
+                (.toString 16)
+                (.toLowerCase))
+        padding (apply str (repeat (- length (count hex)) "0"))]
+    (str padding hex)))
+
+
 (defn hash
-  "Calculates the hash digest of the given byte array. Returns a HashID."
+  "Calculates the hash digest of the given data source. Returns a HashID."
   [algo content]
   (check-algorithm algo)
   (let [algorithm (MessageDigest/getInstance (algorithm-names algo))
-        length (* 2 (.getDigestLength algorithm))
-        data (byte-streams/to-byte-array content)
-        digest (.digest algorithm data)
-        hex (-> (BigInteger. 1 digest) (.toString 16) .toLowerCase)
-        padding (apply str (repeat (- length (count hex)) "0"))]
-    (->HashID algo (str padding hex))))
+        data-seq (map byte-streams/to-byte-array
+                      (byte-streams/to-byte-buffers content))]
+    (doseq [^bytes data data-seq]
+      (.update algorithm data))
+    (->HashID algo (hex-signature (.digest algorithm)))))
 
 
 
-;; BLOB STORAGE
+;; BLOB DATA
 
 (defrecord BlobData
   [id content])
 
+
+(defn- buffer-data
+  ^ByteBuffer
+  [source]
+  (let [^ByteBuffer buffer (byte-streams/convert source ByteBuffer)]
+    (.asReadOnlyBuffer buffer)))
+
+
+
+;; STORAGE INTERFACE
 
 (defprotocol BlobStore
   "Protocol for content storage providers, keyed by hash ids."
@@ -190,7 +210,7 @@
 (defn store!
   "Stores data from the given byte source and returns the blob's hash id."
   [store source]
-  (let [content (byte-streams/to-byte-array source)
+  (let [content (buffer-data source)
         id (hash *digest-algorithm* content)]
     (-store! store (->BlobData id content))
     id))

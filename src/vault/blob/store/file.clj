@@ -1,5 +1,6 @@
 (ns vault.blob.store.file
   (:require
+    [byte-streams]
     [clojure.java.io :as io]
     [clojure.string :as string]
     [vault.blob.core :as blob :refer [BlobStore]])
@@ -82,7 +83,7 @@
   (-open [this id]
     (let [file (hashid->file (:root this) id)]
       (when (.exists file)
-        (io/input-stream file))))
+        (byte-streams/to-input-stream file))))
 
 
   (-store! [this blob]
@@ -90,7 +91,7 @@
           file (hashid->file (:root this) id)]
       (when-not (.exists file)
         (io/make-parents file)
-        (io/copy content file)
+        (byte-streams/transfer content file)
         (.setWritable file false false))))
 
 

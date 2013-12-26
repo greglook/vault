@@ -1,10 +1,8 @@
 (ns vault.blob.store.memory
   (:require
+    [byte-streams]
     [clojure.java.io :as io]
-    [vault.blob.core :as blob :refer [BlobStore]])
-  (:import
-    (java.io
-      ByteArrayInputStream)))
+    [vault.blob.core :as blob :refer [BlobStore]]))
 
 
 (defrecord MemoryBlobStore
@@ -18,13 +16,13 @@
 
   (-stat [this id]
     (when-let [blob (@store id)]
-      {:size (count (:content blob))
+      {:size (count (byte-streams/to-byte-array (:content blob)))
        :stored-at (:since blob)}))
 
 
   (-open [this id]
     (when-let [blob (@store id)]
-      (ByteArrayInputStream. (:content blob))))
+      (byte-streams/to-input-stream (:content blob))))
 
 
   (-store! [this blob]
