@@ -1,4 +1,4 @@
-(ns vault.tool
+(ns vault.tool.main
   (:require
     [mvxcvi.directive :refer [command execute]]
     [puget.printer :refer [pprint cprint]]
