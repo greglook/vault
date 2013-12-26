@@ -29,8 +29,7 @@
 
 (deftest store!-wrapper
   (let [store (reify BlobStore (-store! [this blob] (vector :store (str (:id blob)))))]
-    (is (= [:store "sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"]
-           (blob/store! store "foobarbaz")))))
+    (is (instance? vault.blob.digest.HashID (blob/store! store "foobarbaz")))))
 
 
 (deftest remove!-wrapper

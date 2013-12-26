@@ -7,8 +7,7 @@
       [digest :as digest]))
   (:import
     (java.io
-      File
-      FileInputStream)))
+      File)))
 
 
 ;; HELPER FUNCTIONS

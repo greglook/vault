@@ -77,7 +77,8 @@
   ([store source]
    (let [content (byte-streams/to-byte-array source)
          id (digest/hash content)]
-     (-store! store (->BlobData id content)))))
+     (-store! store (->BlobData id content))
+     id)))
 
 
 (defn remove!

@@ -11,7 +11,7 @@
 
 (defn- store-test-blobs!
   "Stores some test blobs in the given blob store and returns a map of the
-  blobrefs to the original string values."
+  ids to the original string values."
   [store]
   (->> ["foo" "bar" "baz" "foobar" "barbaz"]
        (map (juxt (partial blob/store! store) identity))
@@ -20,12 +20,12 @@
 
 (defn- test-stored-blob
   "Determines whether the store contains the data for the given identifier"
-  [store blobref data]
-  (let [blob-info (blob/stat store blobref)
-        stored-content (with-open [stream (blob/open store blobref)]
+  [store id data]
+  (let [status (blob/stat store id)
+        stored-content (with-open [stream (blob/open store id)]
                          (slurp stream))]
-    (is (and blob-info stored-content) "returns info and content")
-    (is (= (:size blob-info) (count (.getBytes stored-content))) "stats contain size info")
+    (is (and status stored-content) "returns info and content")
+    (is (= (:size status) (count (.getBytes stored-content))) "stats contain size info")
     (is (= data stored-content) "content matches data")))
 
 
@@ -36,11 +36,11 @@
   (testing (str (-> store class .getSimpleName))
     (let [blobs (store-test-blobs! store)]
       (is (= (keys blobs) (blob/list store {}))
-          "enumerates all blobrefs in sorted order")
-      (doseq [[blobref data] blobs]
-        (testing (str "for blob " blobref)
-          (test-stored-blob store blobref data)
-          (is (blob/remove! store blobref) "remove returns true")))
+          "enumerates all ids in sorted order")
+      (doseq [[id data] blobs]
+        (testing (str "for blob " id)
+          (test-stored-blob store id data)
+          (is (blob/remove! store id) "remove returns true")))
       (is (empty? (blob/list store)) "ends empty")
       (is (not (blob/remove! store (first (keys blobs))))
           "gives false when removing a nonexistent blob"))))
