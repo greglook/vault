@@ -62,7 +62,8 @@
 (defrecord FileBlobStore
   [^File root])
 
-
+; Don't know why it has to be done this way, but if it's defined inline then
+; cloverage breaks.
 (extend-protocol BlobStore
   FileBlobStore
 
@@ -104,4 +105,4 @@
 (defn file-store
   "Creates a new local file-based blob store."
   [root]
-  (->FileBlobStore (io/file root)))
+  (FileBlobStore. (io/file root)))
