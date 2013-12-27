@@ -14,6 +14,12 @@
   "sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d")
 
 
+(deftest blob-digest-algorithm
+  (is (not (nil? blob/*digest-algorithm*)))
+  (blob/with-algorithm :sha1
+    (is (= :sha1 blob/*digest-algorithm*))))
+
+
 (deftest hash-id-comparison
   (let [b1 (blob/hash-id :sha1 "33655e63cafac69a5287e96f71457bbfa6d7deec")
         b2 (blob/hash-id :sha256 "14ea6507645c2ba7e973ea87444bf0470fc2e1f4b64f4f692f736acf9a4dec8a")
