@@ -1,6 +1,5 @@
 (ns vault.blob.store.memory
   (:require
-    [byte-streams]
     [clojure.java.io :as io]
     [vault.blob.core :as blob :refer [BlobStore]]))
 
@@ -16,19 +15,19 @@
 
   (stat [this id]
     (when-let [blob (@store id)]
-      {:size (.limit ^java.nio.ByteBuffer (:content blob))
-       :stored-at (:since blob)}))
+      {:size (count (:content blob))
+       :stored-at (:stored-at blob)}))
 
 
   (open [this id]
     (when-let [blob (@store id)]
-      (byte-streams/to-input-stream (:content blob))))
+      (io/input-stream (:content blob))))
 
 
   (store! [this blob]
     (let [id (:id blob)]
       (when-not (@store id)
-        (swap! store assoc id (assoc blob :since (java.util.Date.))))))
+        (swap! store assoc id (assoc blob :stored-at (java.util.Date.))))))
 
 
   (delete! [this id]

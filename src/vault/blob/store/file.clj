@@ -100,7 +100,7 @@
       (when-not (.exists file)
         (io/make-parents file)
         ; For some reason, io/copy is much faster than byte-streams/transfer here.
-        (io/copy (byte-streams/to-input-stream content) file)
+        (io/copy content file)
         (.setWritable file false false))))
 
 

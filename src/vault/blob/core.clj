@@ -69,8 +69,8 @@
 
 
 (defn parse-id
-  "Parses a hash identifier string into a blobref. Accepts either a hash URN
-  or the shorter \"algo:digest\" format."
+  "Parses a hash identifier string into a hash identifier. Accepts either a
+  hash URN or the shorter \"algo:digest\" format."
   [id]
   (let [id (if (re-find #"^urn:" id) (subs id 4) id)
         id (if (re-find #"^hash:" id) (subs id 5) id)
@@ -135,20 +135,6 @@
 
 
 
-;; BLOB DATA
-
-(defrecord BlobData
-  [id content])
-
-
-(defn- buffer-data
-  ^ByteBuffer
-  [source]
-  (let [^ByteBuffer buffer (byte-streams/convert source ByteBuffer)]
-    (.asReadOnlyBuffer buffer)))
-
-
-
 ;; STORAGE INTERFACE
 
 (defprotocol BlobStore
@@ -184,6 +170,13 @@
     "Completely removes all stored blob data."))
 
 
+(defn blob-data
+  "Builds a blob data map."
+  [id content]
+  {:id id
+   :content content})
+
+
 (defn list
   "Enumerates the stored blobs, returning a sequence of HashIDs.
   Options should be keyword/value pairs from the following:
@@ -205,25 +198,25 @@
 
 
 (defn get
-  "Retrieves data for the given blob and returns a BlobData with buffered
+  "Retrieves data for the given blob and returns blob data with buffered
   content. This function verifies that the id matches the actual digest of the
   data returned."
   [store id]
   (with-open [stream (open store id)]
     (when stream
-      (let [content (buffer-data stream)
+      (let [content (byte-streams/to-byte-array stream)
             data-id (hash (:algorithm id) content)]
         (when-not (= id data-id)
           (throw (RuntimeException.
                    (str "Store " store " returned invalid data: requested "
                         id " but got " data-id))))
-        (BlobData. id content)))))
+        (blob-data id content)))))
 
 
 (defn put!
   "Stores data from the given byte source and returns the blob's hash id."
   [store source]
-  (let [content (buffer-data source)
+  (let [content (byte-streams/to-byte-array source)
         id (hash *digest-algorithm* content)]
-    (store! store (->BlobData id content))
+    (store! store (blob-data id content))
     id))
