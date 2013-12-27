@@ -16,7 +16,7 @@
 
   (-stat [this id]
     (when-let [blob (@store id)]
-      {:size (count (byte-streams/to-byte-array (:content blob)))
+      {:size (.limit ^java.nio.ByteBuffer (:content blob))
        :stored-at (:since blob)}))
 
 

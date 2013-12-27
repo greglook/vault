@@ -91,7 +91,8 @@
           file (hashid->file (:root this) id)]
       (when-not (.exists file)
         (io/make-parents file)
-        (byte-streams/transfer content file)
+        ; For some reason, io/copy is much faster than byte-streams/transfer here.
+        (io/copy (byte-streams/to-input-stream content) file)
         (.setWritable file false false))))
 
 
