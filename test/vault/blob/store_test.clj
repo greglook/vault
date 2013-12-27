@@ -14,7 +14,7 @@
   ids to the original string values."
   [store]
   (->> ["foo" "bar" "baz" "foobar" "barbaz"]
-       (map (juxt (partial blob/store! store) identity))
+       (map (juxt (partial blob/put! store) identity))
        (into (sorted-map))))
 
 
@@ -34,11 +34,11 @@
   [store id content]
   (is (blob/contains? store id))
   (let [status     (blob/stat store id)
-        new-id     (blob/store! store content)
+        new-id     (blob/put! store content)
         new-status (blob/stat store id)]
     (is (= id new-id))
-    (is (= (:created-at status)
-           (:created-at new-status)))))
+    (is (= (:stored-at status)
+           (:stored-at new-status)))))
 
 
 (defn test-blob-store
@@ -54,19 +54,22 @@
       (let [[id content] (first (seq blobs))]
         (test-restore-blob store id content))
       (doseq [id (keys blobs)]
-        (is (blob/remove! store id) "remove returns true"))
+        (is (blob/delete! store id) "delete returns true"))
       (is (empty? (blob/list store)) "ends empty")
-      (is (not (blob/remove! store (first (keys blobs))))
+      (is (not (blob/delete! store (first (keys blobs))))
           "gives false when removing a nonexistent blob"))))
 
 
 (deftest memory-blob-store
-  (test-blob-store (memory-store)))
+  (let [store (memory-store)]
+    (test-blob-store (memory-store))
+    (blob/destroy!! store)))
 
 
 (deftest file-blob-store
   (let [tmpdir (io/file "target" "test" "tmp"
                         (str "file-blob-store."
-                             (System/currentTimeMillis)))]
-    (.mkdirs tmpdir)
-    (test-blob-store (file-store tmpdir))))
+                             (System/currentTimeMillis)))
+        store (file-store tmpdir)]
+    (test-blob-store (file-store tmpdir))
+    (blob/destroy!! store)))
