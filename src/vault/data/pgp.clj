@@ -57,7 +57,7 @@
 
 
 
-;; KEY FUNCTIONS
+;; KEY UTILITIES
 
 (defn key-id
   "Returns the PGP key identifier associated with the argument."
@@ -91,16 +91,6 @@
                        (str "Don't know how to get public key from: " k)))))
 
 
-(defn load-secret-key
-  "Loads a secret key from the given keyring file."
-  [keyring-file id]
-  (with-open [input (PGPUtil/getDecoderStream
-                      (io/input-stream keyring-file))]
-    (.getSecretKey
-      (PGPSecretKeyRingCollection. input)
-      (key-id id))))
-
-
 (defn extract-private-key
   [^PGPSecretKey secret-key
    ^String passphrase]
@@ -108,6 +98,46 @@
     (-> (BcPGPDigestCalculatorProvider.)
         (BcPBESecretKeyDecryptorBuilder.)
         (.build (.toCharArray passphrase)))))
+
+
+(defn key-info
+  "Returns a map of information about the given key."
+  [k]
+  (let [pubkey (public-key k)
+        info
+        {:master-key? (.isMasterKey pubkey)
+         :key-id (Long/toHexString (key-id pubkey))
+         :strength (.getBitStrength pubkey)
+         :algorithm (algorithm-name public-key-algorithms (key-algorithm pubkey))
+         :fingerprint (->> (.getFingerprint pubkey)
+                           (map (partial format "%02X"))
+                           string/join)
+         :encryption-key? (.isEncryptionKey pubkey)
+         :user-ids (-> pubkey .getUserIDs iterator-seq vec)}]
+    (if (instance? PGPSecretKey k)
+      (if (.isPrivateKeyEmpty ^PGPSecretKey k)
+        (assoc info :private-key? false)
+        (merge info
+               {:private-key? true
+                :signing-key? (.isSigningKey ^PGPSecretKey k)}))
+      info)))
+
+
+
+;; KEYRING FUNCTIONS
+
+(defn load-secret-keyrings
+  "Loads a secret keyring file into a sequence of vectors of secret keys."
+  [source]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (byte-streams/to-input-stream source))]
+    (map #(-> (.getSecretKeys %)
+              iterator-seq
+              vec)
+          (-> stream
+              PGPSecretKeyRingCollection.
+              .getKeyRings
+              iterator-seq))))
 
 
 
@@ -173,37 +203,3 @@
                  (str "Data did not contain a PGPSignatureList: " sigs))))
       (when-not (.isEmpty ^PGPSignatureList sigs)
         (.get ^PGPSignatureList sigs 0)))))
-
-
-
-;; DEBUGGING HELPERS
-
-(defn print-key-info
-  "Prints information about the given key."
-  [k]
-  (let [pkey (public-key k)
-        strength (.getBitStrength pkey)
-        algorithm (or (algorithm-name
-                        public-key-algorithms
-                        (key-algorithm pkey))
-                      "UNKNOWN")
-        fingerprint (->> (.getFingerprint pkey)
-                         (map (partial format "%02X"))
-                         string/join)]
-    (println (if (.isMasterKey pkey) "Master key:" "Subkey:")
-             (Long/toHexString (key-id k))
-             (str \( strength \/ algorithm \)))
-    (println "    Fingerprint:"
-             (str (subs fingerprint 0 (- (count fingerprint) 8)) \/
-                  (subs fingerprint (- (count fingerprint) 8))))
-    (if (.isEncryptionKey pkey)
-      (println "    Public key is available for encryption.")
-      (println "    Public key is available."))
-    (when (instance? PGPSecretKey k)
-      (if (.isPrivateKeyEmpty ^PGPSecretKey k)
-        (println "    Private key is not available.")
-        (if (.isSigningKey ^PGPSecretKey k)
-          (println "    Private key is available for decryption and signing.")
-          (println "    Private key is available for decryption."))))
-    (doseq [uid (iterator-seq (.getUserIDs pkey))]
-      (println "    User ID:" uid))))
