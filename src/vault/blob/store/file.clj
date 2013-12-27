@@ -5,25 +5,25 @@
     [clojure.string :as string]
     [vault.blob.core :as blob :refer [BlobStore]])
   (:import
-    (java.io
-      File)))
+    java.io.File
+    java.util.Date))
 
 
 ;; HELPER FUNCTIONS
 
-(defn- hashid->file
+(defn- id->file
   ^File
   [root id]
   (let [id (blob/hash-id id)
         {:keys [algorithm digest]} id]
     (io/file root
-             (name algorithm)
-             (subs digest 0 3)
-             (subs digest 3 6)
-             (subs digest 6))))
+      (name algorithm)
+      (subs digest 0 3)
+      (subs digest 3 6)
+      (subs digest 6))))
 
 
-(defn- file->hashid
+(defn- file->id
   [root file]
   (let [root (str root)
         file (str file)]
@@ -44,7 +44,7 @@
 
 
 (defn- enumerate-files
-  "Generates a lazy sequence of file blobs contained in a root directory."
+  "Generates a lazy sequence of blob files contained in a root directory."
   [^File root]
   ; TODO: intelligently skip entries based on 'after'
   (flatten
@@ -53,6 +53,16 @@
         (for-files [midfix-dir prefix-dir]
           (for-files [blob midfix-dir]
             blob))))))
+
+
+(defmacro ^:private when-blob-file
+  "This is an unhygenic macro which binds the blob file to 'file' and executes
+  the body only if it exists."
+  [store id & body]
+  `(let [~(with-meta 'file {:tag 'java.io.File})
+         (id->file (:root ~store) ~id)]
+     (when (.exists ~'file)
+       ~@body)))
 
 
 
@@ -66,29 +76,27 @@
 (extend-protocol BlobStore
   FileBlobStore
 
-  (-list [this opts]
+  (enumerate [this opts]
     (->> (enumerate-files (:root this))
-         (map (partial file->hashid (:root this)))
+         (map (partial file->id (:root this)))
          (blob/select-ids opts)))
 
 
-  (-stat [this id]
-    (let [file (hashid->file (:root this) id)]
-      (when (.exists file)
-        {:size (.length file)
-         :stored-at (java.util.Date. (.lastModified file))
-         :location (.toURI file)})))
+  (stat [this id]
+    (when-blob-file this id
+      {:size (.length file)
+       :stored-at (Date. (.lastModified file))
+       :location (.toURI file)}))
 
 
-  (-open [this id]
-    (let [file (hashid->file (:root this) id)]
-      (when (.exists file)
-        (byte-streams/to-input-stream file))))
+  (open [this id]
+    (when-blob-file this id
+      (io/input-stream file)))
 
 
-  (-store! [this blob]
+  (store! [this blob]
     (let [{:keys [id content]} blob
-          file (hashid->file (:root this) id)]
+          file (id->file (:root this) id)]
       (when-not (.exists file)
         (io/make-parents file)
         ; For some reason, io/copy is much faster than byte-streams/transfer here.
@@ -96,10 +104,18 @@
         (.setWritable file false false))))
 
 
-  (-remove! [this id]
-    (let [file (hashid->file (:root this) id)]
-      (when (.exists file)
-        (.delete file)))))
+  (delete! [this id]
+    (when-blob-file this id
+      (.delete file)))
+
+
+  (destroy!! [this]
+    (let [rm-r (fn rm-r [^File path]
+                 (when (.isDirectory path)
+                   (doseq [child (.listFiles path)]
+                     (rm-r child)))
+                 (.delete path))]
+      (rm-r (:root this)))))
 
 
 (defn file-store

@@ -10,31 +10,35 @@
 
   BlobStore
 
-  (-list [this opts]
+  (enumerate [this opts]
     (blob/select-ids opts (keys @store)))
 
 
-  (-stat [this id]
+  (stat [this id]
     (when-let [blob (@store id)]
       {:size (.limit ^java.nio.ByteBuffer (:content blob))
        :stored-at (:since blob)}))
 
 
-  (-open [this id]
+  (open [this id]
     (when-let [blob (@store id)]
       (byte-streams/to-input-stream (:content blob))))
 
 
-  (-store! [this blob]
+  (store! [this blob]
     (let [id (:id blob)]
       (when-not (@store id)
         (swap! store assoc id (assoc blob :since (java.util.Date.))))))
 
 
-  (-remove! [this id]
+  (delete! [this id]
     (when (@store id)
       (swap! store dissoc id)
-      true)))
+      true))
+
+
+  (destroy!! [this]
+    (swap! store empty)))
 
 
 (defn memory-store

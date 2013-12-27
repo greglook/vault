@@ -1,5 +1,5 @@
 (ns vault.blob.core
-  (:refer-clojure :exclude [contains? hash list])
+  (:refer-clojure :exclude [contains? get hash list])
   (:require
     byte-streams
     [clojure.string :as string])
@@ -154,20 +154,34 @@
 (defprotocol BlobStore
   "Protocol for content storage providers, keyed by hash ids."
 
-  (-list [this opts]
-    "Enumerates the stored blobs with some filtering options.")
+  (enumerate [this opts]
+    "Enumerates the ids of the stored blobs with some filtering options. The
+    'list' function provides a nicer wrapper around this protocol method.")
 
-  (-stat [this id]
-    "Returns the stored status metadata for a blob.")
+  (stat [this id]
+    "Returns a map of metadata about the blob, if it is stored. Properties are
+    implementation-specific, but may include:
+    * :size         - blob size in bytes
+    * :created-at   - date blob was added to store
+    * :location     - a resource location for the blob")
 
-  (-open [this id]
-    "Returns a an open input stream of the stored data.")
+  (open
+    ^java.io.InputStream
+    [this id]
+    "Opens a stream of byte content for the blob, if it is stored. The
+    'get' function provides a wrapper around this method which buffers the
+    blob content.")
 
-  (-store! [this blob]
-    "Persists blob content in the store.")
+  (store! [this blob]
+    "Persists blob content in the store. Clients should prefer the 'put!'
+    function, which handles hashing the data.")
 
-  (-remove! [this id]
-    "Returns true if the store contained the blob."))
+  (delete! [this id]
+    "Removes the referenced blob from the store. Returns true if the store
+    contained the blob.")
+
+  (destroy!! [this]
+    "Completely removes all stored blob data."))
 
 
 (defn list
@@ -177,47 +191,39 @@
   * :prefix - only return ids matching the given string
   * :limit  - limit the number of results returned"
   ([store]
-   (-list store nil))
+   (enumerate store nil))
   ([store opts]
-   (-list store opts))
+   (enumerate store opts))
   ([store opt-key opt-val & opts]
-   (-list store (apply hash-map opt-key opt-val opts))))
-
-
-(defn stat
-  "Returns a map of metadata about the blob, if it is stored. Properties are
-  implementation-specific, but may include:
-  * :size         - blob size in bytes
-  * :since        - date blob was added to store
-  * :location     - a resource location for the blob"
-  [store id]
-  (-stat store id))
+   (enumerate store (apply hash-map opt-key opt-val opts))))
 
 
 (defn contains?
   "Determines whether the store contains the referenced blob."
   [store id]
-  (not (nil? (-stat store id))))
+  (not (nil? (stat store id))))
 
 
-(defn open
-  "Opens a stream of byte content for the referenced blob, if it is stored."
-  ^java.io.InputStream
+(defn get
+  "Retrieves data for the given blob and returns a BlobData with buffered
+  content. This function verifies that the id matches the actual digest of the
+  data returned."
   [store id]
-  (-open store id))
+  (with-open [stream (open store id)]
+    (when stream
+      (let [content (buffer-data stream)
+            data-id (hash (:algorithm id) content)]
+        (when-not (= id data-id)
+          (throw (RuntimeException.
+                   (str "Store " store " returned invalid data: requested "
+                        id " but got " data-id))))
+        (BlobData. id content)))))
 
 
-(defn store!
+(defn put!
   "Stores data from the given byte source and returns the blob's hash id."
   [store source]
   (let [content (buffer-data source)
         id (hash *digest-algorithm* content)]
-    (-store! store (->BlobData id content))
+    (store! store (->BlobData id content))
     id))
-
-
-(defn remove!
-  "Remove the referenced blob from this store. Returns true if the store
-  contained the blob when this method was called."
-  [store id]
-  (-remove! store id))
