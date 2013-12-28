@@ -2,10 +2,13 @@
   (:require
     [byte-streams]
     [clojure.java.io :as io]
+    [puget.data]
     [puget.printer :as puget]
     [vault.blob.core :as blob]
     [vault.data.format :as data]
-    [vault.tool.blob :refer [enumerate-prefix]]))
+    [vault.tool.blob :refer [enumerate-prefix]])
+  (:import
+    vault.blob.core.HashID))
 
 
 ;; UTILITY FUNCTIONS
@@ -44,6 +47,10 @@
 
 ;; DATA ACTIONS
 
+; FIXME: figure out where to put this
+(puget.data/extend-tagged-str HashID vault/ref)
+
+
 (defn show-blob
   [opts args]
   (let [store (:store opts)]
@@ -51,7 +58,9 @@
       (when-let [blob (blob/get store id)]
         (println (str id))
         (let [content (:content blob)
-              data (data/read-data content)]
+              data (data/read-data
+                     {'vault/ref blob/hash-id}
+                     content)]
           (cond data               (print-data-blob data)
                 (:binary opts)     (print-binary-blob content)
                 (textual? content) (print-text-blob content)

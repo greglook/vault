@@ -59,17 +59,17 @@
     (println "Must provide a single blobref or unique prefix.")
     (System/exit 1))
   (let [store (:store opts)
-        blobrefs (enumerate-prefix store (first args))]
-    (when (< 1 (count blobrefs))
-      (println (count blobrefs) "blobs match prefix:")
-      (doseq [blobref blobrefs]
+        ids (enumerate-prefix store (first args))]
+    (when (< 1 (count ids))
+      (println (count ids) "blobs match prefix:")
+      (doseq [blobref ids]
         (println (str blobref)))
       (System/exit 1))
-    (with-open [stream (blob/open store (first blobrefs))]
-      (io/copy stream *out*))))
+    (let [blob (blob/get store (first ids))]
+      (io/copy (:content blob) *out*))))
 
 
 (defn put-blob
   [opts args]
-  (let [blobref (blob/store! (:store opts) *in*)]
-    (println (str blobref))))
+  (let [id (blob/put! (:store opts) *in*)]
+    (println (str id))))

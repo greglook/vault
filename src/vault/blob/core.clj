@@ -28,9 +28,6 @@
   (toString [this]
     (str (name algorithm) ":" digest)))
 
-; FIXME: figure out where to put this
-;(data/extend-tagged-str BlobRef vault/ref)
-
 
 (defn parse-id
   "Parses a hash identifier string into a hash identifier. Accepts either a

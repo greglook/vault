@@ -21,7 +21,7 @@ The `:key` and `:signature` values are required. If a signature is given as the
 primary value of a blob, it is a _detached signature_ and must specify a blob
 containing the contents being signed with the `:data` key. Otherwise, it is
 considered an _inline signature_ and the data to be signed is the blob's primary
-EDN value. These are the bytes from the beginning of the blob through the last
+EDN value. These are the bytes immediately following the header through the last
 byte of the last character forming the first complete EDN value.
 
 Accordingly, an EDN value is considered to be signed by a given PGP key when:
