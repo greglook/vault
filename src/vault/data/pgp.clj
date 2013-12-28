@@ -27,58 +27,94 @@
 
 ;; CONFIGURATION
 
-(def ^:dynamic *hash-algorithm*
-  "Digest algorithm used for creating signatures."
-  "SHA1")
-
-
-(def hash-algorithms
-  "Map of hash algorithm names to numeric codes."
-  (->> (.getFields HashAlgorithmTags)
-       (map (fn [^java.lang.reflect.Field f]
-              (vector (.getName f)
-                      (.getInt f nil))))
-       (into {})))
+(defn- map-tags
+  "Converts static 'tag' fields on the given class into a map of keywords to
+  numeric codes."
+  [^Class tags]
+  (let [field->entry
+        (fn [^java.lang.reflect.Field f]
+          (vector (-> (.getName f)
+                      (string/replace \_ \-)
+                      .toLowerCase
+                      keyword)
+                  (.getInt f nil)))]
+    (->> (.getFields tags)
+         (map field->entry)
+         (into {}))))
 
 
 (def public-key-algorithms
   "Map of public-key algorithm names to numeric codes."
-  (->> (.getFields PublicKeyAlgorithmTags)
-       (map (fn [^java.lang.reflect.Field f]
-              (vector (.getName f)
-                      (.getInt f nil))))
-       (into {})))
+  (map-tags PublicKeyAlgorithmTags))
 
 
-(defn- algorithm-name
-  "Look up the name of an algorithm given the numeric code."
+(def hash-algorithms
+  "Map of hash algorithm keywords to numeric codes."
+  (map-tags HashAlgorithmTags))
+
+
+(def ^:dynamic *hash-algorithm*
+  "Digest algorithm used for creating signatures."
+  :sha1)
+
+
+(defn- code->name
+  "Look up the keyword of an algorithm given the numeric code."
   [codes code]
-  (some (fn [[k i]] (if (= i code) k)) codes))
+  (some #(if (= (val %) code) (key %)) codes))
 
 
 
 ;; KEY UTILITIES
 
-(defn key-id
-  "Returns the PGP key identifier associated with the argument."
-  [x]
-  (cond (integer? x) x
-        (string? x) (Long/parseLong x 16)
-        (instance? PGPPublicKey x) (.getKeyID ^PGPPublicKey x)
-        (instance? PGPSecretKey x) (.getKeyID ^PGPSecretKey x)
-        (instance? PGPSignature x) (.getKeyID ^PGPSignature x)
-        :else (throw (IllegalArgumentException.
-                       (str "Don't know how to make key id from: " x)))))
+(defmulti key-id
+  "Constructs a numeric PGP key identifier from the argument."
+  class)
+
+(defmethod key-id nil [_] nil)
+
+(defmethod key-id Long [id] id)
+
+(defmethod key-id String [hex] (Long/parseLong hex 16))
+
+(defmethod key-id PGPPublicKey
+  [^PGPPublicKey pubkey]
+  (.getKeyID pubkey))
+
+(defmethod key-id PGPSecretKey
+  [^PGPSecretKey seckey]
+  (.getKeyID seckey))
+
+(defmethod key-id PGPSignature
+  [^PGPSignature sig]
+  (.getKeyID sig))
 
 
-(defn key-algorithm
-  "Returns the numeric key algorithm code from the argument."
-  [k]
-  (cond (instance? PGPPublicKey k) (.getAlgorithm ^PGPPublicKey k)
-        (instance? PGPSecretKey k) (.getAlgorithm (.getPublicKey ^PGPSecretKey k))
-        (instance? PGPPrivateKey k) (.getAlgorithm (.getPublicKeyPacket ^PGPPrivateKey k))
-        :else (throw (IllegalArgumentException.
-                       (str "Don't know how to get key algorithm from: " k)))))
+(defmulti key-algorithm
+  "Constructs a numeric PGP key identifier from the argument."
+  class)
+
+(defmethod key-algorithm nil [_] nil)
+
+(defmethod key-algorithm clojure.lang.Keyword [kw] kw)
+
+(defmethod key-algorithm PGPPublicKey
+  [^PGPPublicKey pubkey]
+  (code->name
+    public-key-algorithms
+    (.getAlgorithm pubkey)))
+
+(defmethod key-algorithm PGPSecretKey
+  [^PGPSecretKey seckey]
+  (code->name
+    public-key-algorithms
+    (.getAlgorithm seckey)))
+
+(defmethod key-algorithm PGPPrivateKey
+  [^PGPPrivateKey privkey]
+  (code->name
+    public-key-algorithms
+    (.getAlgorithm privkey)))
 
 
 (defn public-key
@@ -108,7 +144,7 @@
         {:master-key? (.isMasterKey pubkey)
          :key-id (Long/toHexString (key-id pubkey))
          :strength (.getBitStrength pubkey)
-         :algorithm (algorithm-name public-key-algorithms (key-algorithm pubkey))
+         :algorithm (key-algorithm pubkey)
          :fingerprint (->> (.getFingerprint pubkey)
                            (map (partial format "%02X"))
                            string/join)
@@ -164,7 +200,7 @@
   ([data-source hash-algo private-key]
    (let [generator (PGPSignatureGenerator.
                      (BcPGPContentSignerBuilder.
-                       (key-algorithm private-key)
+                       (.getAlgorithm private-key)
                        hash-algo))]
      (.init generator PGPSignature/BINARY_DOCUMENT private-key)
      (for-bytes data-source #(.update generator %1 0 %2))

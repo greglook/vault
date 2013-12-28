@@ -24,7 +24,7 @@
       (are [k v] (= v (info k))
            :key-id "923b1c1c4392318a"
            :fingerprint "4C0F256D432975418FAB3D7B923B1C1C4392318A"
-           :algorithm "RSA_GENERAL"
+           :algorithm :rsa-general
            :strength 1024
            :master-key? true
            :private-key? true
@@ -35,7 +35,7 @@
       (are [k v] (= v (info k))
            :key-id "3f40edec41c6cb7d"
            :fingerprint "798A598943062D6C0D1D40F73F40EDEC41C6CB7D"
-           :algorithm "RSA_GENERAL"
+           :algorithm :rsa-general
            :strength 1024
            :master-key? false
            :private-key? true
