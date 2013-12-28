@@ -39,9 +39,10 @@
     (doseq [id (apply enumerate-prefix store args)]
       (when-let [blob (blob/get store id)]
         (println (str id))
-        (let [data (data/read-data blob)]
+        (let [content (:content blob)
+              data (data/read-data content)]
           (if data
             (print-data-blob data)
             ; TODO: check for all ascii (or no null blobs?) first...
-            (print-binary-blob (:content blob))))
+            (print-binary-blob content)))
         (newline)))))

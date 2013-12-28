@@ -32,7 +32,7 @@
 (deftest read-non-data-blob
   (let [content "foobarbaz not a data blob"
         result (format/read-data content)]
-    (is (= content (byte-streams/convert result String)))))
+    (is (nil? result))))
 
 
 (deftest read-data-blob

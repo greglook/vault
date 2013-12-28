@@ -126,37 +126,29 @@
     (doall (take-while not-eos? edn-stream))))
 
 
-(defn- read-values!
-  "Reads primary and secondary EDN values from blob contents. Returns a seq of
-  the values. The sequence will have attached metadata giving the bytes which
-  comprise the first value in the sequence."
-  [tag-readers content]
-  (let [tag-readers (merge puget.data/data-readers tag-readers)]
-    (with-open [reader (-> content
-                           byte-streams/to-input-stream
-                           (InputStreamReader. blob-charset))]
-      (.skip reader (count blob-header))
-      (let [[primary-value primary-bytes] (read-primary-value! tag-readers reader)
-            secondary-values (read-secondary-values! tag-readers reader)]
-        (-> primary-value
-            (cons secondary-values)
-            (vary-meta assoc ::primary-bytes primary-bytes))))))
-
-
 (defn read-data
-  "Reads the given blob data and attempts to parse it as an EDN data
-  structure. If the data is not EDN, it returns nil. Otherwise, it returns a
+  "Reads the given byte content and attempts to parse it as an EDN data
+  structure. If the content is not EDN, it returns nil. Otherwise, it returns a
   sequence of the parsed values.
 
   The returned sequence will have attached metadata giving the bytes which
-  comprise the first value in the sequence."
-  ([blob]
-   (read-data nil blob))
-  ([tag-readers blob]
-   (let [{:keys [id content]} blob]
-     (when (read-header! content)
-       (let [data (read-values! tag-readers content)]
-         (vary-meta data assoc ::blob-id id))))))
+  comprise the first value in the sequence. This is accessible using the
+  'primary-bytes' function."
+  ([content]
+   (read-data nil content))
+  ([tag-readers content]
+   (when (read-header! content)
+     (let [tag-readers (merge puget.data/data-readers
+                              tag-readers)]
+       (with-open [reader (-> content
+                              byte-streams/to-input-stream
+                              (InputStreamReader. blob-charset))]
+         (.skip reader (count blob-header))
+         (let [[pvalue pbytes] (read-primary-value! tag-readers reader)
+               svalues (read-secondary-values! tag-readers reader)]
+           (with-meta
+             (cons pvalue svalues)
+             {::primary-bytes pbytes})))))))
 
 
 (defn primary-bytes
@@ -164,9 +156,3 @@
   metadata on a value sequence."
   [data]
   (::primary-bytes (meta data)))
-
-
-(defn blob-id
-  "Retrieves the identity of the blob which a sequence of data was read from."
-  [data]
-  (::blob-id (meta data)))
