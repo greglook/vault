@@ -1,4 +1,4 @@
-(ns vault.blob.digest-test
+(ns vault.blob.hash-id-test
   (:require
     [clojure.test :refer :all]
     [vault.blob.core :as blob]))
