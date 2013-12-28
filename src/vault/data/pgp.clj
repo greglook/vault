@@ -11,8 +11,10 @@
       PGPObjectFactory
       PGPPrivateKey
       PGPPublicKey
+      PGPPublicKeyRing
       PGPPublicKeyRingCollection
       PGPSecretKey
+      PGPSecretKeyRing
       PGPSecretKeyRingCollection
       PGPSignature
       PGPSignatureGenerator
@@ -67,6 +69,27 @@
 
 ;; KEY UTILITIES
 
+(defn public-key
+  "Coerces the argument into a PGPPublicKey."
+  ^PGPPublicKey
+  [k]
+  (cond (instance? PGPPublicKey k) k
+        (instance? PGPSecretKey k) (.getPublicKey ^PGPSecretKey k)
+        :else (throw (IllegalArgumentException.
+                       (str "Don't know how to get public key from: " k)))))
+
+
+(defn unlock-key
+  "Decodes a secret key with a passphrase to obtain the private key."
+  ^PGPPrivateKey
+  [^PGPSecretKey seckey
+   ^String passphrase]
+  (.extractPrivateKey seckey
+    (-> (BcPGPDigestCalculatorProvider.)
+        (BcPBESecretKeyDecryptorBuilder.)
+        (.build (.toCharArray passphrase)))))
+
+
 (defmulti key-id
   "Constructs a numeric PGP key identifier from the argument."
   class)
@@ -85,6 +108,10 @@
   [^PGPSecretKey seckey]
   (.getKeyID seckey))
 
+(defmethod key-id PGPPrivateKey
+  [^PGPPrivateKey privkey]
+  (.getKeyID privkey))
+
 (defmethod key-id PGPSignature
   [^PGPSignature sig]
   (.getKeyID sig))
@@ -96,44 +123,21 @@
 
 (defmethod key-algorithm nil [_] nil)
 
+(defmethod key-algorithm Number [code] (code->name public-key-algorithms code))
+
 (defmethod key-algorithm clojure.lang.Keyword [kw] kw)
 
 (defmethod key-algorithm PGPPublicKey
   [^PGPPublicKey pubkey]
-  (code->name
-    public-key-algorithms
-    (.getAlgorithm pubkey)))
+  (key-algorithm (.getAlgorithm pubkey)))
 
 (defmethod key-algorithm PGPSecretKey
   [^PGPSecretKey seckey]
-  (code->name
-    public-key-algorithms
-    (.getAlgorithm seckey)))
+  (key-algorithm (public-key seckey)))
 
 (defmethod key-algorithm PGPPrivateKey
   [^PGPPrivateKey privkey]
-  (code->name
-    public-key-algorithms
-    (.getAlgorithm privkey)))
-
-
-(defn public-key
-  "Coerces the argument into a PGPPublicKey."
-  ^PGPPublicKey
-  [k]
-  (cond (instance? PGPPublicKey k) k
-        (instance? PGPSecretKey k) (.getPublicKey ^PGPSecretKey k)
-        :else (throw (IllegalArgumentException.
-                       (str "Don't know how to get public key from: " k)))))
-
-
-(defn extract-private-key
-  [^PGPSecretKey secret-key
-   ^String passphrase]
-  (.extractPrivateKey secret-key
-    (-> (BcPGPDigestCalculatorProvider.)
-        (BcPBESecretKeyDecryptorBuilder.)
-        (.build (.toCharArray passphrase)))))
+  (key-algorithm (.getAlgorithm (.getPublicKeyPacket privkey))))
 
 
 (defn key-info
@@ -159,6 +163,15 @@
       info)))
 
 
+(defn find-key
+  "Locates a key in a sequence by id. Nested sequences are flattened, so this
+  works directly on keyrings and keyring collections."
+  [id key-seq]
+  (let [id (key-id id)]
+    (some #(when (= id (key-id %)) %)
+          (flatten key-seq))))
+
+
 
 ;; KEYRING FUNCTIONS
 
@@ -167,13 +180,12 @@
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
                        (byte-streams/to-input-stream source))]
-    (map #(-> (.getSecretKeys %)
-              iterator-seq
-              vec)
-          (-> stream
-              PGPSecretKeyRingCollection.
-              .getKeyRings
-              iterator-seq))))
+    (map (fn [^PGPSecretKeyRing keyring]
+           (vec (iterator-seq (.getSecretKeys keyring))))
+         (-> stream
+             PGPSecretKeyRingCollection.
+             .getKeyRings
+             iterator-seq))))
 
 
 
@@ -191,36 +203,37 @@
           (recur (.read stream buffer)))))))
 
 
-(defn sign-data
+(defn sign
   "Generates a PGPSignature from the given data and private key."
-  ([data-source private-key]
-   (sign-data data-source
-              (hash-algorithms *hash-algorithm*)
-              private-key))
-  ([data-source hash-algo private-key]
+  ([data privkey]
+   (sign data *hash-algorithm* privkey))
+  (^PGPSignature
+   [data
+    hash-algo
+    ^PGPPrivateKey privkey]
    (let [generator (PGPSignatureGenerator.
                      (BcPGPContentSignerBuilder.
-                       (.getAlgorithm private-key)
-                       hash-algo))]
-     (.init generator PGPSignature/BINARY_DOCUMENT private-key)
-     (for-bytes data-source #(.update generator %1 0 %2))
+                       (public-key-algorithms (key-algorithm privkey))
+                       (hash-algorithms hash-algo)))]
+     (.init generator PGPSignature/BINARY_DOCUMENT privkey)
+     (for-bytes data #(.update generator %1 0 %2))
      (.generate generator))))
 
 
-(defn verify-signature
-  [data-source
+(defn verify
+  [data
    ^PGPSignature signature
-   ^PGPPublicKey public-key]
-  (when-not (= (key-id signature) (key-id public-key))
+   ^PGPPublicKey pubkey]
+  (when-not (= (key-id signature) (key-id pubkey))
     (throw (IllegalArgumentException.
              (str "Signature key id "
                   (Long/toHexString (key-id signature))
                   " doesn't match public key id "
-                  (Long/toHexString (key-id public-key))))))
+                  (Long/toHexString (key-id pubkey))))))
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
-         public-key)
-  (for-bytes data-source #(.update signature %1 0 %2))
+         pubkey)
+  (for-bytes data #(.update signature %1 0 %2))
   (.verify signature))
 
 
@@ -230,12 +243,14 @@
 
 
 (defn decode-signature
+  ^PGPSignature
   [data]
   (with-open [stream (PGPUtil/getDecoderStream
                        (byte-streams/to-input-stream data))]
-    (let [sigs (.nextObject (PGPObjectFactory. stream))]
+    (let [^PGPSignatureList sigs
+          (.nextObject (PGPObjectFactory. stream))]
       (when-not (instance? PGPSignatureList sigs)
         (throw (IllegalArgumentException.
                  (str "Data did not contain a PGPSignatureList: " sigs))))
-      (when-not (.isEmpty ^PGPSignatureList sigs)
-        (.get ^PGPSignatureList sigs 0)))))
+      (when-not (.isEmpty sigs)
+        (.get sigs 0)))))
