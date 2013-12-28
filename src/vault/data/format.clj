@@ -16,8 +16,7 @@
       PushbackReader
       Reader
       Writer)
-    java.nio.charset.Charset
-    java.nio.ByteBuffer))
+    java.nio.charset.Charset))
 
 
 ;; CONSTANTS & CONFIGURATION
@@ -107,10 +106,7 @@
         reader (PushbackReader. (capturing-reader reader copy-writer))
         value (edn/read {:readers tag-readers} reader)]
     (.flush copy-writer)
-    (vector value (-> copy-bytes
-                      .toByteArray
-                      ByteBuffer/wrap
-                      .asReadOnlyBuffer))))
+    (vector value (.toByteArray copy-bytes))))
 
 
 (defn- read-secondary-values!
