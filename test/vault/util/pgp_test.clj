@@ -1,20 +1,19 @@
-(ns vault.data.pgp-test
+(ns vault.util.pgp-test
   (:require
     [byte-streams :refer [bytes=]]
-    [clojure.data.codec.base64 :as b64]
     [clojure.java.io :as io]
     [clojure.test :refer :all]
-    [vault.data.pgp :as pgp])
+    [vault.util.pgp :as pgp])
   (:import
     (org.bouncycastle.openpgp
       PGPSignature)))
 
 
 (def test-pubring
-  (io/file (io/resource "vault/data/pgp/pubring.gpg")))
+  (io/file (io/resource "test-resources/pgp/pubring.gpg")))
 
 (def test-secring
-  (io/file (io/resource "vault/data/pgp/secring.gpg")))
+  (io/file (io/resource "test-resources/pgp/secring.gpg")))
 
 
 (deftest reading-secring-file

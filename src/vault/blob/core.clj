@@ -2,47 +2,11 @@
   (:refer-clojure :exclude [contains? get hash list])
   (:require
     byte-streams
-    [clojure.string :as string])
+    [clojure.string :as string]
+    [vault.util.digest :as digest])
   (:import
     java.nio.ByteBuffer
     java.security.MessageDigest))
-
-
-;; DIGEST ALGORITHMS
-
-(def ^:private algorithm-names
-  "Map of content hashing algorithms to system names."
-  {:md5    "MD5"
-   :sha1   "SHA-1"
-   :sha256 "SHA-256"})
-
-
-(def algorithms
-  "Set of available content hashing algorithms."
-  (set (keys algorithm-names)))
-
-
-(def ^:dynamic *digest-algorithm*
-  "Default digest algorithm to use for content hashing."
-  :sha256)
-
-
-(defmacro with-algorithm
-  "Executes a body of expressions with the given default digest algorithm."
-  [algorithm & body]
-  `(binding [*digest-algorithm* ~algorithm]
-     ~@body))
-
-
-(defn- check-algorithm
-  "Throws an exception if the given keyword is not a valid algorithm
-  identifier."
-  [algo]
-  (when-not (algorithms algo)
-    (throw (IllegalArgumentException.
-             (str "Unsupported digest algorithm: " algo
-                  ", must be one of: " (string/join " " algorithms))))))
-
 
 
 ;; HASH IDENTIFIERS
@@ -87,7 +51,6 @@
      :else (parse-id (str x))))
   ([algorithm digest]
    (let [algo (keyword algorithm)]
-     (check-algorithm algo)
      (->HashID algo digest))))
 
 
@@ -111,27 +74,25 @@
     ids))
 
 
-(defn- hex-signature
-  "Formats a sequence of bytes into a hexadecimal string."
-  [^bytes digest]
-  (let [length (* 2 (count digest))
-        hex (-> (BigInteger. 1 digest)
-                (.toString 16)
-                (.toLowerCase))
-        padding (apply str (repeat (- length (count hex)) "0"))]
-    (str padding hex)))
+
+;; CONTENT HASHING
+
+(def ^:dynamic *digest-algorithm*
+  "Default digest algorithm to use for content hashing."
+  :sha256)
+
+
+(defmacro with-algorithm
+  "Executes a body of expressions with the given default digest algorithm."
+  [algorithm & body]
+  `(binding [*digest-algorithm* ~algorithm]
+     ~@body))
 
 
 (defn hash
   "Calculates the hash digest of the given data source. Returns a HashID."
   [algo content]
-  (check-algorithm algo)
-  (let [algorithm (MessageDigest/getInstance (algorithm-names algo))
-        data-seq (map byte-streams/to-byte-array
-                      (byte-streams/to-byte-buffers content))]
-    (doseq [^bytes data data-seq]
-      (.update algorithm data))
-    (->HashID algo (hex-signature (.digest algorithm)))))
+  (->HashID algo (digest/hash-content algo content)))
 
 
 
