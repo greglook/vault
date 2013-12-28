@@ -47,5 +47,6 @@
   (check-algorithm algo)
   (let [algorithm (MessageDigest/getInstance (algorithms algo))]
     (.reset algorithm)
-    (do-bytes content #(.update algorithm %1 0 %2))
+    (do-bytes content [buf n]
+      (.update algorithm buf 0 n))
     (hex-signature (.digest algorithm))))

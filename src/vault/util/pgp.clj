@@ -206,7 +206,8 @@
                        (public-key-algorithms (key-algorithm privkey))
                        (hash-algorithms hash-algo)))]
      (.init generator PGPSignature/BINARY_DOCUMENT privkey)
-     (do-bytes data #(.update generator %1 0 %2))
+     (do-bytes data [buf n]
+       (.update generator buf 0 n))
      (.generate generator))))
 
 
@@ -223,7 +224,8 @@
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)
-  (do-bytes data #(.update signature %1 0 %2))
+  (do-bytes data [buf n]
+    (.update signature buf 0 n))
   (.verify signature))
 
 
