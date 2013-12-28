@@ -98,6 +98,10 @@
 
       (command "show <blobref> [blobref ...]"
         "Inspect the contents of the given blobs, pretty-printing EDN values and showing hex for binary blobs."
+
+        ["-b" "--binary" "Print blobs as binary even if they appear to be textual."
+         :flag true]
+
         (action data-tool/show-blob))
 
       (command "create [args]"
