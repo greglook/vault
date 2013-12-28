@@ -4,7 +4,8 @@
     [puget.printer :refer [pprint cprint]]
     (vault.tool
       [config :as config]
-      [blob :as blob-tool]))
+      [blob :as blob-tool]
+      [data :as data-tool]))
   (:gen-class :main true))
 
 
@@ -40,6 +41,7 @@
 
     (init config/initialize)
 
+
     (command "config <type>"
       "Show configuration information."
 
@@ -58,6 +60,7 @@
         "List the available blob stores."
         (action config/list-blob-stores)))
 
+
     (command "blob <action> [args]"
       "Low-level commands dealing with data blobs."
 
@@ -66,12 +69,12 @@
       (command "list [opts]"
         "Enumerate the stored blobs."
 
-        ["-s" "--start" "Start enumerating blobs lexically following the start string."]
-        ["-n" "--count" "Limit the number of results returned." :parse-fn #(Integer/parseInt %)]
+        ["-a" "--after" "Start enumerating blobs lexically following the given string."]
+        ["-n" "--limit" "Limit the number of results returned." :parse-fn #(Integer/parseInt %)]
 
         (action blob-tool/list-blobs))
 
-      (command "stat <blobref>"
+      (command "stat <blobref> [blobref ...]"
         "Show information about a stored blob."
 
         ["--pretty" "Format the info over multiple lines for easier viewing."
@@ -87,8 +90,15 @@
         "Store a blob of data read from stdin and print the resulting blobref."
         (action blob-tool/put-blob)))
 
-    (command "object <action> [args]"
+
+    (command "data <action> [args]"
       "Interact with object entities and data."
+
+      (init config/setup-blob-store)
+
+      (command "show <blobref> [blobref ...]"
+        "Inspect the contents of the given blobs, pretty-printing EDN values and showing hex for binary blobs."
+        (action data-tool/show-blob))
 
       (command "create [args]"
         "Create a new object."
@@ -96,11 +106,10 @@
         ["--time" "Set the time to create the object root with. Defaults to the current time."]
         ["--id" "Set an identity for the object root. Defaults to a random string."]
         ["--attributes" "Provide an initial set of attributes for the object."]
-        ["--value" "Set the initial object value to the given reference."]
 
         (action not-yet-implemented))
 
-      (command "update <object> <type> [args]"
+      (command "update <entity> <type> [args]"
         "Apply an update to an existing object."
 
         (action not-yet-implemented)))))

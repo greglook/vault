@@ -15,7 +15,7 @@
     id))
 
 
-(defn- enumerate-prefix
+(defn enumerate-prefix
   "Lists stored blobs with references matching the given prefixes.
   Automatically prepends the store's algorithm if none is given."
   ([store]
