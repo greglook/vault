@@ -1,8 +1,8 @@
 (ns vault.data.pgp
   (:require
     [byte-streams]
-    [clojure.java.io :as io]
-    [clojure.string :as string])
+    [clojure.string :as string]
+    [vault.util.io :refer [do-bytes]])
   (:import
     (org.bouncycastle.bcpg
       HashAlgorithmTags
@@ -191,18 +191,6 @@
 
 ;; SIGNATURE FUNCTIONS
 
-(defn for-bytes
-  "Calls the given function on chunks of the byte sequence read from the given
-  data source."
-  [source f]
-  (with-open [stream (byte-streams/to-input-stream source)]
-    (let [buffer (byte-array 1024)]
-      (loop [n (.read stream buffer)]
-        (when (pos? n)
-          (f buffer n)
-          (recur (.read stream buffer)))))))
-
-
 (defn sign
   "Generates a PGPSignature from the given data and private key."
   ([data privkey]
@@ -216,7 +204,7 @@
                        (public-key-algorithms (key-algorithm privkey))
                        (hash-algorithms hash-algo)))]
      (.init generator PGPSignature/BINARY_DOCUMENT privkey)
-     (for-bytes data #(.update generator %1 0 %2))
+     (do-bytes data #(.update generator %1 0 %2))
      (.generate generator))))
 
 
@@ -233,7 +221,7 @@
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)
-  (for-bytes data #(.update signature %1 0 %2))
+  (do-bytes data #(.update signature %1 0 %2))
   (.verify signature))
 
 
