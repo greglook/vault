@@ -1,4 +1,6 @@
-(ns vault.data.pgp
+(ns vault.util.pgp
+  "Utility functions for interacting with BouncyCastle's OpenPGP
+  library interface."
   (:require
     [byte-streams]
     [clojure.string :as string]

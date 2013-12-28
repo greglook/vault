@@ -51,7 +51,6 @@
      :else (parse-id (str x))))
   ([algorithm digest]
    (let [algo (keyword algorithm)]
-     (check-algorithm algo)
      (->HashID algo digest))))
 
 

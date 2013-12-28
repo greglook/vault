@@ -1,4 +1,5 @@
 (ns vault.util.digest
+  "Utility functions for producing hash digests."
   (:require
     byte-streams
     [vault.util.io :refer [do-bytes]])
