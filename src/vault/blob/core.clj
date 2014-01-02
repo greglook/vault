@@ -93,6 +93,25 @@
 
 
 
+;; BLOB DATA
+
+(defn blob-data
+  "Builds a blob data map."
+  [id content]
+  {:id id
+   :content content})
+
+
+(defn load-blob
+  "Buffers data in memory and hashes it to identify the blob."
+  [source]
+  (let [content (byte-streams/to-byte-array source)]
+    (when-not (empty? content)
+      (let [id (hash *digest-algorithm* content)]
+        (blob-data id content)))))
+
+
+
 ;; STORAGE INTERFACE
 
 (defprotocol BlobStore
@@ -126,13 +145,6 @@
 
   (destroy!! [this]
     "Completely removes all stored blob data."))
-
-
-(defn blob-data
-  "Builds a blob data map."
-  [id content]
-  {:id id
-   :content content})
 
 
 (defn list
@@ -174,7 +186,6 @@
 (defn put!
   "Stores data from the given byte source and returns the blob's hash id."
   [store source]
-  (let [content (byte-streams/to-byte-array source)
-        id (hash *digest-algorithm* content)]
-    (store! store (blob-data id content))
-    id))
+  (let [blob (load-blob source)]
+    (store! store blob)
+    (:id blob)))

@@ -123,7 +123,6 @@
   (try
     (execute commands args)
     (shutdown-agents)
-    (flush)
     (catch Exception e
       (.printStackTrace e)
       (System/exit 1))))

@@ -71,5 +71,14 @@
 
 (defn put-blob
   [opts args]
-  (let [id (blob/put! (:store opts) *in*)]
-    (println (str id))))
+  (let [byte-copier (java.io.ByteArrayOutputStream.)
+        copy-writer (java.io.OutputStreamWriter. byte-copier)]
+    (io/copy *in* copy-writer)
+    (.flush copy-writer)
+    (let [content (.toByteArray byte-copier)]
+      (when (empty? content)
+        (binding [*out* *err*]
+          (println "(no content)"))
+        (System/exit 1))
+      (if-let [id (blob/put! (:store opts) content)]
+        (println (str id))))))
