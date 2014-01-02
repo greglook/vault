@@ -49,13 +49,27 @@
     (puget/pprint value print-opts)))
 
 
+(defn value-bytes
+  "Computes an array of bytes representing the serialized form of the given
+  value."
+  [value]
+  (binding [puget/*colored-output* false]
+    (-> value
+        print-value
+        with-out-str
+        string/trim
+        (.getBytes blob-charset))))
+
+
 (defn print-data
   "Prints the given data value(s) as canonical EDN in a data blob."
   [value & more]
   (binding [puget/*strict-mode* true]
     (print (puget/color-text :tag blob-header))
     (print-value value)
-    (dorun (map #(do (print "\n") (print-value %)) more))))
+    (doseq [v more]
+      (newline)
+      (print-value v))))
 
 
 (defn print-data-str

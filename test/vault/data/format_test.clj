@@ -50,16 +50,20 @@
 (deftest read-primary-bytes
   (let [primary-content "[1 \\2 :three]"
         content (data-fixture primary-content)
-        result (format/read-data content)]
+        result (format/read-data content)
+        primary-bytes (format/primary-bytes result)]
     (is (= '([1 \2 :three]) result))
     (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
+    (is (bytes= (.getBytes primary-content format/blob-charset) primary-bytes))
+    (is (bytes= primary-bytes (format/value-bytes (first result))))))
 
 
 (deftest read-primary-bytes-with-extra-values
-  (let [primary-content "#{:bar \"baz\"}"
+  (let [primary-content "#{\"baz\" :bar}"
         content (data-fixture primary-content ":frobble")
-        result (format/read-data content)]
+        result (format/read-data content)
+        primary-bytes (format/primary-bytes result)]
     (is (= '(#{:bar "baz"} :frobble) result))
     (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content format/blob-charset) (format/primary-bytes result)))))
+    (is (bytes= (.getBytes primary-content format/blob-charset) primary-bytes))
+    (is (bytes= primary-bytes (format/value-bytes (first result))))))
