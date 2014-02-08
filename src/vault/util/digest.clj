@@ -2,6 +2,7 @@
   "Utility functions for producing hash digests."
   (:require
     byte-streams
+    [clojure.string :as str]
     [vault.util.io :refer [do-bytes]])
   (:import
     java.security.MessageDigest))
@@ -32,11 +33,13 @@
 (defn- hex-signature
   "Formats a sequence of bytes into a hexadecimal string."
   [^bytes digest]
-  (let [length (* 2 (count digest))
-        hex (-> (BigInteger. 1 digest)
+  (let [width (* 2 (count digest))
+        hex (-> (BigInteger. 1 data)
                 (.toString 16)
-                (.toLowerCase))
-        padding (apply str (repeat (- length (count hex)) "0"))]
+                str/lower-case)
+        padding (-> (- width (count hex))
+                    (repeat "0")
+                    str/join)]
     (str padding hex)))
 
 

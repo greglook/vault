@@ -43,7 +43,7 @@
   [value]
   (let [print-opts {:width blob-width}
         metadata (meta value)]
-    (when-not (empty? metadata)
+    (when (seq? metadata)
       (print (puget/color-text :delimiter \^))
       (puget/pprint metadata print-opts))
     (puget/pprint value print-opts)))

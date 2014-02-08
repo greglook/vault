@@ -106,7 +106,7 @@
   "Buffers data in memory and hashes it to identify the blob."
   [source]
   (let [content (byte-streams/to-byte-array source)]
-    (when-not (empty? content)
+    (when (seq? content)
       (let [id (hash *digest-algorithm* content)]
         (blob-data id content)))))
 
