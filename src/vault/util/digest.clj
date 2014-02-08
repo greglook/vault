@@ -34,7 +34,7 @@
   "Formats a sequence of bytes into a hexadecimal string."
   [^bytes digest]
   (let [width (* 2 (count digest))
-        hex (-> (BigInteger. 1 data)
+        hex (-> (BigInteger. 1 digest)
                 (.toString 16)
                 str/lower-case)
         padding (-> (- width (count hex))
