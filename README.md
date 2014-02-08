@@ -1,9 +1,9 @@
 Vault
 =====
 
-A Clojure library and application to store documents in a content-addressable
-datastore while maintaining a secure history of entity values. See the docs for
-more detailed explanations of the various pieces.
+Vault is a Clojure library and application to store documents in a
+content-addressable datastore while maintaining a secure history of entity
+values. See the docs for more detailed explanations of the various pieces.
 
 This is heavily inspired by both [Camlistore](http://camlistore.org/) and
 [Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
@@ -55,13 +55,17 @@ Finally, the data layer implements efficient querying by
 
 ### Application Layer
 
-At the top level, applications can be built on top of vault's data layer. Some
-example usages:
-- Maintain personal tracking data (Quantified Self)
-- Archive messages such as email, chat, social media posts
-- Snapshot filesystems for backup
-- Draw relations between many different kinds of data
-- Flexible information modeling
+At the top level, applications are built on top of the data layer. An
+application defines semantics for a set of data types. Some example usages:
+- Snapshot filesystems for backup, taking advantage of deduplicated blobs to
+  store only incremental changes.
+- Archive messages such as email, chat, and social media.
+- Store and flexibly organize media such as music and photos.
+- Maintain personal time-series data for Quantified Self tracking.
+
+One significant advantage of building on a comman data layer is the ability to
+draw relations between many different kinds of data. Information from a variety
+of systems can be correlated into more meaningful, higher-level aggregates.
 
 ## Usage
 
