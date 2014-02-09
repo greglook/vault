@@ -6,7 +6,11 @@
     [clojure.string :as string]
     [vault.util.io :refer [do-bytes]])
   (:import
+    (java.io
+      ByteArrayOutputStream)
     (org.bouncycastle.bcpg
+      ArmoredOutputStream
+      BCPGOutputStream
       HashAlgorithmTags
       PublicKeyAlgorithmTags)
     (org.bouncycastle.openpgp
@@ -177,6 +181,19 @@
 
 ;; KEYRING FUNCTIONS
 
+(defn load-public-keyrings
+  "Loads a public keyring file into a sequence of vectors of public keys."
+  [source]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (byte-streams/to-input-stream source))]
+    (map (fn [^PGPPublicKeyRing keyring]
+           (vec (iterator-seq (.getPublicKeys keyring))))
+         (-> stream
+             PGPPublicKeyRingCollection.
+             .getKeyRings
+             iterator-seq))))
+
+
 (defn load-secret-keyrings
   "Loads a secret keyring file into a sequence of vectors of secret keys."
   [source]
@@ -188,6 +205,21 @@
              PGPSecretKeyRingCollection.
              .getKeyRings
              iterator-seq))))
+
+
+(defn encode-public-key
+  "Encodes a public key as ascii-armored text."
+  [^PGPPublicKey pubkey]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [writer (-> buffer ArmoredOutputStream. BCPGOutputStream.)]
+      (.writePacket writer (.getPublicKeyPacket pubkey)))
+    (str buffer)))
+
+
+(defn decode-public-key
+  "Decodes a public key from the given string."
+  [data]
+  (-> data load-public-keyrings flatten first))
 
 
 
