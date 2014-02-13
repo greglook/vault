@@ -104,7 +104,9 @@
 
 (defmethod key-id Long [id] id)
 
-(defmethod key-id String [hex] (Long/parseLong hex 16))
+(defmethod key-id String
+  [^String hex]
+  (-> hex (BigInteger. 16) .longValue))
 
 (defmethod key-id PGPPublicKey
   [^PGPPublicKey pubkey]

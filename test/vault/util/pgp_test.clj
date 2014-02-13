@@ -101,6 +101,8 @@
     (let [privkey (pgp/unlock-key seckey "test password")
           sig (pgp/sign data privkey)]
       (is (= (pgp/key-id privkey) (pgp/key-id sig)))
+      (let [wrong-key (pgp/find-key "923b1c1c4392318a" secrings)]
+        (is (thrown? IllegalArgumentException (pgp/verify data sig wrong-key))))
       (let [binary (pgp/encode-signature sig)
             sig' (pgp/decode-signature binary)]
         (is (bytes= (.getSignature sig)
