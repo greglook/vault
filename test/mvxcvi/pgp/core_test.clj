@@ -1,19 +1,9 @@
-(ns vault.util.pgp-test
+(ns mvxcvi.pgp.core-test
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.java.io :as io]
     [clojure.test :refer :all]
-    [vault.util.pgp :as pgp])
-  (:import
-    (org.bouncycastle.openpgp
-      PGPSignature)))
-
-
-(def test-pubring
-  (io/file (io/resource "test-resources/pgp/pubring.gpg")))
-
-(def test-secring
-  (io/file (io/resource "test-resources/pgp/secring.gpg")))
+    [mvxcvi.pgp.core :as pgp]))
 
 
 (deftest utility-functions
@@ -26,8 +16,9 @@
     (is (= :rsa-general (pgp/key-algorithm :rsa-general))))
 
 
+#_
 (deftest public-key-functions
-  (let [pubrings (pgp/load-public-keyrings test-pubring)
+  (let [pubrings (keyring/load-public-keyrings test-pubring)
         pubring (first pubrings)
         pubkey (first pubring)]
     (is (= 1 (count pubrings)))
@@ -59,8 +50,9 @@
         (is (= encoded-key (pgp/encode-public-key decoded-key)))))))
 
 
+#_
 (deftest secret-key-functions
-  (let [secrings (pgp/load-secret-keyrings test-secring)
+  (let [secrings (keyring/load-secret-keyrings test-secring)
         secring (first secrings)
         seckey (first secring)]
     (is (= 1 (count secrings)))
@@ -90,18 +82,19 @@
              :signing-key? true)))))
 
 
+#_
 (deftest signature-functions
   (let [data "cryptography is neat"
         id (pgp/key-id "3f40edec41c6cb7d")
-        secrings (pgp/load-secret-keyrings test-secring)
-        seckey (pgp/find-key id secrings)]
+        secrings (keyring/load-secret-keyrings test-secring)
+        seckey (keyring/find-key id secrings)]
     (is (= id (pgp/key-id seckey)))
     (is (thrown? org.bouncycastle.openpgp.PGPException
                  (pgp/unlock-key seckey "wrong password")))
     (let [privkey (pgp/unlock-key seckey "test password")
           sig (pgp/sign data privkey)]
       (is (= (pgp/key-id privkey) (pgp/key-id sig)))
-      (let [wrong-key (pgp/find-key "923b1c1c4392318a" secrings)]
+      (let [wrong-key (keyring/find-key "923b1c1c4392318a" secrings)]
         (is (thrown? IllegalArgumentException (pgp/verify data sig wrong-key))))
       (let [binary (pgp/encode-signature sig)
             sig' (pgp/decode-signature binary)]

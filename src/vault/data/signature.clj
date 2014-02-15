@@ -4,7 +4,7 @@
     [puget.data :refer [TaggedValue]]
     [vault.blob.core :as blob]
     [vault.data.format :as fmt]
-    [vault.util.pgp :as pgp])
+    [mvxcvi.pgp.core :as pgp])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey
@@ -21,17 +21,12 @@
 ;  :public-key-hash #vault/ref "sha256:1234567890abcdef"}
 
 
-(defprotocol KeyProvider
-  "A protocol for finding PGP keys by their id."
-
-  (unlock-private-key [this id]
-    "Obtains an unlocked private key."))
-
 
 
 ;; SIGNATURE RECORD
 
 ;#vault/signature
+;^{:type :vault.data/signature}
 ;{:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
 ; :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
 ; :target #vault/ref "sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"}
@@ -77,31 +72,34 @@
 (defn- load-private-key
   "Obtains a private key for the given id."
   [provider key-id]
-  (let [privkey (unlock-private-key provider key-id)]
+  (let [privkey (pgp/load-private-key provider key-id)]
     (when-not (instance? PGPPrivateKey privkey)
       (throw (IllegalStateException.
                (str "Private key " (Long/toHexString key-id) " is not available"))))
     privkey))
 
 
-(defn sign-value
-  "Signs a clojure value with pgp private keys. Returns the constructed
-  string holding the canonical value and signature."
-  [blob-store
-   key-provider
-   pubkey-hash
-   value]
+(defn- sign-value-bytes
+  "Signs byte data with the key looked up by the hash identifier."
+  [blob-store key-provider value-bytes pubkey-hash]
   (let [pubkey (load-public-key blob-store pubkey-hash)
         privkey (load-private-key key-provider (pgp/key-id pubkey))
+        pgp-sig (pgp/sign value-bytes privkey)]
+    (map->Signature {:key pubkey-hash, :signature pgp-sig})))
+
+
+(defn sign-value
+  "Signs a clojure value with PGP keys. Returns the constructed string holding
+  string holding the canonical value and signature."
+  [blob-store key-provider value pubkey-hash & more]
+  (let [pubkey-hashes (cons pubkey-hash more)
         value-bytes (fmt/value-bytes value)
-        pgp-sig (pgp/sign value-bytes privkey)
-        sig (map->Signature {:key pubkey-hash
-                             :signature pgp-sig})]
-    (fmt/print-data-str value sig)))
+        sign-fn (partial sign-value-bytes blob-store key-provider value-bytes)]
+    (apply fmt/print-data-str value (map sign-fn pubkey-hashes))))
 
 
 (defn verify-blob
-  "Verifies that the inline signatures in a sequence of blob values is valid."
+  "Verifies that the inline signatures in a sequence of blob values are valid."
   [blob-store
    blob-values]
   ; TODO: implement

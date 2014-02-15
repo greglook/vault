@@ -1,10 +1,10 @@
-(ns vault.util.pgp
-  "Utility functions for interacting with BouncyCastle's OpenPGP
-  library interface."
+(ns mvxcvi.pgp.core
+  "Functions for interacting with BouncyCastle's OpenPGP library."
   (:require
     [byte-streams]
+    [clojure.java.io :as io]
     [clojure.string :as string]
-    [vault.util.io :as io])
+    [mvxcvi.pgp.util :refer [do-bytes hex-str]])
   (:import
     (java.io
       ByteArrayOutputStream)
@@ -117,12 +117,6 @@
   (.getKeyID sig))
 
 
-(defn key-id-hex
-  "Returns the PGP key identifier in hexadecimal."
-  [v]
-  (io/hex-str (key-id v)))
-
-
 (defmulti key-algorithm
   "Constructs a numeric PGP key identifier from the argument."
   class)
@@ -152,7 +146,7 @@
   (let [pubkey (public-key k)
         info
         {:master-key? (.isMasterKey pubkey)
-         :key-id (io/hex-str (key-id pubkey))
+         :key-id (hex-str (key-id pubkey))
          :strength (.getBitStrength pubkey)
          :algorithm (key-algorithm pubkey)
          :fingerprint (->> (.getFingerprint pubkey)
@@ -180,59 +174,6 @@
         (.build (.toCharArray passphrase)))))
 
 
-(defn find-key
-  "Locates a key in a sequence by id. Nested sequences are flattened, so this
-  works directly on keyrings and keyring collections."
-  [id key-seq]
-  (let [id (key-id id)]
-    (some #(when (= id (key-id %)) %)
-          (flatten key-seq))))
-
-
-
-;; KEYRING FUNCTIONS
-
-(defn load-public-keyrings
-  "Loads a public keyring file into a sequence of vectors of public keys."
-  [source]
-  (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream source))]
-    (map (fn [^PGPPublicKeyRing keyring]
-           (vec (iterator-seq (.getPublicKeys keyring))))
-         (-> stream
-             PGPPublicKeyRingCollection.
-             .getKeyRings
-             iterator-seq))))
-
-
-(defn load-secret-keyrings
-  "Loads a secret keyring file into a sequence of vectors of secret keys."
-  [source]
-  (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream source))]
-    (map (fn [^PGPSecretKeyRing keyring]
-           (vec (iterator-seq (.getSecretKeys keyring))))
-         (-> stream
-             PGPSecretKeyRingCollection.
-             .getKeyRings
-             iterator-seq))))
-
-
-(defn encode-public-key
-  "Encodes a public key as ascii-armored text."
-  [^PGPPublicKey pubkey]
-  (let [buffer (ByteArrayOutputStream.)]
-    (with-open [writer (-> buffer ArmoredOutputStream. BCPGOutputStream.)]
-      (.writePacket writer (.getPublicKeyPacket pubkey)))
-    (str buffer)))
-
-
-(defn decode-public-key
-  "Decodes a public key from the given string."
-  [data]
-  (-> data load-public-keyrings flatten first))
-
-
 
 ;; SIGNATURE FUNCTIONS
 
@@ -249,7 +190,7 @@
                        (public-key-algorithms (key-algorithm privkey))
                        (hash-algorithms hash-algo)))]
      (.init generator PGPSignature/BINARY_DOCUMENT privkey)
-     (io/do-bytes data [buf n]
+     (do-bytes [[buf n] data]
        (.update generator buf 0 n))
      (.generate generator))))
 
@@ -267,9 +208,28 @@
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)
-  (io/do-bytes data [buf n]
+  (do-bytes [[buf n] data]
     (.update signature buf 0 n))
   (.verify signature))
+
+
+
+;; SERIALIZATION
+
+(defn encode-public-key
+  "Encodes a public key as ascii-armored text."
+  [^PGPPublicKey pubkey]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [writer (-> buffer ArmoredOutputStream. BCPGOutputStream.)]
+      (.writePacket writer (.getPublicKeyPacket pubkey)))
+    (str buffer)))
+
+
+(defn decode-public-key
+  "Decodes a public key from the given string."
+  [data]
+  nil ; FIXME
+  #_ (-> data load-public-keyrings flatten first))
 
 
 (defn encode-signature
@@ -289,3 +249,16 @@
                  (str "Data did not contain a PGPSignatureList: " sigs))))
       (when-not (.isEmpty sigs)
         (.get sigs 0)))))
+
+
+
+;; KEY PROVIDER PROTOCOL
+
+(defprotocol KeyProvider
+  "Protocol for obtaining PGP keys."
+
+  (load-public-key [this id]
+    "Loads a public key by id.")
+
+  (load-private-key [this id] [this id passphrase]
+    "Loads a private key by id."))
