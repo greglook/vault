@@ -3,12 +3,10 @@
   (:require
     byte-streams
     [clojure.string :as str]
-    [vault.util.io :refer [do-bytes]])
+    [vault.util.io :as io])
   (:import
     java.security.MessageDigest))
 
-
-;; DIGEST ALGORITHMS
 
 (def algorithms
   "Map of content hashing algorithms to system names."
@@ -27,22 +25,6 @@
                   ", must be one of: " algorithms)))))
 
 
-
-;; CONTENT HASHING
-
-(defn- hex-signature
-  "Formats a sequence of bytes into a hexadecimal string."
-  [^bytes digest]
-  (let [width (* 2 (count digest))
-        hex (-> (BigInteger. 1 digest)
-                (.toString 16)
-                str/lower-case)
-        padding (-> (- width (count hex))
-                    (repeat "0")
-                    str/join)]
-    (str padding hex)))
-
-
 (defn hash-content
   "Calculates the hash digest of the given data source. Returns the digest as
   a hex string."
@@ -50,6 +32,6 @@
   (check-algorithm algo)
   (let [algorithm (MessageDigest/getInstance (algorithms algo))]
     (.reset algorithm)
-    (do-bytes content [buf n]
+    (io/do-bytes content [buf n]
       (.update algorithm buf 0 n))
-    (hex-signature (.digest algorithm))))
+    (io/hex-str (.digest algorithm))))

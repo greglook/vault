@@ -4,7 +4,7 @@
   (:require
     [byte-streams]
     [clojure.string :as string]
-    [vault.util.io :refer [do-bytes]])
+    [vault.util.io :as io])
   (:import
     (java.io
       ByteArrayOutputStream)
@@ -75,29 +75,21 @@
 
 ;; KEY UTILITIES
 
-(defn public-key
-  "Coerces the argument into a PGPPublicKey."
-  ^PGPPublicKey
-  [k]
-  (cond (instance? PGPPublicKey k) k
-        (instance? PGPSecretKey k) (.getPublicKey ^PGPSecretKey k)
-        :else (throw (IllegalArgumentException.
-                       (str "Don't know how to get public key from: " k)))))
+(defmulti ^PGPPublicKey public-key
+  "Determines the public PGP key associated with the argument."
+  class)
 
+(defmethod public-key PGPPublicKey
+  [^PGPPublicKey pubkey]
+  pubkey)
 
-(defn unlock-key
-  "Decodes a secret key with a passphrase to obtain the private key."
-  ^PGPPrivateKey
-  [^PGPSecretKey seckey
-   ^String passphrase]
-  (.extractPrivateKey seckey
-    (-> (BcPGPDigestCalculatorProvider.)
-        (BcPBESecretKeyDecryptorBuilder.)
-        (.build (.toCharArray passphrase)))))
+(defmethod public-key PGPSecretKey
+  [^PGPSecretKey seckey]
+  (.getPublicKey seckey))
 
 
 (defmulti key-id
-  "Constructs a numeric PGP key identifier from the argument."
+  "Determines the numeric PGP key identifier from the argument."
   class)
 
 (defmethod key-id nil [_] nil)
@@ -123,6 +115,12 @@
 (defmethod key-id PGPSignature
   [^PGPSignature sig]
   (.getKeyID sig))
+
+
+(defn key-id-hex
+  "Returns the PGP key identifier in hexadecimal."
+  [v]
+  (io/hex-str (key-id v)))
 
 
 (defmulti key-algorithm
@@ -154,7 +152,7 @@
   (let [pubkey (public-key k)
         info
         {:master-key? (.isMasterKey pubkey)
-         :key-id (Long/toHexString (key-id pubkey))
+         :key-id (io/hex-str (key-id pubkey))
          :strength (.getBitStrength pubkey)
          :algorithm (key-algorithm pubkey)
          :fingerprint (->> (.getFingerprint pubkey)
@@ -169,6 +167,17 @@
                {:private-key? true
                 :signing-key? (.isSigningKey ^PGPSecretKey k)}))
       info)))
+
+
+(defn unlock-key
+  "Decodes a secret key with a passphrase to obtain the private key."
+  ^PGPPrivateKey
+  [^PGPSecretKey seckey
+   ^String passphrase]
+  (.extractPrivateKey seckey
+    (-> (BcPGPDigestCalculatorProvider.)
+        (BcPBESecretKeyDecryptorBuilder.)
+        (.build (.toCharArray passphrase)))))
 
 
 (defn find-key
@@ -240,7 +249,7 @@
                        (public-key-algorithms (key-algorithm privkey))
                        (hash-algorithms hash-algo)))]
      (.init generator PGPSignature/BINARY_DOCUMENT privkey)
-     (do-bytes data [buf n]
+     (io/do-bytes data [buf n]
        (.update generator buf 0 n))
      (.generate generator))))
 
@@ -258,7 +267,7 @@
   (.init signature
          (BcPGPContentVerifierBuilderProvider.)
          pubkey)
-  (do-bytes data [buf n]
+  (io/do-bytes data [buf n]
     (.update signature buf 0 n))
   (.verify signature))
 
