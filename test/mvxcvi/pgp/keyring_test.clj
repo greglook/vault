@@ -8,10 +8,4 @@
       [keyring :as keyring])))
 
 
-(def test-keyring
-  (keyring/pgp-keyring
-    (io/resource "test-resources/pgp/pubring.gpg")
-    (io/resource "test-resources/pgp/secring.gpg")))
-
-
 

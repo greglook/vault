@@ -4,7 +4,6 @@
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
   :dependencies [[byte-streams "0.1.6"]
-                 [fipp "0.4.1"]
                  [mvxcvi/directive "0.1.0"]
                  [mvxcvi/puget "0.3.0-SNAPSHOT"]
                  [org.bouncycastle/bcpg-jdk15on "1.49"]

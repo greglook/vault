@@ -51,6 +51,12 @@
          (into {}))))
 
 
+(defn- code->name
+  "Look up the keyword of an algorithm given the numeric code."
+  [codes code]
+  (some #(if (= (val %) code) (key %)) codes))
+
+
 (def public-key-algorithms
   "Map of public-key algorithm names to numeric codes."
   (map-tags PublicKeyAlgorithmTags))
@@ -64,12 +70,6 @@
 (def ^:dynamic *hash-algorithm*
   "Digest algorithm used for creating signatures."
   :sha1)
-
-
-(defn- code->name
-  "Look up the keyword of an algorithm given the numeric code."
-  [codes code]
-  (some #(if (= (val %) code) (key %)) codes))
 
 
 
@@ -257,8 +257,11 @@
 (defprotocol KeyProvider
   "Protocol for obtaining PGP keys."
 
-  (load-public-key [this id]
+  (get-public-key [this id]
     "Loads a public key by id.")
 
-  (load-private-key [this id] [this id passphrase]
+  (get-secret-key [this id]
+    "Loads a secret key by id.")
+
+  (get-private-key [this id] [this id passphrase]
     "Loads a private key by id."))

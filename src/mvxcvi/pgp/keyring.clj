@@ -18,7 +18,7 @@
 
 ;; KEYRING UTILITIES
 
-(defn load-public-keyrings
+(defn- load-public-keyrings
   "Loads a public keyring file into a sequence of vectors of public keys."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
@@ -31,7 +31,7 @@
              iterator-seq))))
 
 
-(defn load-secret-keyrings
+(defn- load-secret-keyrings
   "Loads a secret keyring file into a sequence of vectors of secret keys."
   [source]
   (with-open [stream (PGPUtil/getDecoderStream
@@ -61,10 +61,13 @@
 
   KeyProvider
 
-  (load-public-key [this id]
+  (get-public-key [this id]
     (find-key id (load-public-keyrings (:pubring this))))
 
-  (load-private-key [this id passphrase]
+  (get-secret-key [this id]
+    (find-key id (load-secret-keyrings (:secring this))))
+
+  (get-private-key [this id passphrase]
     (-> id
         (find-key (load-secret-keyrings (:secring this)))
         (pgp/unlock-key passphrase))))
@@ -72,11 +75,8 @@
 
 (defn pgp-keyring
   "Constructs a PGPKeyring for the given keyring files."
-  ([keyring-dir]
-   (pgp-keyring (io/file keyring-dir "pubring.gpg")
-                (io/file keyring-dir "secring.gpg")))
-  ([pubring secring]
-   (->PGPKeyring (io/file pubring) (io/file secring))))
+  [pubring secring]
+  (->PGPKeyring (io/file pubring) (io/file secring)))
 
 
 
@@ -87,23 +87,27 @@
 
   KeyProvider
 
-  (load-public-key
+  (get-public-key
     [this id]
-    (pgp/load-public-key (:provider this) id))
+    (pgp/get-public-key (:provider this) id))
 
-  (load-private-key
+  (get-secret-key
+    [this id]
+    (pgp/get-secret-key (:provider this) id))
+
+  (get-private-key
     [this id]
     (let [id (pgp/key-id id)]
       (or (get @(:store this) id)
-          (when-let [privkey (pgp/load-private-key (:provider this) id)]
+          (when-let [privkey (pgp/get-private-key (:provider this) id)]
             (swap! (:store this) assoc id privkey)
             privkey))))
 
-  (load-private-key
+  (get-private-key
     [this id passphrase]
     (let [id (pgp/key-id id)]
       (or (get @(:store this) id)
-          (when-let [privkey (pgp/load-private-key (:provider this) id passphrase)]
+          (when-let [privkey (pgp/get-private-key (:provider this) id passphrase)]
             (swap! (:store this) assoc id privkey)
             privkey)))))
 
@@ -123,16 +127,20 @@
   [provider]
   (reify KeyProvider
 
-    (load-public-key
+    (get-public-key
       [_ id]
-      (pgp/load-public-key provider id))
+      (pgp/get-public-key provider id))
 
-    (load-private-key
+    (get-secret-key
+      [_ id]
+      (pgp/get-secret-key provider id))
+
+    (get-private-key
       [_ id]
       (let [id (pgp/key-id id)]
         (println "Passphrase for private key " (hex-str id) ":")
-        (pgp/load-private-key provider id (read-line))))
+        (pgp/get-private-key provider id (read-line))))
 
-    (load-private-key
+    (get-private-key
       [_ id passphrase]
-      (pgp/load-private-key provider id passphrase))))
+      (pgp/get-private-key provider id passphrase))))

@@ -13,16 +13,6 @@
       PGPSignature)))
 
 
-; Loaded key map:
-; {:public-key #<PGPPublicKey org.bouncycastle.openpgp.PGPPublicKey@47df68e4>
-;  :private-key #<PGPPrivateKey org.bouncycastle.openpgp.PGPPrivateKey@47df68e4>
-;  :secret-key #<PGPSecretKey org.bouncycastle.openpgp.PGPPrivateKey@47df68e4>
-;  :public-key-blob "ascii-armored-string"
-;  :public-key-hash #vault/ref "sha256:1234567890abcdef"}
-
-
-
-
 ;; SIGNATURE RECORD
 
 ;#vault/signature
@@ -72,7 +62,7 @@
 (defn- load-private-key
   "Obtains a private key for the given id."
   [provider key-id]
-  (let [privkey (pgp/load-private-key provider key-id)]
+  (let [privkey (pgp/get-private-key provider key-id)]
     (when-not (instance? PGPPrivateKey privkey)
       (throw (IllegalStateException.
                (str "Private key " (Long/toHexString key-id) " is not available"))))
