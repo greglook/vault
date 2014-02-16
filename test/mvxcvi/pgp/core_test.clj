@@ -4,7 +4,11 @@
     [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.pgp.core :as pgp]
-    [mvxcvi.pgp.keyring :as keyring]))
+    [mvxcvi.pgp.keyring :as keyring])
+  (:import
+    (org.bouncycastle.openpgp
+      PGPPublicKey
+      PGPSignature)))
 
 
 (def test-keyring
@@ -57,38 +61,41 @@
       :algorithm :rsa-general
       :strength 1024
       :master-key? false
-      :private-key? true
+      :secret-key? true
       :encryption-key? true
       :signing-key? true)))
 
 
+(deftest private-key-functions
+  (is (thrown? org.bouncycastle.openpgp.PGPException
+               (pgp/unlock-key seckey "wrong password")))
+  (let [privkey (pgp/unlock-key seckey "test password")]
+    (is (= (pgp/key-id privkey) (pgp/key-id seckey)))
+    (is (= :rsa-general (pgp/key-algorithm privkey)))))
 
 
-#_
-(deftest public-key-encoding
-  (let [encoded-key (pgp/encode-public-key pubkey)
-        decoded-key (pgp/decode-public-key encoded-key)]
-    (is (string? encoded-key))
-    (is (instance? org.bouncycastle.openpgp.PGPPublicKey decoded-key))
-    (is (= encoded-key (pgp/encode-public-key decoded-key)))))
-
-
-#_
 (deftest signature-functions
   (let [data "cryptography is neat"
-        id (pgp/key-id "3f40edec41c6cb7d")
-        secrings (keyring/load-secret-keyrings test-secring)
-        seckey (keyring/find-key id secrings)]
-    (is (= id (pgp/key-id seckey)))
-    (is (thrown? org.bouncycastle.openpgp.PGPException
-                 (pgp/unlock-key seckey "wrong password")))
-    (let [privkey (pgp/unlock-key seckey "test password")
-          sig (pgp/sign data privkey)]
-      (is (= (pgp/key-id privkey) (pgp/key-id sig)))
-      (let [wrong-key (keyring/find-key "923b1c1c4392318a" secrings)]
-        (is (thrown? IllegalArgumentException (pgp/verify data sig wrong-key))))
-      (let [binary (pgp/encode-signature sig)
+        privkey (pgp/unlock-key seckey "test password")
+        sig (pgp/sign data privkey)]
+    (is (= (pgp/key-id privkey) (pgp/key-id sig)))
+    (is (thrown? IllegalArgumentException (pgp/verify data sig pubkey)))
+    (is (pgp/verify data sig (pgp/public-key seckey)))
+    (testing "signature encoding"
+      (let [binary (pgp/encode sig)
             sig' (pgp/decode-signature binary)]
         (is (bytes= (.getSignature sig)
                     (.getSignature sig')))
         (is (pgp/verify data sig' (pgp/public-key seckey)))))))
+
+
+(deftest public-key-encoding
+  (let [encoded-key (pgp/encode pubkey)
+        decoded-key (pgp/decode-public-key encoded-key)]
+    (is (instance? org.bouncycastle.openpgp.PGPPublicKey decoded-key))
+    (is (bytes= encoded-key (pgp/encode decoded-key))))
+  (let [encoded-key (pgp/encode-ascii pubkey)
+        decoded-key (pgp/decode-public-key encoded-key)]
+    (is (string? encoded-key))
+    (is (instance? org.bouncycastle.openpgp.PGPPublicKey decoded-key))
+    (is (= encoded-key (pgp/encode-ascii decoded-key)))))

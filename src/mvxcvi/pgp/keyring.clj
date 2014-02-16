@@ -4,9 +4,7 @@
     [byte-streams]
     [clojure.java.io :as io]
     [clojure.string :as string]
-    (mvxcvi.pgp
-      [core :as pgp :refer [KeyStore]]
-      [util :refer [hex-str]]))
+    [mvxcvi.pgp.core :as pgp :refer [KeyStore]])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing
@@ -142,7 +140,7 @@
     (get-private-key
       [_ id]
       (let [id (pgp/key-id id)]
-        (println "Passphrase for private key " (hex-str id) ":")
+        (println "Passphrase for private key " (pgp/key-id-hex id) ":")
         (pgp/get-private-key provider id (read-line))))
 
     (get-private-key

@@ -26,9 +26,9 @@
 
 (defmacro do-bytes
   "Wraps the given statements in a function to pass to apply-bytes."
-  [source [buff-sym n-sym] & body]
-  `(let [f# (fn [~(vary-meta buff-sym assoc :tag 'bytes)
-                 ~(vary-meta n-sym assoc :tag 'long)]
+  [[[buff n] source] & body]
+  `(let [f# (fn [~(vary-meta buff assoc :tag 'bytes)
+                 ~(vary-meta n assoc :tag 'long)]
               ~@body)]
      (apply-bytes ~source f#)))
 

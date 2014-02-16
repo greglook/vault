@@ -4,7 +4,7 @@
     [byte-streams]
     [clojure.java.io :as io]
     [clojure.string :as string]
-    [mvxcvi.pgp.util :refer [do-bytes hex-str]])
+    [mvxcvi.pgp.util :refer [do-bytes]])
   (:import
     (java.io
       ByteArrayOutputStream)
@@ -17,6 +17,7 @@
       PGPObjectFactory
       PGPPrivateKey
       PGPPublicKey
+      PGPPublicKeyRing
       PGPSecretKey
       PGPSignature
       PGPSignatureGenerator
@@ -113,6 +114,12 @@
   (.getKeyID sig))
 
 
+(defn key-id-hex
+  "Gets the key identifier and converts it into hex."
+  [value]
+  (format "%016x" (key-id value)))
+
+
 (defmulti key-algorithm
   "Constructs a numeric PGP key identifier from the argument."
   class)
@@ -142,7 +149,7 @@
   (let [pubkey (public-key k)
         info
         {:master-key? (.isMasterKey pubkey)
-         :key-id (hex-str (key-id pubkey))
+         :key-id (key-id-hex pubkey)
          :strength (.getBitStrength pubkey)
          :algorithm (key-algorithm pubkey)
          :fingerprint (->> (.getFingerprint pubkey)
@@ -151,11 +158,8 @@
          :encryption-key? (.isEncryptionKey pubkey)
          :user-ids (-> pubkey .getUserIDs iterator-seq vec)}]
     (if (instance? PGPSecretKey k)
-      (if (.isPrivateKeyEmpty ^PGPSecretKey k)
-        (assoc info :private-key? false)
-        (merge info
-               {:private-key? true
-                :signing-key? (.isSigningKey ^PGPSecretKey k)}))
+      (merge info {:secret-key? true
+                   :signing-key? (.isSigningKey ^PGPSecretKey k)})
       info)))
 
 
@@ -248,23 +252,25 @@
 
 (defn decode-public-key
   "Decodes a public key from the given data."
+  ^PGPPublicKey
   [data]
-  nil ; FIXME
-  #_ (-> data load-public-keyrings flatten first))
+  (let [object (first (decode data))]
+    (condp = (class object)
+      PGPPublicKey     object
+      PGPPublicKeyRing (.getPublicKey ^PGPPublicKeyRing object)
+      (throw (IllegalArgumentException.
+               (str "Data did not contain a PGPPublicKey or PGPPublicKeyRing: " object))))))
 
 
 (defn decode-signature
   ^PGPSignature
   [data]
-  (with-open [stream (PGPUtil/getDecoderStream
-                       (byte-streams/to-input-stream data))]
-    (let [^PGPSignatureList sigs
-          (.nextObject (PGPObjectFactory. stream))]
-      (when-not (instance? PGPSignatureList sigs)
-        (throw (IllegalArgumentException.
-                 (str "Data did not contain a PGPSignatureList: " sigs))))
-      (when-not (.isEmpty sigs)
-        (.get sigs 0)))))
+  (let [^PGPSignatureList sigs (first (decode data))]
+    (when-not (instance? PGPSignatureList sigs)
+      (throw (IllegalArgumentException.
+               (str "Data did not contain a PGPSignatureList: " sigs))))
+    (when-not (.isEmpty sigs)
+      (.get sigs 0))))
 
 
 

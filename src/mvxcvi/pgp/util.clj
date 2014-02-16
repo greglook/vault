@@ -31,34 +31,3 @@
                  ~(vary-meta n assoc :tag 'long)]
               ~@body)]
      (apply-bytes ~source f#)))
-
-
-
-;; HEX CONVERSION
-
-(defn- zero-pad
-  "Pads a string"
-  [width value]
-  (let [string (str value)]
-    (-> width
-        (- (count string))
-        (repeat "0")
-        str/join
-        (str string))))
-
-
-(defmulti hex-str
-  "Format the argument as a hexadecimal string."
-  class)
-
-(defmethod hex-str Long
-  [^long value]
-  (zero-pad 16 (Long/toHexString value)))
-
-(defmethod hex-str (Class/forName "[B")
-  [^bytes value]
-  (let [width (* 2 (count value))
-        hex (-> (BigInteger. 1 value)
-                (.toString 16)
-                str/lower-case)]
-    (zero-pad width hex)))

@@ -32,6 +32,6 @@
   (check-algorithm algo)
   (let [algorithm (MessageDigest/getInstance (algorithms algo))]
     (.reset algorithm)
-    (io/do-bytes content [buf n]
+    (io/do-bytes [[buf n] content]
       (.update algorithm buf 0 n))
     (io/hex-str (.digest algorithm))))
