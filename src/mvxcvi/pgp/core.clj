@@ -17,11 +17,7 @@
       PGPObjectFactory
       PGPPrivateKey
       PGPPublicKey
-      PGPPublicKeyRing
-      PGPPublicKeyRingCollection
       PGPSecretKey
-      PGPSecretKeyRing
-      PGPSecretKeyRingCollection
       PGPSignature
       PGPSignatureGenerator
       PGPSignatureList
@@ -216,25 +212,45 @@
 
 ;; SERIALIZATION
 
-(defn encode-public-key
-  "Encodes a public key as ascii-armored text."
+(defmulti encode
+  "Encodes a PGP object into a byte sequence."
+  class)
+
+(defmethod encode PGPPublicKey
   [^PGPPublicKey pubkey]
   (let [buffer (ByteArrayOutputStream.)]
-    (with-open [writer (-> buffer ArmoredOutputStream. BCPGOutputStream.)]
+    (with-open [writer (BCPGOutputStream. buffer)]
       (.writePacket writer (.getPublicKeyPacket pubkey)))
+    (.toByteArray buffer)))
+
+(defmethod encode PGPSignature
+  [^PGPSignature sig]
+  (.getEncoded sig))
+
+
+(defn encode-ascii
+  "Encodes a PGP object into an ascii-armored text blob."
+  [data]
+  (let [buffer (ByteArrayOutputStream.)]
+    (with-open [encoder (ArmoredOutputStream. buffer)]
+      (io/copy (encode data) encoder))
     (str buffer)))
 
 
+(defn decode
+  "Decodes PGP objects from an encoded data source."
+  [data]
+  (with-open [stream (PGPUtil/getDecoderStream
+                       (byte-streams/to-input-stream data))]
+    (let [factory (PGPObjectFactory. stream)]
+      (doall (take-while identity (repeatedly #(.nextObject factory)))))))
+
+
 (defn decode-public-key
-  "Decodes a public key from the given string."
+  "Decodes a public key from the given data."
   [data]
   nil ; FIXME
   #_ (-> data load-public-keyrings flatten first))
-
-
-(defn encode-signature
-  [^PGPSignature sig]
-  (.getEncoded sig))
 
 
 (defn decode-signature
@@ -252,16 +268,19 @@
 
 
 
-;; KEY PROVIDER PROTOCOL
+;; KEY STORE PROTOCOL
 
-(defprotocol KeyProvider
+(defprotocol KeyStore
   "Protocol for obtaining PGP keys."
+
+  (list-public-keys [this]
+    "Enumerates the available public keys.")
 
   (get-public-key [this id]
     "Loads a public key by id.")
 
-  (get-secret-key [this id]
-    "Loads a secret key by id.")
+  (list-secret-keys [this]
+    "Enumerates the available secret keys.")
 
-  (get-private-key [this id] [this id passphrase]
-    "Loads a private key by id."))
+  (get-secret-key [this id]
+    "Loads a secret key by id."))

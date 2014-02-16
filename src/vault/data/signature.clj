@@ -62,6 +62,8 @@
 (defn- load-private-key
   "Obtains a private key for the given id."
   [provider key-id]
+  ; FIXME: work out 'key-provider' function
+  #_
   (let [privkey (pgp/get-private-key provider key-id)]
     (when-not (instance? PGPPrivateKey privkey)
       (throw (IllegalStateException.

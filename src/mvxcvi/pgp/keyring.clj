@@ -5,7 +5,7 @@
     [clojure.java.io :as io]
     [clojure.string :as string]
     (mvxcvi.pgp
-      [core :as pgp :refer [KeyProvider]]
+      [core :as pgp :refer [KeyStore]]
       [util :refer [hex-str]]))
   (:import
     (org.bouncycastle.openpgp
@@ -56,21 +56,22 @@
 
 ;; KEYRING PROVIDER
 
-(defrecord PGPKeyring
-  [pubring secring]
+(defrecord PGPKeyring [pubring secring])
 
-  KeyProvider
+(extend-protocol KeyStore
+  PGPKeyring
+
+  (list-public-keys [this]
+    (-> this :pubring load-public-keyrings flatten))
 
   (get-public-key [this id]
-    (find-key id (load-public-keyrings (:pubring this))))
+    (->> this :pubring load-public-keyrings (find-key id)))
+
+  (list-secret-keys [this]
+    (-> this :secring load-secret-keyrings flatten))
 
   (get-secret-key [this id]
-    (find-key id (load-secret-keyrings (:secring this))))
-
-  (get-private-key [this id passphrase]
-    (-> id
-        (find-key (load-secret-keyrings (:secring this)))
-        (pgp/unlock-key passphrase))))
+    (->> this :secring load-secret-keyrings (find-key id))))
 
 
 (defn pgp-keyring
@@ -82,10 +83,11 @@
 
 ;; CACHING PROVIDER
 
+#_
 (defrecord PrivateKeyCache
   [provider store]
 
-  KeyProvider
+  KeyStore
 
   (get-public-key
     [this id]
@@ -112,6 +114,7 @@
             privkey)))))
 
 
+#_
 (defn key-cache
   "Wraps a key provider in a layer that keeps unlocked private keys in a map."
   [provider]
@@ -121,11 +124,12 @@
 
 ;; INTERACTIVE PROVIDER
 
+#_
 (defn interactive-unlocker
   "Wraps a key provider in a layer that will request a passphrase on the
   command-line when a private key needs to be unlocked."
   [provider]
-  (reify KeyProvider
+  (reify KeyStore
 
     (get-public-key
       [_ id]

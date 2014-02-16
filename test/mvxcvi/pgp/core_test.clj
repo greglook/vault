@@ -19,7 +19,28 @@
   (pgp/get-secret-key test-keyring "3f40edec41c6cb7d"))
 
 
-(deftest public-key-info
+
+(deftest list-keyring
+  (let [pubkeys (pgp/list-public-keys test-keyring)]
+    (is (= 2 (count pubkeys))))
+  (let [seckeys (pgp/list-secret-keys test-keyring)]
+    (is (= 2 (count seckeys)))))
+
+
+(deftest utility-functions
+  (testing "key-id coercion"
+    (is (nil? (pgp/key-id nil)))
+    (is (= 1234 (pgp/key-id 1234))))
+  (testing "public-key coercion"
+    (is (identical? pubkey (pgp/public-key pubkey)))
+    (is (thrown? IllegalArgumentException (pgp/public-key "a string"))))
+  (testing "key-algorithm detection"
+    (is (nil? (pgp/key-algorithm nil)))
+    (is (= :rsa-general (pgp/key-algorithm seckey)))
+    (is (= :rsa-general (pgp/key-algorithm :rsa-general)))))
+
+
+(deftest key-info
   (let [info (pgp/key-info pubkey)]
     (are [k v] (= v (info k))
       :key-id "923b1c1c4392318a"
@@ -28,10 +49,7 @@
       :strength 1024
       :master-key? true
       :encryption-key? true
-      :user-ids ["Test User <test@vault.mvxcvi.com>"])))
-
-
-(deftest secret-key-info
+      :user-ids ["Test User <test@vault.mvxcvi.com>"]))
   (let [info (pgp/key-info seckey)]
     (are [k v] (= v (info k))
       :key-id "3f40edec41c6cb7d"
@@ -42,19 +60,6 @@
       :private-key? true
       :encryption-key? true
       :signing-key? true)))
-
-
-(deftest utility-functions
-  (testing "key-id coercion"
-    (is (nil? (pgp/key-id nil))))
-  (testing "public-key coercion"
-    (is (identical? pubkey (pgp/public-key pubkey)))
-    (is (thrown? IllegalArgumentException (pgp/public-key "a string"))))
-  (testing "key-algorithm detection"
-    (is (nil? (pgp/key-algorithm nil)))
-    (is (= :rsa-general (pgp/key-algorithm seckey)))
-    (is (= :rsa-general (pgp/key-algorithm :rsa-general)))))
-
 
 
 
