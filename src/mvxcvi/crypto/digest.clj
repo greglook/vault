@@ -1,9 +1,9 @@
-(ns vault.util.digest
+(ns mvxcvi.crypto.digest
   "Utility functions for producing hash digests."
   (:require
     byte-streams
     [clojure.string :as str]
-    [vault.util.io :as io])
+    [mvxcvi.crypto.util :refer [do-bytes hex-str]])
   (:import
     java.security.MessageDigest))
 
@@ -32,6 +32,6 @@
   (check-algorithm algo)
   (let [algorithm (MessageDigest/getInstance (algorithms algo))]
     (.reset algorithm)
-    (io/do-bytes [[buf n] content]
+    (do-bytes [[buf n] content]
       (.update algorithm buf 0 n))
-    (io/hex-str (.digest algorithm))))
+    (hex-str (.digest algorithm))))

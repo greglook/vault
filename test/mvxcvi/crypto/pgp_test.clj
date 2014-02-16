@@ -1,10 +1,10 @@
-(ns mvxcvi.pgp.core-test
+(ns mvxcvi.crypto.pgp-test
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.java.io :as io]
     [clojure.test :refer :all]
-    [mvxcvi.pgp.core :as pgp]
-    [mvxcvi.pgp.keyring :as keyring])
+    [mvxcvi.crypto.pgp :as pgp]
+    [mvxcvi.crypto.pgp.keyring :as keyring])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKey

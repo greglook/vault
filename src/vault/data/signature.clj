@@ -4,7 +4,7 @@
     [puget.data :refer [TaggedValue]]
     [vault.blob.core :as blob]
     [vault.data.format :as fmt]
-    [mvxcvi.pgp.core :as pgp])
+    [mvxcvi.crypto.pgp :as pgp])
   (:import
     (org.bouncycastle.openpgp
       PGPPrivateKey

@@ -1,10 +1,10 @@
-(ns mvxcvi.pgp.keyring
+(ns mvxcvi.crypto.pgp.keyring
   "Keyring provider protocols."
   (:require
-    [byte-streams]
+    byte-streams
     [clojure.java.io :as io]
     [clojure.string :as string]
-    [mvxcvi.pgp.core :as pgp :refer [KeyStore]])
+    [mvxcvi.crypto.pgp :as pgp :refer [KeyStore]])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKeyRing

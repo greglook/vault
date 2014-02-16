@@ -3,10 +3,7 @@
   (:require
     byte-streams
     [clojure.string :as string]
-    [vault.util.digest :as digest])
-  (:import
-    java.nio.ByteBuffer
-    java.security.MessageDigest))
+    [mvxcvi.crypto.digest :as digest]))
 
 
 ;; HASH IDENTIFIERS

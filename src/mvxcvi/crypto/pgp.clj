@@ -1,10 +1,10 @@
-(ns mvxcvi.pgp.core
+(ns mvxcvi.crypto.pgp
   "Functions for interacting with BouncyCastle's OpenPGP library."
   (:require
-    [byte-streams]
+    byte-streams
     [clojure.java.io :as io]
     [clojure.string :as string]
-    [mvxcvi.pgp.util :refer [do-bytes]])
+    [mvxcvi.crypto.util :refer [do-bytes hex-str]])
   (:import
     (java.io
       ByteArrayOutputStream)
@@ -114,12 +114,6 @@
   (.getKeyID sig))
 
 
-(defn key-id-hex
-  "Gets the key identifier and converts it into hex."
-  [value]
-  (format "%016x" (key-id value)))
-
-
 (defmulti key-algorithm
   "Constructs a numeric PGP key identifier from the argument."
   class)
@@ -149,7 +143,7 @@
   (let [pubkey (public-key k)
         info
         {:master-key? (.isMasterKey pubkey)
-         :key-id (key-id-hex pubkey)
+         :key-id (hex-str (key-id pubkey))
          :strength (.getBitStrength pubkey)
          :algorithm (key-algorithm pubkey)
          :fingerprint (->> (.getFingerprint pubkey)
