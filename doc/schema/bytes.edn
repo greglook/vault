@@ -2,28 +2,36 @@
 ; subsegments of the byte sequence. This lets a section of the data change
 ; without having to re-store the unchanged sections.
 ;
-; A byte sequence is a vector of _parts_, each of which may be a reference to
-; a nested bytes structure, a reference to a blob of byte data, or a sequence of
-; zero-valued bytes.
+; A byte sequence is a data structure with type `:vault.data/byte-seq`
+; containing vector of `:parts`, which are maps specifying the binary
+; data making up the sequence.
 ;
-; Each part in the vector must be a map containing a :size key. The value of
+; Each part in the vector must be a map containing a `:size` key. The value of
 ; this key specifies the number of bytes in the sequence contributed by the
 ; part. The part size must be a positive integer.
 ;
-; If no other keys are present, the part represents an all-zero region of bytes,
-; such as in a sparse file. Otherwise, the part must contain a :bytes or :parts
-; key. It is an error for a part to contain both. A :bytes key specifies a
-; reference to a blob whose content should be used directly as byte data. A
-; :parts key refers to another bytes structure with further sub-parts.
-;
-; For either :bytes or :parts sources, the :size key gives the number of bytes
-; to take from the source. If the part size is smaller than the size of the
-; source, extra bytes are omitted. The part size SHOULD NOT be larger than the
-; source, but if so the part is padded with trailing zero bytes.
-;
-; Parts may also give an :offset key specifying the number of bytes to skip
+; Parts may also give an `:offset` key specifying the number of bytes to skip
 ; at the start of the source; this defaults to zero if unspecified. The part
 ; offset must be a non-negative integer.
+;
+; There are four types of data sources parts can reference:
+; - _Empty_ parts are maps containing only a `:size` key and represents an
+;   all-zero region of bytes, such as in a sparse file.
+; - _Data_ parts specify a sequence of bytes directly with `:data` giving a
+;   binary string value. If the `:size` key is omitted, it defaults to the
+;   length of the data.
+; - _Content_ parts reference a blob containing the byte contents. The blob's
+;   hash-id is given with the `:content` key.
+; - _Recursive_ parts reference a blob containing another byte sequence with
+;   the `:parts` key.
+;
+; It is an error for a part to contain more than one of `:data`, `:content`,
+; or `:parts`.
+;
+; For either content or recursive parts, the `:size` key gives the number of
+; bytes to take from the source. If the part size is smaller than the size of
+; the source, extra bytes are omitted. The part size SHOULD NOT be larger than
+; the source, but if so the part is padded with trailing zero bytes.
 ;
 ; The size of a byte sequence can be trivially calculated by summing the sizes
 ; of the parts.
@@ -39,3 +47,14 @@
  {:offset 492,
   :parts #vault/ref "algo:digest",
   :size 500000}]
+
+
+#vault/data
+{:parts [{:size 1000000}
+         {:content #vault/ref "algo:digest",
+          :size 1024}
+         {:data #bin "iQIcBAABAgAGBQ..."}
+         {:offset 492,
+          :parts #vault/ref "algo:digest",
+          :size 500000}]
+ :vault/type :vault.data/byte-seq}

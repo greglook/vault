@@ -21,8 +21,8 @@
 ^{:type :vault/fs.file}
 {; common metadata...
  ; Files contain ONE of the two following entries:
- :bytes #vault/ref "algo:digest" ; direct reference to file content blob
- :parts #vault/ref "algo:digest"}  ; reference to a bytes structure
+ :content #vault/ref "algo:digest" ; direct reference to file content blob
+ :parts #vault/ref "algo:digest"}  ; reference to a byte-seq structure
 
 
 #vault/data
@@ -34,8 +34,8 @@
 ; Full example:
 #vault/data
 ^{:type :vault/fs.file}
-{:bytes #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75",
- :change-time #inst "2013-10-23T20:06:13.000-00:00",
+{:change-time #inst "2013-10-23T20:06:13.000-00:00",
+ :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75",
  :group "users",
  :group-id 500,
  :modify-time #inst "2013-10-25T09:13:24.000-00:00",
