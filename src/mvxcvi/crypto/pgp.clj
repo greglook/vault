@@ -3,7 +3,7 @@
   (:require
     byte-streams
     [clojure.java.io :as io]
-    [clojure.string :as string]
+    [clojure.string :as str]
     [mvxcvi.crypto.util :refer [do-bytes hex-str]])
   (:import
     (java.io
@@ -30,7 +30,7 @@
       BcPBESecretKeyDecryptorBuilder)))
 
 
-;; CONFIGURATION
+;; CONSTANTS / CONFIGURATION
 
 (defn- map-tags
   "Converts static 'tag' fields on the given class into a map of keywords to
@@ -39,7 +39,7 @@
   (let [field->entry
         (fn [^java.lang.reflect.Field f]
           (vector (-> (.getName f)
-                      (string/replace \_ \-)
+                      (str/replace \_ \-)
                       .toLowerCase
                       keyword)
                   (.getInt f nil)))]
@@ -148,7 +148,7 @@
          :algorithm (key-algorithm pubkey)
          :fingerprint (->> (.getFingerprint pubkey)
                            (map (partial format "%02X"))
-                           string/join)
+                           str/join)
          :encryption-key? (.isEncryptionKey pubkey)
          :user-ids (-> pubkey .getUserIDs iterator-seq vec)}]
     (if (instance? PGPSecretKey k)
