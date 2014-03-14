@@ -3,10 +3,7 @@
   (:require
     byte-streams
     [clojure.string :as string]
-    [vault.util.digest :as digest])
-  (:import
-    java.nio.ByteBuffer
-    java.security.MessageDigest))
+    [mvxcvi.crypto.digest :as digest]))
 
 
 ;; HASH IDENTIFIERS
@@ -106,7 +103,7 @@
   "Buffers data in memory and hashes it to identify the blob."
   [source]
   (let [content (byte-streams/to-byte-array source)]
-    (when (seq? content)
+    (when-not (empty? content)
       (let [id (hash *digest-algorithm* content)]
         (blob-data id content)))))
 
@@ -186,6 +183,6 @@
 (defn put!
   "Stores data from the given byte source and returns the blob's hash id."
   [store source]
-  (let [blob (load-blob source)]
+  (when-let [blob (load-blob source)]
     (store! store blob)
     (:id blob)))
