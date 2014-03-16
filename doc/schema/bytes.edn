@@ -18,8 +18,7 @@
 ; - _Empty_ parts are maps containing only a `:size` key and represents an
 ;   all-zero region of bytes, such as in a sparse file.
 ; - _Data_ parts specify a sequence of bytes directly with `:data` giving a
-;   binary string value. If the `:size` key is omitted, it defaults to the
-;   length of the data.
+;   binary string value. The `:size` key should give the length of the data.
 ; - _Content_ parts reference a blob containing the byte contents. The blob's
 ;   hash-id is given with the `:content` key.
 ; - _Recursive_ parts reference a blob containing another byte sequence with
@@ -39,22 +38,12 @@
 
 ; Example (mostly empty) ~1.5 MB sequence:
 
-#vault/data
-^{:type :vault/byte-seq}
-[{:size 1000000}
- {:bytes #vault/ref "algo:digest",
-  :size 1024}
- {:offset 492,
-  :parts #vault/ref "algo:digest",
-  :size 500000}]
-
-
-#vault/data
 {:parts [{:size 1000000}
          {:content #vault/ref "algo:digest",
           :size 1024}
-         {:data #bin "iQIcBAABAgAGBQ..."}
+         {:data #bin "iQIcBAABAgAGBQ..."
+          :size 84}
          {:offset 492,
           :parts #vault/ref "algo:digest",
           :size 500000}]
- :vault/type :vault.data/byte-seq}
+ :vault/type :vault/bytes}
