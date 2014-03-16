@@ -2,9 +2,7 @@
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
-    [vault.data.format :as format])
-  (:import
-    java.io.ByteArrayInputStream))
+    [vault.data.format :as format]))
 
 
 (defn data-fixture
