@@ -41,11 +41,7 @@
 (defn- print-value
   "Prints the canonical EDN representation for the given Clojure value."
   [value]
-  (let [print-opts {:width blob-width}
-        metadata (meta value)]
-    (when-not (empty? metadata)
-      (print (puget/color-text :delimiter \^))
-      (puget/pprint metadata print-opts))
+  (let [print-opts {:width blob-width}]
     (puget/pprint value print-opts)))
 
 

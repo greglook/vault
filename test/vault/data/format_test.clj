@@ -18,10 +18,7 @@
   (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}"
          (format/print-data-str {:omega "bar" :alpha "foo"})))
   (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz"
-         (format/print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz)))
-  (testing "with metadata"
-    (is (= "#vault/data\n^{:type :bytes}\n[{:size 100}]"
-           (format/print-data-str ^{:type :bytes} [{:size 100}])))))
+         (format/print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz))))
 
 
 
