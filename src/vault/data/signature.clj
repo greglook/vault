@@ -29,24 +29,17 @@
       pubkey)))
 
 
-(defn- sign-value-bytes
-  "Signs byte data with the key looked up by the hash identifier."
-  [blob-store key-provider value-bytes pubkey-hash]
-  (let [pubkey (load-public-key blob-store pubkey-hash)
-        privkey (key-provider (pgp/key-id pubkey))
-        pgp-sig (pgp/sign value-bytes privkey)]
-    {:key pubkey-hash, :signature pgp-sig}))
-
-
 (defn sign-value
-  "Signs a clojure value with PGP keys. Returns the constructed string holding
-  the canonical value and signature."
+  "Signs a clojure value with the PGP private key matching a public key
+  identified by a hash-id. Returns the constructed signature map."
   [blob-store key-provider value pubkey-hash]
   (let [pubkey (load-public-key blob-store pubkey-hash)
         privkey (key-provider (pgp/key-id pubkey))
         value-bytes (fmt/value-bytes value)
         pgp-sig (pgp/sign value-bytes privkey)]
-    {:key pubkey-hash, :signature pgp-sig}))
+    {:key pubkey-hash
+     :signature pgp-sig
+     :vault/type :vault/signature}))
 
 
 (defn verify-blob
