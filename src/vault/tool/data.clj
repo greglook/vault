@@ -2,13 +2,10 @@
   (:require
     [byte-streams]
     [clojure.java.io :as io]
-    [puget.data]
     [puget.printer :as puget]
     [vault.blob.core :as blob]
     [vault.data.format :as data]
-    [vault.tool.blob :refer [enumerate-prefix]])
-  (:import
-    vault.blob.core.HashID))
+    [vault.tool.blob :refer [enumerate-prefix]]))
 
 
 ;; UTILITY FUNCTIONS
@@ -46,10 +43,6 @@
 
 
 ;; DATA ACTIONS
-
-; FIXME: figure out where to put this
-(puget.data/extend-tagged-str HashID vault/ref)
-
 
 (defn show-blob
   [opts args]

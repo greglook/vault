@@ -3,7 +3,8 @@
   (:require
     byte-streams
     [clojure.string :as string]
-    [mvxcvi.crypto.digest :as digest]))
+    [mvxcvi.crypto.digest :as digest]
+    puget.data))
 
 
 ;; HASH IDENTIFIERS
@@ -24,6 +25,9 @@
 
   (toString [this]
     (str (name algorithm) ":" digest)))
+
+
+(puget.data/extend-tagged-str HashID vault/ref)
 
 
 (defn parse-id

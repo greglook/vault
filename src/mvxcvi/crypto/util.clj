@@ -55,7 +55,7 @@
   [^long value]
   (format "%016x" value))
 
-(defmethod hex-str (Class/forName "[B")
+(defmethod hex-str (class (byte-array 0))
   [^bytes value]
   (let [width (* 2 (count value))
         hex (-> (BigInteger. 1 value)

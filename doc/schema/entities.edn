@@ -2,17 +2,16 @@
 ; signature by the owner's key.
 
 
-^{:type :vault.entity/root}
 {:id "a123d1c0f82f2ea1"                      ; random string by deault
  :owner #vault/ref "algo:digest"             ; public key ref
- :time #inst "2013-10-23T20:06:13.000-00:00" ; current time by default
+ :time #inst "2013-10-23T20:06:13Z"          ; current time by default
  :attributes                                 ; optional initial attributes
  {:name "Example Entity"
   :content #vault/ref "algo:digest"
-  :tags #{"foo" "bar"}}}
+  :tags #{"foo" "bar"}}
+ :vault/type :vault.entity/root}
 
 
-^{:type :vault.entity/update}
 {:time #inst "2013-10-25T09:13:24.000-00:00"
  :updates
  {#vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
@@ -24,9 +23,10 @@
    [:add-num :changes 1]
    [:set-attr
     :content
-    #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}}
+    #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}
+ :vault/type :vault.entity/update}
 
 
-^{:type :vault.entity/delete}
 {:time #inst "2013-10-25T09:13:24.000-00:00"
- :target #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"}
+ :target #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+ :vault/type :vault.entity/delete}
