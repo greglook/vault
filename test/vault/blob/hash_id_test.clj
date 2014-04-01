@@ -38,7 +38,9 @@
 
 (deftest hash-id-strings
   (testing "string representation"
-    (is (= (str blob-id) blob-id-str))))
+    (is (= blob-id-str (str blob-id)))
+    (is (= "sha256-97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"
+           (blob/path-str blob-id)))))
 
 
 (deftest identifier-parsing

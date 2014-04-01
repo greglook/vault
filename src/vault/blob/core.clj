@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [contains? get hash list])
   (:require
     byte-streams
-    [clojure.string :as string]
+    [clojure.string :as str]
     [mvxcvi.crypto.digest :as digest]
     puget.data))
 
@@ -24,19 +24,31 @@
   Object
 
   (toString [this]
-    (str (name algorithm) ":" digest)))
+    (str (name algorithm) \: digest)))
 
 
 (puget.data/extend-tagged-str HashID vault/ref)
 
 
+(defn path-str
+  "Converts a hash id into a path-safe string. This differs from the normal
+  representation in that the colon (:) is replaced with a hyphen (-). This lets
+  the identifier be used in file paths and URLs."
+  [id]
+  (str (name (:algorithm id)) \- (:digest id)))
+
+
 (defn parse-id
-  "Parses a hash identifier string into a hash identifier. Accepts either a
-  hash URN or the shorter \"algo:digest\" format."
+  "Parses a hash identifier string into a hash identifier. This function
+  accepts the following formats:
+  - urn:hash:{algo}:{digest}
+  - hash:{algo}:{digest}
+  - {algo}:{digest}
+  - {algo}-{digest}"
   [id]
   (let [id (if (re-find #"^urn:" id) (subs id 4) id)
         id (if (re-find #"^hash:" id) (subs id 5) id)
-        [algorithm digest] (string/split id #":" 2)
+        [algorithm digest] (str/split id #"[:-]" 2)
         algorithm (keyword algorithm)]
     (->HashID algorithm digest)))
 
