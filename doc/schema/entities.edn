@@ -9,24 +9,20 @@
  {:name "Example Entity"
   :content #vault/ref "algo:digest"
   :tags #{"foo" "bar"}}
- :vault/type :vault.entity/root}
+ :vault/type :vault.data/entity}
 
 
 {:time #inst "2013-10-25T09:13:24.000-00:00"
  :updates
- {#vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
-  [[:set-attr :name "A Thing"]
-   [:add-values :tags #{"foo" "bar"}]
-   [:remove-values :tags "bar"]]
-  #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
-  [[:remove-attr :description]
-   [:add-num :changes 1]
-   [:set-attr
-    :content
-    #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}
- :vault/type :vault.entity/update}
+ [[:attr/set #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :name "A Thing"]
+  [:attr/add #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :tags "foo"]
+  [:attr/add #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :tags "bar"]
+  [:attr/del #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :tags "bar"]
+  [:attr/del #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75" :description]
+  [:attr/set #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75" :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]
+ :vault/type :vault.data/update}
 
 
 {:time #inst "2013-10-25T09:13:24.000-00:00"
  :target #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
- :vault/type :vault.entity/delete}
+ :vault/type :vault.data/delete}
