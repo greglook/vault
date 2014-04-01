@@ -14,4 +14,7 @@
    [org.clojure/tools.cli "0.2.4"]]
 
   :profiles
-  {:dev {:source-paths ["dev"]}})
+  {:dev {:source-paths ["dev"]}}
+
+  :hiera-graph
+  {:ignore-ns #{byte-streams}})
