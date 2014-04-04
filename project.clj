@@ -16,5 +16,6 @@
   :profiles
   {:dev {:source-paths ["dev"]}}
 
-  :hiera-graph
-  {:ignore-ns #{byte-streams}})
+  :hiera
+  {:cluster-depth 2
+   :ignore-ns #{byte-streams mvxcvi.directive vault.tool}})
