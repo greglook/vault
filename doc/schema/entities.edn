@@ -2,27 +2,30 @@
 ; signature by the owner's key.
 
 
-{:id "a123d1c0f82f2ea1"                      ; random string by deault
- :owner #vault/ref "algo:digest"             ; public key ref
- :time #inst "2013-10-23T20:06:13Z"          ; current time by default
- :attributes                                 ; optional initial attributes
- {:name "Example Entity"
-  :content #vault/ref "algo:digest"
-  :tags #{"foo" "bar"}}
- :vault/type :vault.data/entity}
+{:vault/type :vault.data/entity
+ :id "a123d1c0f82f2ea1"
+ :owner #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+ :time #inst "2013-10-23T20:06:13Z"
+ :data
+ [[:attr/set :name "Example Entity"]
+  [:attr/set :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"]
+  [:attr/add :tags "foo"]
+  [:attr/add :tags "bar"]]}
 
 
-{:time #inst "2013-10-25T09:13:24.000-00:00"
- :updates
- [[:attr/set #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :name "A Thing"]
-  [:attr/add #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :tags "foo"]
-  [:attr/add #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :tags "bar"]
-  [:attr/del #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037" :tags "bar"]
-  [:attr/del #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75" :description]
-  [:attr/set #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75" :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]
- :vault/type :vault.data/update}
+{:vault/type :vault.data/update
+ :time #inst "2013-10-25T09:13:24.000-00:00"
+ :data
+ {#vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+  [[:attr/set :name "A Thing"]
+   [:attr/add :tags "foo"]
+   [:attr/add :tags "bar"]
+   [:attr/del :tags "bar"]]
+  #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+  [[:attr/del :description]
+   [:attr/set :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}}
 
 
-{:time #inst "2013-10-25T09:13:24.000-00:00"
- :target #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
- :vault/type :vault.data/delete}
+{:vault/type :vault.data/delete
+ :time #inst "2013-10-25T09:13:24.000-00:00"
+ :target #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"}
