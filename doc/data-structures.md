@@ -8,30 +8,32 @@ are known as _data blobs_ and form the _blob graph_. Data blobs:
 - SHOULD NOT contain trailing whitespace
 - MUST start with the line `#vault/data`
 - MUST contain at least one 'primary' value
-    - this value SHOULD satisfy IMeta
-- MAY assign metadata to this value
 - MAY contain additional special values
     - only signatures, so far
 
 Data blobs are recognized by the 'magic header' EDN tag prefix. The value
 following the header is the _primary_ value of the blob. Additional EDN values
-may follow in order to provide things such as content signatures. To specify a
-'type' for the data, values can use the standard metadata syntax. An example
-data blob:
+may follow in order to provide things such as content signatures.
+
+Values in data blobs are given a 'type'; for basic EDN values like strings,
+numbers, vectors, etc., the type is just their class. For maps, the system
+checks a special `:vault/type` key. If this key has a keyword value, that is
+taken to be the type, otherwise it is treated as a generic map.
+
+An example data blob:
 
 ```clojure
 #vault/data
-^{:type :vault/bytes, :vault/version 1}
-[{:size 1000}]
+{:vault/type :vault.data/bytes
+ :parts [{:size 1000}]}
 ```
 
 ## EDN Tags
 
-Vault provides a few EDN value tags for special types:
+Vault provides a few EDN tags for special types:
 
 - `#vault/ref` : marks a hash identifier as a blobref
 - `#vault/data` : identifies the primary value in a data blob
-- `#vault/signature` : parses a signature map and resolves the signature target
 
 ## The Blob Graph
 

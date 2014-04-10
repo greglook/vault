@@ -4,7 +4,7 @@ One of the core pieces of the system is the storage of 'blobs', identified by
 the cryptographic hash of their contents. This scheme is known as _content
 addressable storage_: a given hash identifies an immutable piece of data, as a
 change in the content results in a change in the identifier. This has several
-interesting properties:
+useful properties:
 - Data is immutable, so there's no concern over having the 'latest version' of
   something - you either have it, or you don't.
 - Synchronizing data between stores only requires enumerating the stored blobs
@@ -78,6 +78,7 @@ systems:
 Blob stores can also be composed with _filter_ layers. Some ideas:
 - `compress`: compress blobs to save space
 - `encrypt`: encrypt blobs, perhaps stored in untrusted third-party services
+
 One issue with transforming filters like this is that the bytes stored in a
 location no longer match the hash identifier they are stored under. This may not
 be a problem as long as you ensure correctness at some higher level; for
