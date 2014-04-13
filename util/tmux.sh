@@ -27,15 +27,16 @@ tmux new-window -t "$SESSION:0" -n 'misc' -c "$HOME" -k
 tmux new-window -t "$SESSION:1" -n 'vault' -c "$PROJECT_ROOT"
 tmux send-keys -t "$SESSION:1" "alias vault='$PROJECT_ROOT/bin/vault'" C-m
 
-tmux new-window -t "$SESSION:2" -n 'src' -c "$PROJECT_ROOT/src/vault"
-tmux split-window -t "$SESSION:2" -h -l 60 -c "$PROJECT_ROOT"
-tmux send-keys -t "$SESSION:2.1" "lein trampoline repl" C-m
+tmux new-window -t "$SESSION:2" -n 'repl' -c "$PROJECT_ROOT"
+tmux send-keys -t "$SESSION:2" "lein trampoline repl" # C-m
 
-tmux new-window -t "$SESSION:3" -n 'test' -c "$PROJECT_ROOT/test/vault"
-tmux split-window -t "$SESSION:3" -h -c "$PROJECT_ROOT"
-tmux send-keys -t "$SESSION:3.1" "lein test-refresh" # C-m
+tmux new-window -t "$SESSION:3" -n 'src' -c "$PROJECT_ROOT/src/vault"
 
-tmux new-window -t "$SESSION:4" -n 'doc'  -c "$PROJECT_ROOT/doc"
+tmux new-window -t "$SESSION:4" -n 'test' -c "$PROJECT_ROOT/test/vault"
+tmux split-window -t "$SESSION:4" -h -c "$PROJECT_ROOT"
+tmux send-keys -t "$SESSION:4.1" "lein test-refresh" # C-m
+
+tmux new-window -t "$SESSION:5" -n 'doc' -c "$PROJECT_ROOT/doc"
 
 # Attach to session
 tmux select-window -t "$SESSION:1"
