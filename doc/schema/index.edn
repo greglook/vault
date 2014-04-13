@@ -1,0 +1,6 @@
+{:predicate #(is-type? % :vault.data/entity)
+ :fields [entity attr value ^Date tx-time tx]
+ :indexes {:eavt [entity attr value tx-time]
+           :aevt [attr entity value tx-time]
+           :avet [attr value entity tx-time]
+           :vaet [value attr entity tx-time]}

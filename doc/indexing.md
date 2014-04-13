@@ -26,7 +26,7 @@ number of _indexes_ on that view to optimize.
 {:attrs [blob key data ^Date time]
  :indexes [[data key]
            [key time]]
- :predicate #(= (type %) :vault/signature)
+ :predicate #(isa? (type %) :vault/signature)
  :view (fn [blobref sig]
          {:blob blobref
           :key (:key sig)
