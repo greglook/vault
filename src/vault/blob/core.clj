@@ -39,15 +39,15 @@
 
 
 (defn parse-id
-  "Parses a hash identifier string into a hash identifier. This function
-  accepts the following formats:
+  "Parses a string into a hash identifier. This function accepts the following
+  formats:
   - urn:hash:{algo}:{digest}
   - hash:{algo}:{digest}
   - {algo}:{digest}
   - {algo}-{digest}"
-  [id]
-  (let [id (if (re-find #"^urn:" id) (subs id 4) id)
-        id (if (re-find #"^hash:" id) (subs id 5) id)
+  [^String id]
+  (let [id (if (.startsWith id "urn:") (subs id 4) id)
+        id (if (.startsWith id "hash:") (subs id 5) id)
         [algorithm digest] (str/split id #"[:-]" 2)
         algorithm (keyword algorithm)]
     (->HashID algorithm digest)))
