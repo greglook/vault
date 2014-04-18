@@ -38,27 +38,38 @@ the identifier can add the 'urn' components as desired.
 
 Blobs are stored as immutable byte sequences with some optional associated
 _status_ metadata. The only way to reference a blob is by its hash identifier.
+Blob data is represented as a Clojure map with id and content keys:
+
+```clojure
+{:id #vault/ref "sha256:9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"
+ :content #bin "iJwEAAECAAYFAlNMwWMACgkQkjscHEOSMYqORwQAnfJw0AX/6zabotV6yf2LbuwwJ6Mr+..."}
+```
 
 The blob storage interface is straightforward:
 - `list` - enumerate the stored blobs
 - `stat` - get metadata about a stored blob
-- `open` - return a stream of bytes stored for a blob
-- `store!` - store a stream of bytes for a blob
+- `get` - return the bytes stored for a blob
+- `put!` - store a some bytes as a blob
+
+Optionally, some stores may _separately_ implement the following operations:
 - `remove!` - drop a blob from the store
+- `destroy!!` - completely remove the blob store
 
-Status metadata is a simple map of information about the stored blob. The
-metadata present is largely implementation-specific, but may include some
-common information:
-- `:size` - the number of bytes stored for the blob
-- `:stored-at` - time the blob was added to the store
-- `:location` - an optional URI giving a path to the stored resource
+Status metadata is attached as additional keys in the blob record under the
+`meta` namespace. The data present is largely implementation-specific, but may
+include some common keys:
+- `:meta/size` - the number of bytes stored for the blob
+- `:meta/stored-at` - time the blob was added to the store
+- `:meta/origin` - an optional URI giving referencing the stored content
 
-An example status map from a blob stored in S3 might look like:
+A `stat` call is similar to an HTTP HEAD request, in that it returns the blob
+with no content. An example from a blob stored in S3 might look like:
 
 ```clojure
-{:created-at #inst "2013-12-01T18:23:48Z",
- :location #uri "s3://user-storage/vault/data/sha256/53e/0b9/f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180",
- :size 123}
+{:id #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"
+ :meta/origin #uri "s3://user-bucket/vault/sha256/53e/0b9/f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"
+ :meta/size 12345
+ :meta/stored-at #inst "2013-12-01T18:23:48Z"}
 ```
 
 ## Implementations
@@ -72,7 +83,8 @@ implementation. Here's some ideas:
 
 'Meta-stores' can also wrap multiple blob stores to give more complex storage
 systems:
-- `replicate`: store blobs in multiple locations
+- `aggregate`: search multiple blob stores in order for blobs
+- `replicate`: copy blobs to multiple stores
 - `cache`: keep a fixed size of local blobs, deferring to another authoritative store
 
 Blob stores can also be composed with _filter_ layers. Some ideas:

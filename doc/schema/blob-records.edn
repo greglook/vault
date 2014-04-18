@@ -1,0 +1,35 @@
+; Rough schema for blob records in Vault.
+
+
+; Blob-store level blobs just have content and a hash-id:
+{:id #vault/ref "sha256:9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"
+ :content #bin "iJwEAAECAAYFAlNMwWMACgkQkjscHEOSMYqORwQAnfJw0AX/6zabotV6yf2LbuwwJ6Mr+..."}
+
+
+; But they might get stats merged in:
+{:id #vault/ref "sha256:9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"
+ :content #bin "iJwEAAECAAYFAlNMwWMACgkQkjscHEOSMYqORwQAnfJw0AX/6zabotV6yf2LbuwwJ6Mr+..."
+ :meta/size 123456
+ :meta/stored-at #inst "2013-12-01T18:23:48Z"
+ :meta/origin #uri "s3://user-bucket/vault/data/sha256-9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"}
+
+
+; After parsing, data blobs may have additional values:
+{:id #vault/ref "sha256:9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"
+ :content #bin "iJwEAAECAAYFAlNMwWMACgkQkjscHEOSMYqORwQAnfJw0AX/6zabotV6yf2LbuwwJ6Mr+..."
+ :data/primary-byte-range [12 51]
+ :data/values [{:alpha 12345, :baz :frobble, :foo "bar"}]
+ :data/type :map}
+
+
+; If it's not a data blob, check for PGP objects:
+{:id #vault/ref "sha256:9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"
+ :content #bin "iJwEAAECAAYFAlNMwWMACgkQkjscHEOSMYqORwQAnfJw0AX/6zabotV6yf2LbuwwJ6Mr+..."
+ :data/values [pgp-key]
+ :data/type :pgp/public-key}
+
+
+; Otherwise just treat it as raw binary data:
+{:id #vault/ref "sha256:9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"
+ :content #bin "iJwEAAECAAYFAlNMwWMACgkQkjscHEOSMYqORwQAnfJw0AX/6zabotV6yf2LbuwwJ6Mr+..."
+ :data/type :bytes}
