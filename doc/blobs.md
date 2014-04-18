@@ -24,15 +24,18 @@ include the leading 'urn' scheme, and a fully-specified version could use the
 "foobarbaz" to the following digest:
 
 <pre>
-sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
-urn:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 urn:hash:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
+urn:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
+sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 </pre>
 
-These strings are _hash identifiers_; more generally, the pairing of an algorithm
-and hex digest is known as a _blobref_. In practice, the shorter _algo:digest_
-form will probably be used internally for brevity. External representations of
-the identifier can add the 'urn' components as desired.
+The pairing of an algorithm and hex digest is a _hash identifier_, also known as
+a _blobref_. In practice, the shorter `algo:digest` form will probably be used
+internally for brevity. External representations of the identifier can add the
+'urn' components as desired.
+
+Another non-canonical syntax trades the colon (:) for a hyphen (-) to make the
+identifiers _path-safe_. This lets them be used in URLs and file paths.
 
 ## Storage Interface
 
@@ -67,7 +70,7 @@ with no content. An example from a blob stored in S3 might look like:
 
 ```clojure
 {:id #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"
- :meta/origin #uri "s3://user-bucket/vault/sha256/53e/0b9/f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"
+ :meta/origin #uri "s3://user-bucket/vault/sha256/53e/0b9/f7503729f698..."
  :meta/size 12345
  :meta/stored-at #inst "2013-12-01T18:23:48Z"}
 ```
