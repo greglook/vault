@@ -1,4 +1,5 @@
-# Blob Indexing
+Blob Indexing
+=============
 
 A common use case for a storage system is to _search_ it for data matching
 certain attributes. While it is possible to exhaustively scan the entire data

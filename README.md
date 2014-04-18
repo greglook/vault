@@ -1,44 +1,48 @@
 Vault
 =====
 
-Vault is a Clojure library and application to store documents in a
-content-addressable datastore while maintaining a secure history of entity
-values. See the docs for more detailed explanations of the various pieces.
+Vault is a time-travelling, content-addressable, hypermedia datastore which
+provides strong assertions about the integrity and provenance of stored data. If
+that mouthfull of buzzwords didn't spark anything, don't worry. Read on for a
+general introduction, or see the docs for more detailed explanations of the
+various concepts.
 
 This is heavily inspired by both [Camlistore](http://camlistore.org/) and
 [Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
-compatible with either, though many of the concepts are similar.
+compatible with either, though many of the ideas are similar.
 
 ## Concepts
 
-This is a rough outline of the concepts developing in Vault. For more details,
-follow the links or browse around the [doc](doc/) folder.
+This is a quick tour of the concepts in Vault. For more details, follow the
+links or browse around the [doc](doc/) folder.
 
-### Blob Layer
+### Blob Storage
 
 At the lowest level, Vault is built on [content-addressable
-storage](doc/blobs.md). Data is stored in _blobs_, which are some sequence of
-bytes addressed by a cryptographic hash of their contents. The combination of a
-hash algorithm and the corresponding digest is enough information to securely
-and uniquely identify a blob. These _blobrefs_ are formatted like a URN:
+storage](doc/blobs.md). Data is stored in _blobs_, which are a sequence of bytes
+addressed by a cryptographic hash of their contents. The combination of a hash
+algorithm and the corresponding digest is enough information to securely and
+uniquely identify a blob. These _hash-ids_ are formatted like a URN:
 
 `sha256:2f72cc11a6fcd0271ecef8c61056ee1eb1243be3805bf9a9df98f92f7636b05c`
 
-A _blob store_ is a system which can store and retrieve blob data by address.
-Blobs can be _encoded_ before being stored, performing operations like
-compression and encryption.
+A _blob store_ is a system which can store and retrieve blob data. Blob stores
+must support a very simple interface; mainly storing and retrieving blobs, and
+enumerating the stored blobs. A simple example is a file-based store.
 
-### Data Layer
+### Data Blobs
 
-The [data layer](doc/data-structures.md) is built on the blob storage layer.
-Vault data is stored as [EDN](https://github.com/edn-format/edn) in UTF-8 text.
-It is recognized by a magic header sequence: `#vault/data\n`. This has the
-advantage of still being a legal EDN tag, though it is stripped in practice.
+To represent [structured data](doc/data-structures.md), Vault uses
+[EDN](https://github.com/edn-format/edn). Data blobs are recognized by a magic
+header sequence: `#vault/data\n`. This has the advantage of still being a legal
+EDN tag, though it is stripped in practice.
 
-Blob references provide a secure way to link to immutable data, so it is simple
-to build data structures which automatically deduplicate shared data. These are
-similar to Clojure's persistent collections; see the schema for [hierarchical
-byte sequences](doc/schema/bytes.edn) for an example.
+Blob references through hash-ids provide a secure way to link to immutable data,
+so it is simple to build data structures which automatically deduplicate shared
+data. These are similar to Clojure's persistent collections; see the schema for
+[hierarchical byte sequences](doc/schema/bytes.edn) for an example.
+
+### Mutable State
 
 Mutable data is represented in Vault by [entities](doc/entities.md).
 - A _root blob_ serves as the static identifier of an entity.
@@ -49,8 +53,10 @@ Identity and ownership in Vault are handled by [cryptographic
 signatures](doc/signatures.md). These provide trust to data that is present in
 the blob layer.
 
-Finally, the data layer implements efficient querying by
-[indexing](doc/indexing.md) entities and their attributes.
+### Indexing
+
+The data layer implements efficient querying by [indexing](doc/indexing.md)
+entities and their attributes.
 
 ### Application Layer
 

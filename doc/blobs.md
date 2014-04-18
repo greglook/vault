@@ -1,4 +1,5 @@
-# Blob Storage
+Blob Storage
+============
 
 One of the core pieces of the system is the storage of 'blobs', identified by
 the cryptographic hash of their contents. This scheme is known as _content
@@ -23,11 +24,11 @@ include the leading 'urn' scheme, and a fully-specified version could use the
 'hash' URN namespace. For example, the SHA-256 algorithm hashes the string
 "foobarbaz" to the following digest:
 
-<pre>
+```
 urn:hash:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 urn:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
-</pre>
+```
 
 The pairing of an algorithm and hex digest is a _hash identifier_, also known as
 a _blobref_. In practice, the shorter `algo:digest` form will probably be used

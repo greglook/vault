@@ -1,4 +1,5 @@
-# Identity and State
+Identity and State
+==================
 
 Immutable data is great, but to be useful the system needs to be able to
 represent _mutable state_ somehow. Say a user stores a document; that content
