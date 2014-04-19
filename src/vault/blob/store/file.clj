@@ -65,6 +65,14 @@
        ~@body)))
 
 
+(defn- stat-blob
+  "Calculates statistics for a blob file."
+  [^File file]
+  {:meta/size (.length file)
+   :meta/stored-at (Date. (.lastModified file))
+   :meta/origin (.toURI file)})
+
+
 
 ;; FILE STORE
 
@@ -84,38 +92,42 @@
 
   (stat [this id]
     (when-blob-file this id
-      {:size (.length file)
-       :stored-at (Date. (.lastModified file))
-       :location (.toURI file)}))
+      (stat-blob file)))
 
 
-  (open [this id]
+  (get* [this id]
     (when-blob-file this id
-      (io/input-stream file)))
+      (-> file
+          io/input-stream
+          blob/load
+          (assoc :size)
+          (into (stat-blob file)))))
 
 
-  (store! [this blob]
+  (put! [this blob]
     (let [{:keys [id content]} blob
           file (id->file (:root this) id)]
       (when-not (.exists file)
         (io/make-parents file)
         ; For some reason, io/copy is much faster than byte-streams/transfer here.
         (io/copy content file)
-        (.setWritable file false false))))
+        (.setWritable file false false)))))
 
 
-  (delete! [this id]
-    (when-blob-file this id
-      (.delete file)))
+(defn delete!
+  [this id]
+  (when-blob-file this id
+    (.delete file)))
 
 
-  (destroy!! [this]
-    (let [rm-r (fn rm-r [^File path]
-                 (when (.isDirectory path)
-                   (doseq [child (.listFiles path)]
-                     (rm-r child)))
-                 (.delete path))]
-      (rm-r (:root this)))))
+(defn destroy!!
+  [this]
+  (let [rm-r (fn rm-r [^File path]
+               (when (.isDirectory path)
+                 (doseq [child (.listFiles path)]
+                   (rm-r child)))
+               (.delete path))]
+    (rm-r (:root this))))
 
 
 (defn file-store

@@ -4,6 +4,15 @@
     [vault.blob.core :as blob :refer [BlobStore]]))
 
 
+(defn- stat-blob
+  "Augments a blob with stat metadata."
+  [blob]
+  (assoc blob
+    :meta/size (count (:content blob))
+    :meta/stored-at (or (:meta/stored-at blob)
+                        (java.util.Date.))))
+
+
 (defrecord MemoryBlobStore
   [store]
 
@@ -15,29 +24,31 @@
 
   (stat [this id]
     (when-let [blob (@store id)]
-      {:size (count (:content blob))
-       :stored-at (:stored-at blob)}))
+      (dissoc blob :content)))
 
 
-  (open [this id]
-    (when-let [blob (@store id)]
-      (io/input-stream (:content blob))))
+  (get* [this id]
+    (@store id))
 
 
-  (store! [this blob]
-    (let [id (:id blob)]
-      (when-not (@store id)
-        (swap! store assoc id (assoc blob :stored-at (java.util.Date.))))))
+  (put! [this blob]
+    (if-let [id (:id blob)]
+      (or (@store id)
+          (let [blob (stat-blob blob)]
+            (swap! store assoc id blob)
+            blob)))))
 
 
-  (delete! [this id]
-    (when (@store id)
-      (swap! store dissoc id)
-      true))
+(defn delete!
+  [this id]
+  (when (@(:store this) id)
+    (swap! (:store this) dissoc id)
+    true))
 
 
-  (destroy!! [this]
-    (swap! store empty)))
+(defn destroy!!
+  [this]
+  (swap! (:store this) empty))
 
 
 (defn memory-store

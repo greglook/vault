@@ -1,10 +1,10 @@
 (ns vault.blob.core
-  (:refer-clojure :exclude [contains? get hash list])
+  (:refer-clojure :exclude [get hash list load])
   (:require
     byte-streams
     [clojure.string :as str]
     [mvxcvi.crypto.digest :as digest]
-    puget.data))
+    [puget.data :as edn]))
 
 
 ;; HASH IDENTIFIERS
@@ -25,9 +25,6 @@
 
   (toString [this]
     (str (name algorithm) \: digest)))
-
-
-(puget.data/extend-tagged-str HashID vault/ref)
 
 
 (defn path-str
@@ -53,8 +50,12 @@
     (->HashID algorithm digest)))
 
 
+(edn/extend-tagged-str HashID vault/ref)
+(edn/register-reader! 'vault/ref parse-id)
+
+
 (defn hash-id
-  "Coerces the argument to a HashID."
+  "Constructs a hash identifier from the arguments."
   ([x]
    (cond
      (instance? HashID x) x
@@ -67,21 +68,16 @@
 (defn select-ids
   "Selects hash identifiers from a lazy sequence based on input criteria.
   Available options:
-  * :after  - start enumerating ids lexically following this string
-  * :prefix - only return ids matching the given string
-  * :limit  - limit the number of results returned"
+  * :after    start enumerating ids lexically following this string
+  * :prefix   only return ids matching the given string
+  * :limit    limit the number of results returned"
   [opts ids]
-  (let [{:keys [after prefix]} opts
-        ids (if-let [after (or after prefix)]
-              (drop-while #(pos? (compare after (str %))) ids)
-              ids)
-        ids (if prefix
-              (take-while #(.startsWith (str %) prefix) ids)
-              ids)
-        ids (if-let [n (:limit opts)]
-              (take n ids)
-              ids)]
-    ids))
+  (let [{:keys [after prefix limit]} opts
+        after (or after prefix)]
+    (cond->> ids
+      after  (drop-while #(pos? (compare after (str %))))
+      prefix (take-while #(.startsWith (str %) prefix))
+      limit  (take limit))))
 
 
 
@@ -106,22 +102,26 @@
 
 
 
-;; BLOB DATA
+;; BLOB RECORD
 
-(defn blob-data
-  "Builds a blob data map."
-  [id content]
-  {:id id
-   :content content})
+(defrecord Blob [id content])
 
 
-(defn load-blob
+(defmethod print-method Blob
+  [v ^java.io.Writer w]
+  (->> w
+       (dissoc :content)
+       prn-str
+       (.write w)))
+
+
+(defn load
   "Buffers data in memory and hashes it to identify the blob."
   [source]
   (let [content (byte-streams/to-byte-array source)]
     (when-not (empty? content)
       (let [id (hash *digest-algorithm* content)]
-        (blob-data id content)))))
+        (->Blob id content)))))
 
 
 
@@ -136,36 +136,27 @@
 
   (stat [this id]
     "Returns a map of metadata about the blob, if it is stored. Properties are
-    implementation-specific, but may include:
-    * :size         - blob size in bytes
-    * :created-at   - date blob was added to store
-    * :location     - a resource location for the blob")
+    generally, implementation-specific, but may include:
+    * :meta/size        blob size in bytes
+    * :meta/stored-at   date blob was added to store
+    * :meta/origin      a resource location for the blob")
 
-  (open
-    ^java.io.InputStream
-    [this id]
-    "Opens a stream of byte content for the blob, if it is stored. The
-    'get' function provides a wrapper around this method which buffers the
-    blob content.")
+  (get* [this id]
+    "Loads content from the store and returns a Blob record. Returns nil if no
+    matching content is found. The Blob record may include data as from the
+    `stat` function.")
 
-  (store! [this blob]
-    "Persists blob content in the store. Clients should prefer the 'put!'
-    function, which handles hashing the data.")
-
-  (delete! [this id]
-    "Removes the referenced blob from the store. Returns true if the store
-    contained the blob.")
-
-  (destroy!! [this]
-    "Completely removes all stored blob data."))
+  (put! [this blob]
+    "Saves a blob into the store. Returns the blob record, potentially updated
+    with `stat` metadata."))
 
 
 (defn list
   "Enumerates the stored blobs, returning a sequence of HashIDs.
   Options should be keyword/value pairs from the following:
-  * :after  - start enumerating ids lexically following this string
-  * :prefix - only return ids matching the given string
-  * :limit  - limit the number of results returned"
+  * :after    start enumerating ids lexically following this string
+  * :prefix   only return ids matching the given string
+  * :limit    limit the number of results returned"
   ([store]
    (enumerate store nil))
   ([store opts]
@@ -174,31 +165,21 @@
    (enumerate store (apply hash-map opt-key opt-val opts))))
 
 
-(defn contains?
-  "Determines whether the store contains the referenced blob."
-  [store id]
-  (not (nil? (stat store id))))
-
-
 (defn get
-  "Retrieves data for the given blob and returns blob data with buffered
-  content. This function verifies that the id matches the actual digest of the
-  data returned."
+  "Retrieves data for the given blob and returns the blob record. This function
+  verifies that the id matches the actual digest of the data returned."
   [store id]
-  (with-open [stream (open store id)]
-    (when stream
-      (let [content (byte-streams/to-byte-array stream)
-            data-id (hash (:algorithm id) content)]
-        (when-not (= id data-id)
-          (throw (RuntimeException.
-                   (str "Store " store " returned invalid data: requested "
-                        id " but got " data-id))))
-        (blob-data id content)))))
+  (when-let [blob (get* store id)]
+    (let [content-id (hash (:algorithm id) (:content blob))]
+      (when-not (= id content-id)
+        (throw (RuntimeException.
+                 (str "Store " store " returned invalid data: requested "
+                      id " but got " content-id)))))
+    blob))
 
 
-(defn put!
-  "Stores data from the given byte source and returns the blob's hash id."
+(defn store!
+  "Stores data from the given byte source and returns the blob record."
   [store source]
-  (when-let [blob (load-blob source)]
-    (store! store blob)
-    (:id blob)))
+  (when-let [blob (load source)]
+    (put! store blob)))
