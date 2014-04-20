@@ -16,13 +16,14 @@ compatible with either, though many of the ideas are similar.
 This is a quick tour of the concepts in Vault. For more details, follow the
 links or browse around the [doc](doc/) folder.
 
-### Blob Storage
+### Blob Layer
 
 At the lowest level, Vault is built on [content-addressable
-storage](doc/blobs.md). Data is stored in _blobs_, which are a sequence of bytes
-addressed by a cryptographic hash of their contents. The combination of a hash
-algorithm and the corresponding digest is enough information to securely and
-uniquely identify a blob. These _hash-ids_ are formatted like a URN:
+storage](doc/blobs.md). Data is stored in _blobs_, which are opaque byte
+sequences addressed by a cryptographic hash of their contents. The combination
+of a hash algorithm and the corresponding digest is enough information to
+securely and uniquely identify a blob. These _hash-ids_ are formatted like a
+URN:
 
 `sha256:2f72cc11a6fcd0271ecef8c61056ee1eb1243be3805bf9a9df98f92f7636b05c`
 

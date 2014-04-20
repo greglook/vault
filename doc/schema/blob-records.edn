@@ -17,7 +17,7 @@
 ; After parsing, data blobs may have additional values:
 {:id #vault/ref "sha256:9e663220c60fb814a09f4dc1ecb28222eaf2d647174e60554272395bf776495a"
  :content #bin "iJwEAAECAAYFAlNMwWMACgkQkjscHEOSMYqORwQAnfJw0AX/6zabotV6yf2LbuwwJ6Mr+..."
- :data/primary-byte-range [12 51]
+ :data/primary-bytes [12 51]
  :data/values [{:alpha 12345, :baz :frobble, :foo "bar"}]
  :data/type :map}
 
