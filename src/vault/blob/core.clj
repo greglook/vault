@@ -109,10 +109,8 @@
 
 (defmethod print-method Blob
   [v ^java.io.Writer w]
-  (->> w
-       (dissoc :content)
-       prn-str
-       (.write w)))
+  (let [v (dissoc v :content)]
+    (.write w (prn-str v))))
 
 
 (defn load
