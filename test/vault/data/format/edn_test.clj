@@ -1,64 +1,74 @@
-(ns vault.data.format-test
+(ns vault.data.format.edn-test
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
-    [vault.data.format :as format]))
+    [vault.blob.core :as blob]
+    [vault.data.format.edn :as edn-data]))
 
 
 (defn data-fixture
   "Builds a string representing a data blob from the given sequence of values."
   [& values]
-  (apply str "#vault/data\n" (interpose "\n\n" values)))
+  (->> values
+       (interpose "\n\n")
+       (apply str "#vault/data\n")
+       blob/load))
+
+
+(deftest data-typing
+  (is (= String (edn-data/data-type "foo")))
+  (is (= (class :bar) (edn-data/data-type :bar)))
+  (is (= (class []) (edn-data/data-type [:foo :bar])))
+  (is (= (class {}) (edn-data/data-type {:x 'y})))
+  (is (= :test (edn-data/data-type {:vault.data/type :test}))))
 
 
 
 ;; SERIALIZATION
 
-(deftest print-data-blob
+(deftest blob-printing
   (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}"
-         (format/print-data-str {:omega "bar" :alpha "foo"})))
+         (edn-data/print-blob-str {:omega "bar" :alpha "foo"})))
   (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz"
-         (format/print-data-str [:foo \b 'baz] {:name "Aaron"} :frobnitz))))
+         (edn-data/print-blob-str [:foo \b 'baz] {:name "Aaron"} :frobnitz))))
 
 
 
 ;; DESERIALIZATION
 
-(deftest read-non-data-blob
-  (let [content "foobarbaz not a data blob"
-        result (format/read-data content)]
-    (is (nil? result))))
+(deftest read-non-edn-blob
+  (let [blob (blob/load "foobarbaz not a data blob")
+        data (edn-data/read-blob blob)]
+    (is (nil? data))))
 
 
 (deftest read-data-blob
-  (let [content (data-fixture "[:foo]")
-        result (format/read-data content)]
-    (is (= '([:foo]) result))))
-
-
-(deftest read-custom-tag
-  (let [content (data-fixture "{:foo #my/tag :bar}")
-        result (format/read-data {'my/tag str} content)]
-    (is (= '({:foo ":bar"}) result))))
+  (let [blob (data-fixture "{:foo bar, :vault.data/type :x/y}")
+        data (edn-data/read-blob blob)]
+    (is (= [{:foo 'bar, :vault.data/type :x/y}]
+           (:data/values data)))
+    (is (= :x/y (:data/type data)))))
 
 
 (deftest read-primary-bytes
-  (let [primary-content "[1 \\2 :three]"
-        content (data-fixture primary-content)
-        result (format/read-data content)
-        primary-bytes (format/primary-bytes result)]
-    (is (= '([1 \2 :three]) result))
-    (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content format/blob-charset) primary-bytes))
-    (is (bytes= primary-bytes (format/value-bytes (first result))))))
+  (testing "data blob"
+    (let [primary-value "[1 \\2 :three]"
+          value-str (str primary-value " :x/y \"foo\"")
+          blob (data-fixture value-str)
+          data (edn-data/read-blob blob)
+          values (:data/values data)
+          primary-bytes (edn-data/primary-bytes data)]
+      (is (= [[1 \2 :three] :x/y "foo"] values))
+      (is (bytes= (.getBytes primary-value edn-data/blob-charset) primary-bytes))
+      (is (bytes= primary-bytes (edn-data/value-bytes (first values))))))
+  (testing "non-data blob"
+    (let [blob (blob/load "frobble babble")]
+      (is (bytes= (:content blob) (edn-data/primary-bytes blob))))))
 
 
-(deftest read-primary-bytes-with-extra-values
-  (let [primary-content "#{\"baz\" :bar}"
-        content (data-fixture primary-content ":frobble")
-        result (format/read-data content)
-        primary-bytes (format/primary-bytes result)]
-    (is (= '(#{:bar "baz"} :frobble) result))
-    (is (not (nil? (meta result))))
-    (is (bytes= (.getBytes primary-content format/blob-charset) primary-bytes))
-    (is (bytes= primary-bytes (format/value-bytes (first result))))))
+(deftest read-utf8-primary-bytes
+  (let [value-str "\"€18.50\""
+        blob (data-fixture value-str)
+        data (edn-data/read-blob blob)]
+    (is (bytes= (.getBytes value-str edn-data/blob-charset)
+                (edn-data/primary-bytes data)))))

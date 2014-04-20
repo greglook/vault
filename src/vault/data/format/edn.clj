@@ -1,13 +1,13 @@
 (ns vault.data.format.edn
   "Functions to handle structured data formatted as EDN."
   (:require
-    [byte-streams :refer [bytes=]]
     [clojure.string :as str]
     [puget.data :as edn]
     [puget.printer :as puget])
   (:import
     (java.io
-      FilterInputStream
+      ByteArrayInputStream
+      FilterReader
       InputStream
       InputStreamReader
       PushbackReader
@@ -79,25 +79,32 @@
   function disables colorization."
   [value & more]
   (binding [puget/*colored-output* false]
-    (str/trim (with-out-str (apply print-data value more)))))
+    (str/trim (with-out-str (apply print-blob value more)))))
 
 
 
 ;; DESERIALIZATION
 
-(defn- counting-input-stream
+(defn- counting-reader
   "Wraps the given input stream with a proxy which counts the bytes read
-  through it. The first argument should be an atom containing a counter."
-  [^InputStream input
+  through it. The second argument should be an atom containing a counter."
+  [^Reader reader
    counter]
-  (proxy [FilterInputStream] [input]
+  (proxy [FilterReader] [reader]
     (read []
-      (let [b (.read input)]
-        (swap! counter inc)
-        b))))
+      (let [c (.read reader)]
+        (when-not (= c -1)
+          (let [len (count (.getBytes (str (char c)) blob-charset))]
+            (swap! counter + len)))
+        c))
+    (skip [n]
+      ; NOTE: this assumes that all skipped characters are ASCII, since
+      ; currently this is only used for skipping the blob header.
+      (swap! counter + n)
+      (.skip reader n))))
 
 
-(defn- read-header!
+(defn- check-header
   "Reads the first few bytes from a blob's content to determine whether it is a
   data blob. The result is true if the header matches, otherwise false."
   [^bytes content]
@@ -109,9 +116,9 @@
 (defn- read-primary-value!
   "Reads the primary EDN value from a data blob. Returns a vector containing
   the primary value and the range of bytes as a second vector."
-  [tag-readers reader bytes-read]
+  [reader bytes-read]
   (let [byte-start @bytes-read
-        value (edn/read {:readers tag-readers} reader)
+        value (edn/read {:readers {}} reader)
         byte-range [byte-start @bytes-read]]
     [value byte-range]))
 
@@ -119,26 +126,25 @@
 (defn- read-secondary-values!
   "Reads the secondary EDN values from a data blob. Returns a seq of the values
   read."
-  [tag-readers
-   ^Reader reader]
+  [reader]
   (let [opts {:eof ::end-stream
-              :readers tag-readers}
+              :readers {}}
         read-stream (partial edn/read opts reader)
         edn-stream (repeatedly read-stream)
         not-eos? (partial not= ::end-stream)]
     (doall (take-while not-eos? edn-stream))))
 
 
-(defn read-edn-blob
+(defn read-blob
   "Reads the contents of the given blob and attempts to parse it as an EDN data
   structure. Returns an updated blob record, or nil if the content is not EDN."
   [blob]
-  (when (read-header! (:content blob))
+  (when (check-header (:content blob))
     (let [bytes-read (atom 0)]
       (with-open [reader (-> (:content blob)
-                             byte-streams/to-input-stream
-                             (counting-input-stream bytes-read)
+                             ByteArrayInputStream.
                              (InputStreamReader. blob-charset)
+                             (counting-reader bytes-read)
                              PushbackReader.)]
         (.skip reader (count blob-header))
         (let [[pvalue byte-range] (read-primary-value! reader bytes-read)
@@ -147,3 +153,15 @@
             :data/primary-bytes byte-range
             :data/values (vec (cons pvalue svalues))
             :data/type (data-type pvalue)))))))
+
+
+(defn primary-bytes
+  "Utility function which takes a data blob and returns only the bytes in the
+  primary value. If the bob does not contain a :data/primary-bytes key, the
+  blob content is returned as-is."
+  [blob]
+  (if-let [byte-range (:data/primary-bytes blob)]
+    (java.util.Arrays/copyOfRange (:content blob)
+                                  (first byte-range)
+                                  (second byte-range))
+    (:content blob)))

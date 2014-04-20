@@ -3,7 +3,7 @@
   (:require
     [puget.data :refer [TaggedValue]]
     [vault.blob.core :as blob]
-    [vault.data.format :as fmt]
+    [vault.data.format.edn :as edn-blob]
     [mvxcvi.crypto.pgp :as pgp])
   (:import
     (org.bouncycastle.openpgp
@@ -35,7 +35,7 @@
   [blob-store key-provider value pubkey-hash]
   (let [pubkey (load-public-key blob-store pubkey-hash)
         privkey (key-provider (pgp/key-id pubkey))
-        value-bytes (fmt/value-bytes value)
+        value-bytes (edn-blob/value-bytes value)
         pgp-sig (pgp/sign value-bytes privkey)]
     {:key pubkey-hash
      :signature pgp-sig

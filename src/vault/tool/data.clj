@@ -4,7 +4,7 @@
     [clojure.java.io :as io]
     [puget.printer :as puget]
     [vault.blob.core :as blob]
-    [vault.data.format :as data]
+    [vault.data.format.edn :as edn-blob]
     [vault.tool.blob :refer [enumerate-prefix]]))
 
 
@@ -36,9 +36,9 @@
 
 (defn- print-data-blob
   "Prints a sequence of EDN data values."
-  [data]
+  [blob]
   (binding [puget/*colored-output* true]
-    (apply data/print-data data)))
+    (apply edn-blob/print-blob (:data/values blob))))
 
 
 
@@ -51,9 +51,7 @@
       (when-let [blob (blob/get store id)]
         (println (str id))
         (let [content (:content blob)
-              data (data/read-data
-                     {'vault/ref blob/hash-id}
-                     content)]
+              data (edn-blob/read-blob blob)]
           (cond data               (print-data-blob data)
                 (:binary opts)     (print-binary-blob content)
                 (textual? content) (print-text-blob content)

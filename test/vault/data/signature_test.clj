@@ -10,7 +10,7 @@
       [printer :as puget])
     [vault.blob.core :as blob]
     [vault.blob.store.memory :refer [memory-store]]
-    [vault.data.format :as fmt]
+    [vault.data.format.edn :as edn-blob]
     [vault.data.signature :as sig])
   (:import
     (org.bouncycastle.openpgp
@@ -30,7 +30,10 @@
   (pgp/get-public-key test-keyring "923b1c1c4392318a"))
 
 (def pubkey-hash
-  (blob/put! blob-store (pgp/encode-ascii pubkey)))
+  (->> pubkey
+       pgp/encode-ascii
+       (blob/store! blob-store)
+       :id))
 
 
 (deftest signed-blob
@@ -43,4 +46,4 @@
     (let [sig (sig/sign-value blob-store provider value pubkey-hash)]
       (println "Signed blob:")
       (binding [puget/*colored-output* true]
-        (fmt/print-data value sig)))))
+        (edn-blob/print-blob value sig)))))
