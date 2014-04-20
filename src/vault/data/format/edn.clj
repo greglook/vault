@@ -1,5 +1,5 @@
 (ns vault.data.format.edn
-  "Functions to read structured data formatted as EDN."
+  "Functions to handle structured data formatted as EDN."
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.string :as str]
@@ -7,15 +7,12 @@
     [puget.printer :as puget])
   (:import
     (java.io
-      ByteArrayOutputStream
       FilterInputStream
       InputStream
       InputStreamReader
-      OutputStreamWriter
       PushbackReader
-      Reader
-      Writer)
-    java.nio.charset.Charset))
+      Reader)
+    (java.nio.charset Charset)))
 
 
 ;; CONSTANTS & CONFIGURATION
@@ -32,6 +29,16 @@
 (def ^:private ^:const blob-width
   "Width of text to use in serialized blobs."
   100)
+
+
+(defn data-type
+  "Determines the 'type' of the given value. By default, the result is just the
+  class of the value. For maps, the :vault.data/type key is used if present.
+  This is the main way types are represented in the data layer."
+  [v]
+  (or (when (map? v)
+        (:vault.data/type v))
+      (class v)))
 
 
 
@@ -56,7 +63,7 @@
         (.getBytes blob-charset))))
 
 
-(defn print-data
+(defn print-blob
   "Prints the given data value(s) as canonical EDN in a data blob."
   [value & more]
   (binding [puget/*strict-mode* true]
@@ -67,7 +74,7 @@
       (print-value v))))
 
 
-(defn print-data-str
+(defn print-blob-str
   "Prints a canonical EDN representation to a string and returns it. This
   function disables colorization."
   [value & more]
@@ -112,10 +119,10 @@
 (defn- read-secondary-values!
   "Reads the secondary EDN values from a data blob. Returns a seq of the values
   read."
-  [tag-readers reader]
+  [tag-readers
+   ^Reader reader]
   (let [opts {:eof ::end-stream
               :readers tag-readers}
-        reader (PushbackReader. reader)
         read-stream (partial edn/read opts reader)
         edn-stream (repeatedly read-stream)
         not-eos? (partial not= ::end-stream)]
@@ -139,4 +146,4 @@
           (assoc blob
             :data/primary-bytes byte-range
             :data/values (vec (cons pvalue svalues))
-            :data/type nil)))))) ; TODO
+            :data/type (data-type pvalue)))))))
