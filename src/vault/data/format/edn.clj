@@ -2,14 +2,17 @@
   "Functions to handle structured data formatted as EDN."
   (:require
     [clojure.string :as str]
-    [puget.data :as edn]
-    [puget.printer :as puget])
+    [clojure.edn :as edn]
+    [puget.printer :as puget]
+    [vault.blob.core :as blob])
   (:import
     (java.io
       ByteArrayInputStream
+      ByteArrayOutputStream
       FilterReader
       InputStream
       InputStreamReader
+      OutputStreamWriter
       PushbackReader
       Reader)
     (java.nio.charset Charset)))
@@ -47,39 +50,56 @@
 (defn- print-value
   "Prints the canonical EDN representation for the given Clojure value."
   [value]
-  (let [print-opts {:width blob-width}]
-    (puget/pprint value print-opts)))
+  (let [opts {:width blob-width}]
+    (puget/pprint value opts)))
 
 
-(defn value-bytes
-  "Computes an array of bytes representing the serialized form of the given
-  value."
+(defn- edn-str
+  "Returns a trimmed string of the canonical EDN representation for the given
+  Clojure value."
   [value]
-  (binding [puget/*colored-output* false]
-    (-> value
-        print-value
-        with-out-str
-        str/trim
-        (.getBytes blob-charset))))
+  (binding [puget/*colored-output* false
+            puget/*strict-mode* true]
+    (str/trim (with-out-str (print-value value)))))
+
+
+(defn create-blob
+  "Constructs a data blob from a value. The second argument may be a function
+  which takes the bytes comprising the rendered primary value and returns a
+  sequence of secondary data values."
+  ([value]
+   (create-blob value nil))
+  ([value f]
+   (let [value-str (edn-str value)
+         secondary-values (when f (f (.getBytes value-str blob-charset)))
+         content-bytes (ByteArrayOutputStream.)
+         byte-range (atom [])]
+     (with-open [content (OutputStreamWriter. content-bytes blob-charset)]
+       (.write content blob-header)
+       (.flush content)
+       (swap! byte-range conj (.size content-bytes))
+       (.write content value-str)
+       (.flush content)
+       (swap! byte-range conj (.size content-bytes))
+       (doseq [v secondary-values]
+         (.write content "\n\n")
+         (.write content (edn-str v))))
+     (assoc (blob/load (.toByteArray content-bytes))
+       :data/primary-bytes @byte-range
+       :data/values (vec (cons value secondary-values))
+       :data/type (data-type value)))))
 
 
 (defn print-blob
-  "Prints the given data value(s) as canonical EDN in a data blob."
-  [value & more]
-  (binding [puget/*strict-mode* true]
+  "Prints the values from the given blob. This can be used to pretty-print a
+  colorized version of the values in an EDN data blob."
+  [blob]
+  (when-let [values (:data/values blob)]
     (print (puget/color-text :tag blob-header))
-    (print-value value)
-    (doseq [v more]
+    (print-value (first values))
+    (doseq [v (rest values)]
       (newline)
       (print-value v))))
-
-
-(defn print-blob-str
-  "Prints a canonical EDN representation to a string and returns it. This
-  function disables colorization."
-  [value & more]
-  (binding [puget/*colored-output* false]
-    (str/trim (with-out-str (apply print-blob value more)))))
 
 
 
@@ -157,7 +177,7 @@
 
 (defn primary-bytes
   "Utility function which takes a data blob and returns only the bytes in the
-  primary value. If the bob does not contain a :data/primary-bytes key, the
+  primary value. If the blob does not contain a :data/primary-bytes key, the
   blob content is returned as-is."
   [blob]
   (if-let [byte-range (:data/primary-bytes blob)]

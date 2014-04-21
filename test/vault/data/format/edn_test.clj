@@ -26,11 +26,26 @@
 
 ;; SERIALIZATION
 
+(deftest blob-creation
+  (let [blob (edn-data/create-blob [:foo])]
+    (is (:id blob))
+    (is (:content blob))
+    (is (= clojure.lang.PersistentVector (:data/type blob)))
+    (is (= [[:foo]] (:data/values blob)))
+    (is (= [12 18] (:data/primary-bytes blob)))
+    (is (= "[:foo]" (String. (edn-data/primary-bytes blob)))))
+  (let [blob (edn-data/create-blob {:alpha 'omega} (comp vector count))]
+    (is (= [{:alpha 'omega} 14] (:data/values blob)))
+    (is (= [12 26] (:data/primary-bytes blob)))))
+
+
 (deftest blob-printing
-  (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}"
-         (edn-data/print-blob-str {:omega "bar" :alpha "foo"})))
-  (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz"
-         (edn-data/print-blob-str [:foo \b 'baz] {:name "Aaron"} :frobnitz))))
+  (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}\n"
+         (with-out-str
+           (edn-data/print-blob {:data/values [{:omega "bar" :alpha "foo"}]}))))
+  (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz\n"
+         (with-out-str
+           (edn-data/print-blob {:data/values [[:foo \b 'baz] {:name "Aaron"} :frobnitz]})))))
 
 
 
@@ -59,8 +74,7 @@
           values (:data/values data)
           primary-bytes (edn-data/primary-bytes data)]
       (is (= [[1 \2 :three] :x/y "foo"] values))
-      (is (bytes= (.getBytes primary-value edn-data/blob-charset) primary-bytes))
-      (is (bytes= primary-bytes (edn-data/value-bytes (first values))))))
+      (is (bytes= (.getBytes primary-value edn-data/blob-charset) primary-bytes))))
   (testing "non-data blob"
     (let [blob (blob/load "frobble babble")]
       (is (bytes= (:content blob) (edn-data/primary-bytes blob))))))
