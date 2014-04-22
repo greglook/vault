@@ -27,14 +27,14 @@
 ;; SERIALIZATION
 
 (deftest blob-creation
-  (let [blob (edn-data/create-blob [:foo])]
+  (let [blob (edn-data/edn-blob [:foo])]
     (is (:id blob))
     (is (:content blob))
     (is (= clojure.lang.PersistentVector (:data/type blob)))
     (is (= [[:foo]] (:data/values blob)))
     (is (= [12 18] (:data/primary-bytes blob)))
     (is (= "[:foo]" (String. (edn-data/primary-bytes blob)))))
-  (let [blob (edn-data/create-blob {:alpha 'omega} (comp vector count))]
+  (let [blob (edn-data/edn-blob {:alpha 'omega} (comp vector count))]
     (is (= [{:alpha 'omega} 14] (:data/values blob)))
     (is (= [12 26] (:data/primary-bytes blob)))))
 

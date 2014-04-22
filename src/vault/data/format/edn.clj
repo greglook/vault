@@ -63,12 +63,12 @@
     (str/trim (with-out-str (print-value value)))))
 
 
-(defn create-blob
+(defn edn-blob
   "Constructs a data blob from a value. The second argument may be a function
   which takes the bytes comprising the rendered primary value and returns a
   sequence of secondary data values."
   ([value]
-   (create-blob value nil))
+   (edn-blob value nil))
   ([value f]
    (let [value-str (edn-str value)
          secondary-values (when f (f (.getBytes value-str blob-charset)))
