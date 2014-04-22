@@ -108,13 +108,21 @@
     (.write w (prn-str v))))
 
 
+(defn record
+  "Constructs a new blob record with the given id and optional content."
+  ([id]
+   (record id nil))
+  ([id content]
+   (->Blob id content)))
+
+
 (defn load
   "Buffers data in memory and hashes it to identify the blob."
   [source]
   (let [content (byte-streams/to-byte-array source)]
     (when-not (empty? content)
       (let [id (hash *digest-algorithm* content)]
-        (->Blob id content)))))
+        (record id content)))))
 
 
 

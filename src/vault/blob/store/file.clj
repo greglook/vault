@@ -65,7 +65,7 @@
        ~@body)))
 
 
-(defn- stat-blob
+(defn- blob-stats
   "Calculates statistics for a blob file."
   [^File file]
   {:meta/size (.length file)
@@ -92,7 +92,8 @@
 
   (stat [this id]
     (when-blob-file this id
-      (stat-blob file)))
+      (merge (blob/record id)
+             (blob-stats file))))
 
 
   (get* [this id]
@@ -100,8 +101,7 @@
       (-> file
           io/input-stream
           blob/load
-          (assoc :size)
-          (into (stat-blob file)))))
+          (merge (blob-stats file)))))
 
 
   (put! [this blob]
@@ -111,7 +111,8 @@
         (io/make-parents file)
         ; For some reason, io/copy is much faster than byte-streams/transfer here.
         (io/copy content file)
-        (.setWritable file false false)))))
+        (.setWritable file false false))
+      (merge blob (blob-stats file)))))
 
 
 (defn delete!
