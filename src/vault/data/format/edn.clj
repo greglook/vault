@@ -41,10 +41,10 @@
   "Determines the 'type' of the given value. By default, the result is just the
   class of the value. For maps, the :vault.data/type key is used if present.
   This is the main way types are represented in the data layer."
-  [v]
-  (or (when (map? v)
-        (:vault.data/type v))
-      (class v)))
+  [value]
+  (or (when (map? value)
+        (:vault.data/type value))
+      (class value)))
 
 
 
@@ -155,9 +155,9 @@
   "Reads the first few bytes from a blob's content to determine whether it is a
   data blob. The result is true if the header matches, otherwise false."
   [^bytes content]
-  (let [magic-bytes (.getBytes blob-header blob-charset)
-        magic-len (count magic-bytes)]
-    (= (seq magic-bytes) (take magic-len (seq content)))))
+  (let [header (.getBytes blob-header blob-charset)
+        len (count header)]
+    (= (seq header) (take len (seq content)))))
 
 
 (defn- read-primary-value!
