@@ -4,7 +4,7 @@
     [vault.blob.core :as blob :refer [BlobStore]]))
 
 
-(defn- stat-blob
+(defn- blob-stats
   "Augments a blob with stat metadata."
   [blob]
   (assoc blob
@@ -14,41 +14,41 @@
 
 
 (defrecord MemoryBlobStore
-  [store]
+  [memory]
 
   BlobStore
 
   (enumerate [this opts]
-    (blob/select-ids opts (keys @store)))
+    (blob/select-ids opts (keys @memory)))
 
 
   (stat [this id]
-    (when-let [blob (@store id)]
+    (when-let [blob (@memory id)]
       (dissoc blob :content)))
 
 
   (get* [this id]
-    (@store id))
+    (@memory id))
 
 
   (put! [this blob]
     (if-let [id (:id blob)]
-      (or (@store id)
-          (let [blob (stat-blob blob)]
-            (swap! store assoc id blob)
+      (or (@memory id)
+          (let [blob (blob-stats blob)]
+            (swap! memory assoc id blob)
             blob)))))
 
 
 (defn delete!
-  [this id]
-  (when (@(:store this) id)
-    (swap! (:store this) dissoc id)
+  [store id]
+  (when (@(:memory store) id)
+    (swap! (:memory store) dissoc id)
     true))
 
 
 (defn destroy!!
-  [this]
-  (swap! (:store this) empty))
+  [store]
+  (swap! (:memory store) empty))
 
 
 (defn memory-store
