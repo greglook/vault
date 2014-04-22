@@ -3,8 +3,7 @@
   (:require
     byte-streams
     [clojure.string :as str]
-    [mvxcvi.crypto.digest :as digest]
-    [puget.data :as edn]))
+    [mvxcvi.crypto.digest :as digest]))
 
 
 ;; HASH IDENTIFIERS
@@ -48,10 +47,6 @@
         [algorithm digest] (str/split id #"[:-]" 2)
         algorithm (keyword algorithm)]
     (->HashID algorithm digest)))
-
-
-(edn/extend-tagged-str HashID vault/ref)
-(edn/register-reader! 'vault/ref parse-id)
 
 
 (defn hash-id

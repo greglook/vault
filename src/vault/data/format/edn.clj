@@ -3,7 +3,9 @@
   (:require
     [clojure.string :as str]
     [clojure.edn :as edn]
-    [puget.printer :as puget]
+    (puget
+      [data :as data]
+      [printer :as puget])
     [vault.blob.core :as blob])
   (:import
     (java.io
@@ -15,7 +17,8 @@
       OutputStreamWriter
       PushbackReader
       Reader)
-    (java.nio.charset Charset)))
+    (java.nio.charset Charset)
+    vault.blob.core.HashID))
 
 
 ;; CONSTANTS & CONFIGURATION
@@ -42,6 +45,29 @@
   (or (when (map? v)
         (:vault.data/type v))
       (class v)))
+
+
+
+;; TAGGED VALUES
+
+(def data-readers
+  "Atom containing a map of tag readers supported by Vault."
+  (atom
+    {'bin data/read-bin
+     'uri data/read-uri
+     ; TODO: 'inst data/read-inst-cljtime
+     'vault/ref blob/parse-id}
+    :validator map?))
+
+
+(defn register-reader!
+  "Registers a function as the data reader for an EDN tag."
+  [tag f]
+  {:pre [(symbol? tag)]}
+  (swap! data-readers assoc tag f))
+
+
+(data/extend-tagged-str HashID vault/ref)
 
 
 
@@ -138,7 +164,7 @@
   the primary value and the range of bytes as a second vector."
   [reader bytes-read]
   (let [byte-start @bytes-read
-        value (edn/read {:readers {}} reader)
+        value (edn/read {:readers @data-readers} reader)
         byte-range [byte-start @bytes-read]]
     [value byte-range]))
 
@@ -148,7 +174,7 @@
   read."
   [reader]
   (let [opts {:eof ::end-stream
-              :readers {}}
+              :readers @data-readers}
         read-stream (partial edn/read opts reader)
         edn-stream (repeatedly read-stream)
         not-eos? (partial not= ::end-stream)]
