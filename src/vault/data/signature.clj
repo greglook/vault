@@ -3,6 +3,7 @@
   (:require
     [puget.data :refer [TaggedValue]]
     [vault.blob.core :as blob]
+    [vault.data.format.edn :as edn-data]
     [vault.data.format.pgp :as pgp-data]
     [mvxcvi.crypto.pgp :as pgp])
   (:import
@@ -28,10 +29,10 @@
 
 (defn- sign-bytes
   "Signs a byte array with a single public key."
-  [value-bytes store privkeys pubkey-id]
+  [store privkeys data pubkey-id]
   (let [pubkey (load-pubkey store pubkey-id)
         privkey (privkeys (pgp/key-id pubkey))
-        pgp-sig (pgp/sign value-bytes privkey)]
+        pgp-sig (pgp/sign data privkey)]
     {:key pubkey-id
      :signature pgp-sig
      :vault.data/type :vault/signature}))
@@ -42,13 +43,40 @@
   matching the public key identified by a hash-id. Returns a sequence
   containing the constructed signature map."
   [store privkeys & pubkey-ids]
-  (fn [value-bytes]
-    (map (partial sign-bytes value-bytes store privkeys) pubkey-ids)))
+  (fn [data]
+    (map (partial sign-bytes store privkeys data) pubkey-ids)))
 
 
-(defn verify-blob
-  "Verifies that the inline signatures in a sequence of blob values are valid."
-  [blob-store
-   blob-values]
-  ; TODO: implement
-  nil)
+(defn- inline-signatures
+  "Collects the inline signatures from a data blob."
+  [blob]
+  (->>
+    (rest (:data/values blob))
+    (filter #(= :vault/signature (edn-data/data-type %)))
+    seq))
+
+
+(defn- verify-bytes
+  [store data signature]
+  (let [pubkey (load-pubkey store (:key signature))
+        pgp-sig (:signature signature)]
+    (if (pgp/verify data pgp-sig pubkey)
+      (:key signature)
+      ; TODO: log a warning about invalid signature
+      )))
+
+
+(defn verify
+  "Verifies that the inline signatures in a blob are correct. Returns an
+  updated blob record with the :data/signatures key giving a set of the public
+  key hash ids of the blob signatures."
+  [store blob]
+  (if-let [signatures (inline-signatures blob)]
+    (let [data (edn-data/primary-bytes blob)]
+      (->>
+        signatures
+        (map (partial verify-bytes store data))
+        (filter identity)
+        set
+        (assoc blob :data/signatures)))
+    blob))

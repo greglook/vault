@@ -46,7 +46,10 @@
     (is privkey "Private key should be unlocked")
     (let [blob (->> pubkey-id
                     (sig/blob-signer blob-store provider)
-                    (edn-data/edn-blob value))]
+                    (edn-data/edn-blob value)
+                    (sig/verify blob-store))]
       (println "Signed blob:")
       (binding [puget/*colored-output* true]
-        (edn-data/print-blob blob)))))
+        (edn-data/print-blob blob)
+        (newline) (newline)
+        (puget/pprint blob)))))
