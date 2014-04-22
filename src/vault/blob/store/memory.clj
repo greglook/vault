@@ -8,8 +8,8 @@
   "Augments a blob with stat metadata."
   [blob]
   (assoc blob
-    :meta/size (count (:content blob))
-    :meta/stored-at (or (:meta/stored-at blob)
+    :stat/size (count (:content blob))
+    :stat/stored-at (or (:stat/stored-at blob)
                         (java.util.Date.))))
 
 

@@ -136,11 +136,11 @@
     'list' function provides a nicer wrapper around this protocol method.")
 
   (stat [this id]
-    "Returns a map of metadata about the blob, if it is stored. Properties are
-    generally, implementation-specific, but may include:
-    * :meta/size        blob size in bytes
-    * :meta/stored-at   date blob was added to store
-    * :meta/origin      a resource location for the blob")
+    "Returns a blob record with metadata but no content. Properties are
+    generally implementation-specific, but may include:
+    * :stat/size        blob size in bytes
+    * :stat/stored-at   date blob was added to store
+    * :stat/origin      a resource location for the blob")
 
   (get* [this id]
     "Loads content from the store and returns a Blob record. Returns nil if no

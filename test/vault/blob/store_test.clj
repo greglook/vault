@@ -24,7 +24,7 @@
   (let [status (blob/stat store id)
         stored-content (:content (blob/get store id))]
     (is (and status stored-content) "returns info and content")
-    (is (= (:meta/size status) (count stored-content)) "stats contain size info")
+    (is (= (:stat/size status) (count stored-content)) "stats contain size info")
     (is (= content (slurp stored-content)) "stored content matches input")))
 
 
@@ -35,8 +35,8 @@
         new-blob   (blob/store! store content)
         new-status (blob/stat store id)]
     (is (= id (:id new-blob)))
-    (is (= (:meta/stored-at status)
-           (:meta/stored-at new-status)))))
+    (is (= (:stat/stored-at status)
+           (:stat/stored-at new-status)))))
 
 
 (defn test-blob-store

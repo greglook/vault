@@ -68,9 +68,9 @@
 (defn- blob-stats
   "Calculates statistics for a blob file."
   [^File file]
-  {:meta/size (.length file)
-   :meta/stored-at (Date. (.lastModified file))
-   :meta/origin (.toURI file)})
+  {:stat/size (.length file)
+   :stat/stored-at (Date. (.lastModified file))
+   :stat/origin (.toURI file)})
 
 
 

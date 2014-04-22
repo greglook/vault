@@ -60,20 +60,24 @@ Optionally, some stores may _separately_ implement the following operations:
 - `destroy!!` - completely remove the blob store
 
 Status metadata is attached as additional keys in the blob record under the
-`meta` namespace. The data present is largely implementation-specific, but may
+`stat` namespace. The data present is largely implementation-specific, but may
 include some common keys:
-- `:meta/size` - the number of bytes stored for the blob
-- `:meta/stored-at` - time the blob was added to the store
-- `:meta/origin` - an optional URI giving referencing the stored content
+- `:stat/size` - the number of bytes stored for the blob
+- `:stat/stored-at` - time the blob was added to the store
+- `:stat/origin` - an optional URI giving referencing the stored content
+
+Finally, some stores may support attaching additional metadata to a blob. This
+can be used to enable additional features such as encryption. These properties
+should use keywords in the `meta` namespace.
 
 A `stat` call is similar to an HTTP HEAD request, in that it returns the blob
 with no content. An example from a blob stored in S3 might look like:
 
 ```clojure
 {:id #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"
- :meta/origin #uri "s3://user-bucket/vault/sha256/53e/0b9/f7503729f698..."
- :meta/size 12345
- :meta/stored-at #inst "2013-12-01T18:23:48Z"}
+ :stat/origin #uri "s3://user-bucket/vault/sha256/53e/0b9/f7503729f698..."
+ :stat/size 12345
+ :stat/stored-at #inst "2013-12-01T18:23:48Z"}
 ```
 
 ## Implementations
