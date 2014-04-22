@@ -1,7 +1,6 @@
 (ns vault.data.signature
   "Signature handling functions."
   (:require
-    [puget.data :refer [TaggedValue]]
     [vault.blob.core :as blob]
     [vault.data.format.edn :as edn-data]
     [vault.data.format.pgp :as pgp-data]
@@ -27,6 +26,9 @@
     (first (:data/values pubkey-blob))))
 
 
+
+;; SIGNATURE CREATION
+
 (defn- sign-bytes
   "Signs a byte array with a single public key."
   [store privkeys data pubkey-id]
@@ -46,6 +48,9 @@
   (fn [data]
     (map (partial sign-bytes store privkeys data) pubkey-ids)))
 
+
+
+;; SIGNATURE VERIFICATION
 
 (defn- inline-signatures
   "Collects the inline signatures from a data blob."
