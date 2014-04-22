@@ -241,7 +241,14 @@
   (with-open [stream (PGPUtil/getDecoderStream
                        (byte-streams/to-input-stream data))]
     (let [factory (PGPObjectFactory. stream)]
-      (doall (take-while identity (repeatedly #(.nextObject factory)))))))
+      (->> (repeatedly #(.nextObject factory))
+           (take-while identity)
+           (map #(condp = (class %)
+                   PGPPublicKey %
+                   PGPPublicKeyRing (iterator-seq (.getPublicKeys %))
+                   %))
+           flatten
+           doall))))
 
 
 (defn decode-public-key

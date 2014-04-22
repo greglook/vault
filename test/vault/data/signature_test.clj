@@ -10,7 +10,7 @@
       [printer :as puget])
     [vault.blob.core :as blob]
     [vault.blob.store.memory :refer [memory-store]]
-    [vault.data.format.edn :as edn-blob]
+    [vault.data.format.edn :as edn-data]
     [vault.data.signature :as sig])
   (:import
     (org.bouncycastle.openpgp
@@ -18,6 +18,7 @@
 
 
 (puget.data/extend-tagged-value PGPSignature pgp/signature pgp/encode)
+
 
 (def blob-store (memory-store))
 
@@ -29,7 +30,7 @@
 (def pubkey
   (pgp/get-public-key test-keyring "923b1c1c4392318a"))
 
-(def pubkey-hash
+(def pubkey-id
   (->> pubkey
        pgp/encode-ascii
        (blob/store! blob-store)
@@ -43,7 +44,9 @@
                      caching-provider)
         privkey (provider (pgp/key-id pubkey) "test password")]
     (is privkey "Private key should be unlocked")
-    (let [sig (sig/sign-value blob-store provider value pubkey-hash)]
+    (let [blob (->> pubkey-id
+                    (sig/blob-signer blob-store provider)
+                    (edn-data/edn-blob value))]
       (println "Signed blob:")
       (binding [puget/*colored-output* true]
-        (edn-blob/print-blob value sig)))))
+        (edn-data/print-blob blob)))))
