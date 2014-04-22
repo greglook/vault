@@ -67,7 +67,6 @@
     (vault.blob.store.memory/destroy!! store)))
 
 
-#_
 (deftest file-blob-store
   (let [tmpdir (io/file "target" "test" "tmp"
                         (str "file-blob-store."

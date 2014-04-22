@@ -125,8 +125,7 @@
   [this]
   (let [rm-r (fn rm-r [^File path]
                (when (.isDirectory path)
-                 (doseq [child (.listFiles path)]
-                   (rm-r child)))
+                 (->> path .listFiles (map rm-r) dorun))
                (.delete path))]
     (rm-r (:root this))))
 
