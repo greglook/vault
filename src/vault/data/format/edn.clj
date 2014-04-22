@@ -83,6 +83,7 @@
 (defn- edn-str
   "Returns a trimmed string of the canonical EDN representation for the given
   Clojure value."
+  ^String
   [value]
   (binding [puget/*colored-output* false
             puget/*strict-mode* true]
@@ -206,8 +207,7 @@
   primary value. If the blob does not contain a :data/primary-bytes key, the
   blob content is returned as-is."
   [blob]
-  (if-let [byte-range (:data/primary-bytes blob)]
-    (java.util.Arrays/copyOfRange (:content blob)
-                                  (first byte-range)
-                                  (second byte-range))
-    (:content blob)))
+  (let [^bytes content (:content blob)]
+    (if-let [[^long start ^long end] (:data/primary-bytes blob)]
+      (java.util.Arrays/copyOfRange content start end)
+      content)))
