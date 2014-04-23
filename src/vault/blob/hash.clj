@@ -16,7 +16,7 @@
   "Pads a string with leading zeroes up to the given width."
   [width value]
   (let [string (str value)]
-    (if (< width (count string))
+    (if (<= width (count string))
       string
       (-> width
           (- (count string))
