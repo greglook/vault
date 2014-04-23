@@ -6,9 +6,9 @@
 
   :dependencies
   [[byte-streams "0.1.6"]
+   [mvxcvi/clj-pgp "0.1.0-SNAPSHOT"]
    [mvxcvi/directive "0.1.0"]
    [mvxcvi/puget "0.4.0-SNAPSHOT"]
-   [org.bouncycastle/bcpg-jdk15on "1.49"]
    [org.clojure/clojure "1.5.1"]
    [org.clojure/data.codec "0.1.0"]
    [org.clojure/tools.cli "0.2.4"]]
