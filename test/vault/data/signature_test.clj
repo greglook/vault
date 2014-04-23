@@ -48,8 +48,9 @@
                     (sig/blob-signer blob-store provider)
                     (edn-data/edn-blob value)
                     (sig/verify blob-store))]
-      (println "Signed blob:")
+      #_
       (binding [puget/*colored-output* true]
+        (println "Signed blob:")
         (edn-data/print-blob blob)
         (newline) (newline)
         (puget/pprint blob)))))
