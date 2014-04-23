@@ -3,13 +3,14 @@ Vault
 
 Vault is a time-travelling, content-addressable, hypermedia datastore which
 provides strong assertions about the integrity and provenance of stored data. If
-that mouthfull of buzzwords didn't spark anything, don't worry. Read on for a
+that shower of buzzwords didn't spark anything, don't worry. Read on for a
 general introduction, or see the docs for more detailed explanations of the
 various concepts.
 
 This is heavily inspired by both [Camlistore](http://camlistore.org/) and
 [Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
-compatible with either, though many of the ideas are similar.
+compatible with either, though many of the ideas are similar. Why use a new data
+storage system? See [some comparisons to other systems](doc/vs.md).
 
 ## Concepts
 
