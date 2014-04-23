@@ -1,4 +1,4 @@
-(ns vault.data.signature
+(ns vault.data.security
   "Signature handling functions."
   (:require
     [mvxcvi.crypto.pgp :as pgp]

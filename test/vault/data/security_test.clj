@@ -1,4 +1,4 @@
-(ns vault.data.signature-test
+(ns vault.data.security-test
   (:require
     [clojure.java.io :as io]
     [clojure.test :refer :all]
@@ -11,10 +11,7 @@
     [vault.blob.core :as blob]
     [vault.blob.store.memory :refer [memory-store]]
     [vault.data.format.edn :as edn-data]
-    [vault.data.signature :as sig])
-  (:import
-    (org.bouncycastle.openpgp
-      PGPSignature)))
+    [vault.data.security :as sec]))
 
 
 (def blob-store (memory-store))
@@ -42,9 +39,9 @@
         privkey (provider (pgp/key-id pubkey) "test password")]
     (is privkey "Private key should be unlocked")
     (let [blob (->> pubkey-id
-                    (sig/blob-signer blob-store provider)
+                    (sec/blob-signer blob-store provider)
                     (edn-data/edn-blob value)
-                    (sig/verify blob-store))]
+                    (sec/verify blob-store))]
       #_
       (binding [puget/*colored-output* true]
         (println "Signed blob:")
