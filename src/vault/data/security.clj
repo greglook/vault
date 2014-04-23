@@ -68,6 +68,9 @@
 
 
 (defn- verify-bytes
+  "Verifies a signature map against the provided byte data by looking up public
+  keys from the given blob store. Returns the hash-id of the public key if the
+  signature is correct, otherwise nil."
   [store data signature]
   (let [pubkey (load-pubkey store (:key signature))
         pgp-sig (:signature signature)]
