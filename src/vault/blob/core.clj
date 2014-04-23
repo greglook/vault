@@ -78,7 +78,14 @@
 
 ;; CONTENT HASHING
 
-(def ^:dynamic *digest-algorithm*
+(def hash-algorithms
+  "Map of content hashing algorithms to system names."
+  {:md5    "MD5"
+   :sha1   "SHA-1"
+   :sha256 "SHA-256"})
+
+
+(def ^:dynamic *hash-algorithm*
   "Default digest algorithm to use for content hashing."
   :sha256)
 
@@ -86,7 +93,7 @@
 (defmacro with-algorithm
   "Executes a body of expressions with the given default digest algorithm."
   [algorithm & body]
-  `(binding [*digest-algorithm* ~algorithm]
+  `(binding [*hash-algorithm* ~algorithm]
      ~@body))
 
 
@@ -121,7 +128,7 @@
   [source]
   (let [content (byte-streams/to-byte-array source)]
     (when-not (empty? content)
-      (let [id (hash *digest-algorithm* content)]
+      (let [id (hash *hash-algorithm* content)]
         (record id content)))))
 
 

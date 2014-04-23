@@ -21,7 +21,7 @@
   ([store]
    (blob/list store))
   ([store prefix]
-   (blob/list store :prefix (prefix-id blob/*digest-algorithm* prefix)))
+   (blob/list store :prefix (prefix-id blob/*hash-algorithm* prefix)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))
 

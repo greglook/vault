@@ -15,9 +15,9 @@
 
 
 (deftest blob-digest-algorithm
-  (is (not (nil? blob/*digest-algorithm*)))
+  (is (not (nil? blob/*hash-algorithm*)))
   (blob/with-algorithm :sha1
-    (is (= :sha1 blob/*digest-algorithm*))))
+    (is (= :sha1 blob/*hash-algorithm*))))
 
 
 (deftest hash-id-comparison
