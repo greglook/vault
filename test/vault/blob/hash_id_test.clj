@@ -5,7 +5,7 @@
 
 
 (def blob-content
-  "foobarbaz")
+  (.getBytes "foobarbaz"))
 
 (def blob-id
   (blob/hash-id :sha256 "97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"))
@@ -61,7 +61,7 @@
 (deftest content-hashing
   (testing "blob/hash"
     (is (= blob-id (blob/hash :sha256 blob-content)))
-    (is (thrown? IllegalArgumentException (blob/hash :foo blob-content)))))
+    (is (thrown? AssertionError (blob/hash :foo blob-content)))))
 
 
 (deftest hash-id-selection

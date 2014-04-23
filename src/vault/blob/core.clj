@@ -2,8 +2,34 @@
   (:refer-clojure :exclude [get hash list load])
   (:require
     byte-streams
-    [clojure.string :as str]
-    [mvxcvi.crypto.digest :as digest]))
+    [clojure.string :as str])
+  (:import
+    java.security.MessageDigest))
+
+
+;; UTILITY FUNCTIONS
+
+(defn- zero-pad
+  "Pads a string with leading zeroes up to the given width."
+  [width value]
+  (let [string (str value)]
+    (if (< width (count string))
+      string
+      (-> width
+          (- (count string))
+          (repeat "0")
+          str/join
+          (str string)))))
+
+
+(defn- hex-str
+  [^bytes value]
+  (let [width (* 2 (count value))
+        hex (-> (BigInteger. 1 value)
+                (.toString 16)
+                str/lower-case)]
+    (zero-pad width hex)))
+
 
 
 ;; HASH IDENTIFIERS
@@ -98,9 +124,16 @@
 
 
 (defn hash
-  "Calculates the hash digest of the given data source. Returns a HashID."
-  [algo content]
-  (->HashID algo (digest/hash-content algo content)))
+  "Calculates the hash digest of the given byte array. Returns a HashID."
+  [algo ^bytes content]
+  {:pre [(contains? hash-algorithms algo)]}
+  (->HashID
+    algo
+    (->
+      (hash-algorithms algo)
+      MessageDigest/getInstance
+      (.digest content)
+      hex-str)))
 
 
 

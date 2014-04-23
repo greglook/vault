@@ -14,7 +14,7 @@
 
 
 (deftest get-wrapper
-  (let [content "foobarbaz"
+  (let [content (.getBytes "foobarbaz")
         id (blob/hash :sha256 content)
         store (reify BlobStore (get* [this id] (blob/load content)))
         blob (blob/get store id)]
