@@ -53,21 +53,25 @@
 (def data-readers
   "Atom containing a map of tag readers supported by Vault."
   (atom
+    ; TODO: 'inst clj-time.core/read-inst
     {'bin data/read-bin
-     'uri data/read-uri
-     ; TODO: 'inst data/read-inst-cljtime
-     'vault/ref blob/parse-id}
+     'uri data/read-uri}
     :validator map?))
 
 
-(defn register-reader!
+(defmacro register-tag!
   "Registers a function as the data reader for an EDN tag."
-  [tag f]
-  {:pre [(symbol? tag)]}
-  (swap! data-readers assoc tag f))
+  ([tag reader]
+   `(swap! data-readers assoc ~tag ~reader))
+  ([tag t writer reader]
+   `(do
+      (data/extend-tagged-value ~t ~tag ~writer)
+      (swap! data-readers assoc ~tag ~reader))))
 
 
-(data/extend-tagged-str HashID vault/ref)
+(register-tag! 'vault/ref
+  HashID str
+  blob/parse-id)
 
 
 

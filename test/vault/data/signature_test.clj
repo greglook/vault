@@ -17,9 +17,6 @@
       PGPSignature)))
 
 
-(puget.data/extend-tagged-value PGPSignature pgp/signature pgp/encode)
-
-
 (def blob-store (memory-store))
 
 (def test-keyring

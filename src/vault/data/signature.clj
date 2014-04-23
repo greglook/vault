@@ -1,28 +1,34 @@
 (ns vault.data.signature
   "Signature handling functions."
   (:require
+    [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
-    [vault.data.format.edn :as edn-data]
-    [vault.data.format.pgp :as pgp-data]
-    [mvxcvi.crypto.pgp :as pgp])
+    (vault.data.format
+      [edn :as edn-data]
+      [pgp :as pgp-data]))
   (:import
     (org.bouncycastle.openpgp
-      PGPPublicKey
       PGPSignature)))
+
+
+;; UTILITY FUNCTIONS
+
+(edn-data/register-tag! 'pgp/signature
+  PGPSignature pgp/encode
+  pgp/decode-signature)
 
 
 (defn- load-pubkey
   "Loads a PGP public key from a blob store."
-  [store pubkey-id]
-  (let [pubkey-blob (->> pubkey-id
-                         (blob/get store)
-                         pgp-data/read-blob)]
-    (when-not pubkey-blob
+  [store id]
+  (let [blob (blob/get store id)
+        pubkey-blob (pgp-data/read-blob blob)]
+    (when-not blob
       (throw (IllegalStateException.
-               (str "No public key blob stored for " pubkey-id))))
+               (str "No public key blob stored for " id))))
     (when-not (= :pgp/public-key (:data/type pubkey-blob))
       (throw (IllegalStateException.
-               (str "Blob " pubkey-id " is not a PGP public key"))))
+               (str "Blob " id " is not a PGP public key"))))
     (first (:data/values pubkey-blob))))
 
 
