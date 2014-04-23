@@ -1,34 +1,23 @@
 (ns vault.blob.core
-  (:refer-clojure :exclude [get hash list load])
+  (:refer-clojure :exclude [get list load])
   (:require
     byte-streams
-    [clojure.string :as str])
-  (:import
-    java.security.MessageDigest))
+    [clojure.string :as str]
+    [vault.blob.hash :as hash]))
 
 
-;; UTILITY FUNCTIONS
+;; CONTENT HASHING
 
-(defn- zero-pad
-  "Pads a string with leading zeroes up to the given width."
-  [width value]
-  (let [string (str value)]
-    (if (< width (count string))
-      string
-      (-> width
-          (- (count string))
-          (repeat "0")
-          str/join
-          (str string)))))
+(def ^:dynamic *hash-algorithm*
+  "Default digest algorithm to use for content hashing."
+  :sha256)
 
 
-(defn- hex-str
-  [^bytes value]
-  (let [width (* 2 (count value))
-        hex (-> (BigInteger. 1 value)
-                (.toString 16)
-                str/lower-case)]
-    (zero-pad width hex)))
+(defmacro with-algorithm
+  "Executes a body of expressions with the given default digest algorithm."
+  [algorithm & body]
+  `(binding [*hash-algorithm* ~algorithm]
+     ~@body))
 
 
 
@@ -75,67 +64,6 @@
     (->HashID algorithm digest)))
 
 
-(defn hash-id
-  "Constructs a hash identifier from the arguments."
-  ([x]
-   (cond
-     (instance? HashID x) x
-     :else (parse-id (str x))))
-  ([algorithm digest]
-   (let [algo (keyword algorithm)]
-     (->HashID algo digest))))
-
-
-(defn select-ids
-  "Selects hash identifiers from a lazy sequence based on input criteria.
-  Available options:
-  * :after    start enumerating ids lexically following this string
-  * :prefix   only return ids matching the given string
-  * :limit    limit the number of results returned"
-  [opts ids]
-  (let [{:keys [after prefix limit]} opts
-        after (or after prefix)]
-    (cond->> ids
-      after  (drop-while #(pos? (compare after (str %))))
-      prefix (take-while #(.startsWith (str %) prefix))
-      limit  (take limit))))
-
-
-
-;; CONTENT HASHING
-
-(def hash-algorithms
-  "Map of content hashing algorithms to system names."
-  {:md5    "MD5"
-   :sha1   "SHA-1"
-   :sha256 "SHA-256"})
-
-
-(def ^:dynamic *hash-algorithm*
-  "Default digest algorithm to use for content hashing."
-  :sha256)
-
-
-(defmacro with-algorithm
-  "Executes a body of expressions with the given default digest algorithm."
-  [algorithm & body]
-  `(binding [*hash-algorithm* ~algorithm]
-     ~@body))
-
-
-(defn hash
-  "Calculates the hash digest of the given byte array. Returns a HashID."
-  [algo ^bytes content]
-  {:pre [(contains? hash-algorithms algo)]}
-  (->HashID
-    algo
-    (->
-      (hash-algorithms algo)
-      MessageDigest/getInstance
-      (.digest content)
-      hex-str)))
-
-
 
 ;; BLOB RECORD
 
@@ -161,7 +89,8 @@
   [source]
   (let [content (byte-streams/to-byte-array source)]
     (when-not (empty? content)
-      (let [id (hash *hash-algorithm* content)]
+      (let [digest (hash/digest *hash-algorithm* content)
+            id (->HashID *hash-algorithm* digest)]
         (record id content)))))
 
 
@@ -211,11 +140,11 @@
   verifies that the id matches the actual digest of the data returned."
   [store id]
   (when-let [blob (get* store id)]
-    (let [content-id (hash (:algorithm id) (:content blob))]
-      (when-not (= id content-id)
+    (let [digest (hash/digest (:algorithm id) (:content blob))]
+      (when-not (= (:digest id) digest)
         (throw (RuntimeException.
                  (str "Store " store " returned invalid data: requested "
-                      id " but got " content-id)))))
+                      id " but got " digest)))))
     blob))
 
 
@@ -224,3 +153,33 @@
   [store source]
   (when-let [blob (load source)]
     (put! store blob)))
+
+
+
+;; UTILITY FUNCTIONS
+
+(defn hash-id
+  "Constructs a hash identifier from the arguments."
+  ([x]
+   (cond
+     (instance? HashID x) x
+     (instance? Blob x) (:id x)
+     :else (parse-id (str x))))
+  ([algorithm digest]
+   (let [algo (keyword algorithm)]
+     (->HashID algo digest))))
+
+
+(defn select-ids
+  "Selects hash identifiers from a lazy sequence based on input criteria.
+  Available options:
+  * :after    start enumerating ids lexically following this string
+  * :prefix   only return ids matching the given string
+  * :limit    limit the number of results returned"
+  [opts ids]
+  (let [{:keys [after prefix limit]} opts
+        after (or after prefix)]
+    (cond->> ids
+      after  (drop-while #(pos? (compare after (str %))))
+      prefix (take-while #(.startsWith (str %) prefix))
+      limit  (take limit))))

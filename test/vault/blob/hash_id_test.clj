@@ -1,7 +1,9 @@
 (ns vault.blob.hash-id-test
   (:require
     [clojure.test :refer :all]
-    [vault.blob.core :as blob]))
+    (vault.blob
+      [core :as blob]
+      [hash :as hash])))
 
 
 (def blob-content
@@ -60,8 +62,8 @@
 
 (deftest content-hashing
   (testing "blob/hash"
-    (is (= blob-id (blob/hash :sha256 blob-content)))
-    (is (thrown? AssertionError (blob/hash :foo blob-content)))))
+    (is (= (:digest blob-id) (hash/digest :sha256 blob-content)))
+    (is (thrown? AssertionError (hash/digest :foo blob-content)))))
 
 
 (deftest hash-id-selection
