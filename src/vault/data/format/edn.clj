@@ -32,19 +32,30 @@
   "#vault/data\n")
 
 
-(def ^:private ^:const blob-width
+(def ^:const ^:private blob-width
   "Width of text to use in serialized blobs."
   100)
 
 
+(def ^:const ^:private type-key
+  "Keyword which defines a map's data-type."
+  :vault.data/type)
+
+
 (defn data-type
   "Determines the 'type' of the given value. By default, the result is just the
-  class of the value. For maps, the :vault.data/type key is used if present.
-  This is the main way types are represented in the data layer."
+  class of the value. For maps, the type-key is used if present. This is the
+  main way types are represented in the data layer."
   [value]
   (or (when (map? value)
-        (:vault.data/type value))
+        (get value type-key))
       (class value)))
+
+
+(defn typed-map
+  "Constructs a new value with the given data type."
+  [t]
+  (hash-map type-key t))
 
 
 
