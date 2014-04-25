@@ -13,7 +13,7 @@
   :sha256)
 
 
-(defmacro with-algorithm
+(defmacro with-hash-algorithm
   "Executes a body of expressions with the given default digest algorithm."
   [algorithm & body]
   `(binding [*hash-algorithm* ~algorithm]
@@ -24,7 +24,7 @@
 ;; HASH IDENTIFIERS
 
 (defrecord HashID
-  [algorithm digest]
+  [algorithm ^String digest]
 
   Comparable
 
@@ -67,7 +67,7 @@
 
 ;; BLOB RECORD
 
-(defrecord Blob [id content])
+(defrecord Blob [id ^bytes content])
 
 
 (defmethod print-method Blob
@@ -141,7 +141,7 @@
   [store id]
   (when-let [blob (get* store id)]
     (let [digest (hash/digest (:algorithm id) (:content blob))]
-      (when-not (= (:digest id) digest)
+      (when (not= (:digest id) digest)
         (throw (RuntimeException.
                  (str "Store " store " returned invalid data: requested "
                       id " but got " digest)))))
@@ -166,8 +166,7 @@
      (instance? Blob x) (:id x)
      :else (parse-id (str x))))
   ([algorithm digest]
-   (let [algo (keyword algorithm)]
-     (->HashID algo digest))))
+   (->HashID (keyword algorithm) (str digest))))
 
 
 (defn select-ids
