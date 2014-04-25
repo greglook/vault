@@ -26,7 +26,7 @@
     (when-not blob
       (throw (IllegalStateException.
                (str "No public key blob stored for " id))))
-    (when-not (= :pgp/public-key (:data/type pubkey-blob))
+    (when (not= :pgp/public-key (:data/type pubkey-blob))
       (throw (IllegalStateException.
                (str "Blob " id " is not a PGP public key"))))
     (first (:data/values pubkey-blob))))
@@ -41,9 +41,10 @@
   (let [pubkey (load-pubkey store pubkey-id)
         privkey (privkeys (pgp/key-id pubkey))
         pgp-sig (pgp/sign data privkey)]
-    {:key pubkey-id
-     :signature pgp-sig
-     :vault.data/type :vault/signature}))
+    (assoc
+      (edn-data/typed-map :vault/signature)
+      :key pubkey-id
+      :signature pgp-sig)))
 
 
 (defn blob-signer
