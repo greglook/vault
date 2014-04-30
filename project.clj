@@ -6,7 +6,7 @@
 
   :dependencies
   [[byte-streams "0.1.6"]
-   [mvxcvi/clj-pgp "0.1.0-SNAPSHOT"]
+   [mvxcvi/clj-pgp "0.5.0"]
    [mvxcvi/directive "0.1.0"]
    [mvxcvi/puget "0.4.0-SNAPSHOT"]
    [org.clojure/clojure "1.5.1"]
