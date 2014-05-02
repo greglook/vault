@@ -1,9 +1,9 @@
-(ns vault.data.security
+(ns vault.format.signature
   "Signature handling functions."
   (:require
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
-    (vault.data.format
+    (vault.format
       [edn :as edn-data]
       [pgp :as pgp-data]))
   (:import
