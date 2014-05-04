@@ -1,9 +1,9 @@
 (ns vault.data.core
   (:require
-    (vault.data.format
+    (vault.data
       [edn :as edn-data]
-      [pgp :as pgp-data])
-    [vault.data.security :as sec]))
+      [pgp :as pgp-data]
+      [signature :as sig])))
 
 
 (defn read-blob
@@ -16,7 +16,7 @@
     ; Try to read the content as EDN data.
     (if-let [data-blob (edn-data/read-blob blob)]
       ; Try verifying the signatures (if any) in the blob.
-      (sec/verify store data-blob)
+      (sig/verify store data-blob)
       ; Otherwise, check if it is a PGP object, if not call it a binary blob.
       (or (pgp-data/read-blob blob)
           (assoc blob :data/type :bytes)))))

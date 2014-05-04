@@ -1,7 +1,6 @@
-(ns vault.data.state
+(ns vault.entity.core
   (:require
-    [vault.data.format.edn :as edn-data]
-    [vault.data.security :as sec])
+    [vault.data.edn :as edn-data])
   (:import
     java.util.Date))
 

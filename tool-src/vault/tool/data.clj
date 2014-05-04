@@ -4,7 +4,7 @@
     [clojure.java.io :as io]
     [puget.printer :as puget]
     [vault.blob.core :as blob]
-    [vault.data.format.edn :as edn-blob]
+    [vault.format.edn :as edn-blob]
     [vault.tool.blob :refer [enumerate-prefix]]))
 
 
