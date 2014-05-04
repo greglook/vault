@@ -1,4 +1,4 @@
-(ns vault.format.signature-test
+(ns vault.data.signature-test
   (:require
     [clojure.java.io :as io]
     [clojure.test :refer :all]
@@ -8,8 +8,9 @@
       [printer :as puget])
     [vault.blob.core :as blob]
     [vault.blob.store.memory :refer [memory-store]]
-    [vault.format.edn :as edn-data]
-    [vault.format.signature :as sig])
+    (vault.data
+      [edn :as edn-data]
+      [signature :as sig]))
   (:import
     ; FIXME: why is this necessary??
     ; clojure.lang.Compiler$HostExpr.tagToClass(Compiler.java:1060)

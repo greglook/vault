@@ -1,9 +1,9 @@
-(ns vault.format.edn-test
+(ns vault.data.edn-test
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
     [vault.blob.core :as blob]
-    [vault.format.edn :as edn-data]))
+    [vault.data.edn :as edn-data]))
 
 
 (defn data-fixture

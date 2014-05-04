@@ -1,4 +1,4 @@
-(ns vault.format.edn
+(ns vault.data.edn
   "Functions to handle structured data formatted as EDN."
   (:require
     [clojure.string :as str]

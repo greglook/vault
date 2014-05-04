@@ -1,11 +1,11 @@
-(ns vault.format.pgp-test
+(ns vault.data.pgp-test
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
-    [vault.format.pgp :as pgp-data]))
+    [vault.data.pgp :as pgp-data]))
 
 
 (def test-keyring

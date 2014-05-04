@@ -1,6 +1,6 @@
 (ns vault.data.core
   (:require
-    (vault.format
+    (vault.data
       [edn :as edn-data]
       [pgp :as pgp-data]
       [signature :as sig])))
