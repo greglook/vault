@@ -1,6 +1,6 @@
 (ns vault.entity.core
   (:require
-    [vault.data.edn :as edn-data])
+    [vault.data.core :as data])
   (:import
     java.util.Date))
 
@@ -11,8 +11,8 @@
   ; TODO: verify public key exists
   ; TODO: allow control of the id and time values.
   ; TODO: allow optional initial data.
-  (assoc
-    (edn-data/typed-map :vault.data/entity)
+  (data/typed-map
+    :vault.entity/root
     :id "random-string"
     :time (Date.)
     :owner owner))
@@ -22,8 +22,8 @@
   "Constructs a new update value."
   [data]
   ; TODO: verify that each of the data keys is an entity root.
-  (assoc
-    (edn-data/typed-map :vault.data/update)
+  (data/typed-map
+    :vault.entity/update
     :time (Date.)
     :data data))
 
@@ -31,8 +31,8 @@
 (defn delete
   "Constructs a new delete marker value."
   [target]
-  ; TODO: verify that target exists and is an entity, update, or delete blob.
-  (assoc
-    (edn-data/typed-map :vault.data/delete)
+  ; TODO: verify that target exists and is a root, update, or delete blob.
+  (data/typed-map
+    :vault.entity/delete
     :time (Date.)
     :target target))

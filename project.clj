@@ -6,6 +6,7 @@
 
   :dependencies
   [[byte-streams "0.1.6"]
+   [potemkin "0.3.4"]
    [mvxcvi/clj-pgp "0.5.0"]
    [mvxcvi/directive "0.1.0"]
    [mvxcvi/puget "0.4.0-SNAPSHOT"]

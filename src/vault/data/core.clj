@@ -1,9 +1,16 @@
 (ns vault.data.core
   (:require
+    [potemkin :refer [import-vars]]
     (vault.data
       [edn :as edn-data]
       [pgp :as pgp-data]
       [signature :as sig])))
+
+
+(import-vars
+  (vault.data.edn
+    data-type
+    typed-map))
 
 
 (defn read-blob

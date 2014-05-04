@@ -54,8 +54,8 @@
 
 (defn typed-map
   "Constructs a new value with the given data type."
-  [t]
-  (hash-map type-key t))
+  [t & entries]
+  (apply hash-map type-key t entries))
 
 
 
