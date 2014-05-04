@@ -17,5 +17,4 @@
   {:dev {:source-paths ["dev"]}}
 
   :hiera
-  {:cluster-depth 2
-   :ignore-ns #{byte-streams mvxcvi.directive vault.tool}})
+  {:cluster-depth 2})
