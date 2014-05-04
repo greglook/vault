@@ -35,12 +35,17 @@
 
 ;; SIGNATURE CREATION
 
+(def ^:dynamic *hash-algorithm*
+  "Cryptographic hash algorithm to use for signature generation."
+  :sha1)
+
+
 (defn- sign-bytes
   "Signs a byte array with a single public key."
   [store privkeys data pubkey-id]
   (let [pubkey (load-pubkey store pubkey-id)
         privkey (privkeys (pgp/key-id pubkey))
-        pgp-sig (pgp/sign data privkey)]
+        pgp-sig (pgp/sign data *hash-algorithm* privkey)]
     (assoc
       (edn-data/typed-map :vault/signature)
       :key pubkey-id

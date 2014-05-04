@@ -7,6 +7,7 @@
     (org.bouncycastle.openpgp
       PGPPrivateKey
       PGPPublicKey
+      PGPPublicKeyRing
       PGPSignature)))
 
 
@@ -15,6 +16,20 @@
 (def ^:const blob-header
   "Magic header which must appear as the first characters in a pgp blob."
   "-----BEGIN PGP ")
+
+
+(defn- pgp-value
+  "Converts some complex PGP types into a subset of simpler values."
+  [value]
+  (condp = (class value)
+    PGPPublicKey
+    value
+
+    PGPPublicKeyRing
+    (let [pubkeys (pgp/list-public-keys value)]
+      (if (= 1 (count pubkeys))
+        (first pubkeys)
+        (vec pubkeys)))))
 
 
 (def ^:private pgp-types
@@ -39,7 +54,7 @@
   "Constructs a blob from a PGP object."
   [value]
   (assoc (blob/load (pgp/encode-ascii value))
-    :data/values [value]
+    :data/values [(pgp-value value)]
     :data/type (pgp-type value)))
 
 
@@ -60,7 +75,7 @@
   Returns an updated blob record, or nil if the content is not PGP data."
   [blob]
   (when (check-header (:content blob))
-    (let [values (pgp/decode (:content blob))]
+    (let [values (->> blob :content pgp/decode (map pgp-value) vec)]
       (assoc blob
         :data/values values
         :data/type (pgp-type (first values))))))
