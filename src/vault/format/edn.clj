@@ -91,8 +91,8 @@
 (defn- print-value
   "Prints the canonical EDN representation for the given Clojure value."
   [value]
-  (let [opts {:width blob-width}]
-    (puget/pprint value opts)))
+  (binding [puget/*strict-mode* true]
+    (puget/pprint value {:width blob-width})))
 
 
 (defn- edn-str
@@ -100,8 +100,7 @@
   Clojure value."
   ^String
   [value]
-  (binding [puget/*colored-output* false
-            puget/*strict-mode* true]
+  (binding [puget/*colored-output* false]
     (str/trim (with-out-str (print-value value)))))
 
 
