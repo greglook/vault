@@ -1,24 +1,23 @@
-Blob Indexing
+Data Indexing
 =============
 
-A common use case for a storage system is to _search_ it for data matching
-certain attributes. While it is possible to exhaustively scan the entire data
-store and calculate the relevant properties each time a query is performed, a
-much better aproach is to _index_ the data.
+A common use case for a storage system is to search it for data matching some
+pattern. While it is possible to exhaustively scan the entire data store and
+calculate the relevant properties each time a query is performed, a much better
+aproach is to _index_ the data.
 
 In general, indexing represents a _view_ of the stored data which caches
 desired search criteria in a rapidly-accessible form. Indexes are **not**
-authoritative stores of the blob data, and should not store blob contents.
-Instead, the index might contain a listing of all objects which represent
-"picture" files and their associated dimensions.
+authoritative stores of the blob data, and should not store entire blob
+contents.
 
 Since indexes are not intended to be durable, it is fine to delete and rebuild
 them at any time. Indexes can be treated as a type of blobstore which does not
-support the `open` operation.
+support the `get` operation.
 
 ## Interface
 
-Indexers can be thought of as _views_ of the blob data. It should be possible to
+Indexes can be thought of as _views_ of the blob data. It should be possible to
 declaratively specify the transformations to produce each view, a predicate
 which determines whether to apply the given transformation to a blob, and a
 number of _indexes_ on that view to optimize.

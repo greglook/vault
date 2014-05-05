@@ -1,6 +1,17 @@
-{:predicate #(is-type? % :vault.data/entity)
- :fields [entity attr value ^Date tx-time tx]
- :indexes {:eavt [entity attr value tx-time]
-           :aevt [attr entity value tx-time]
-           :avet [attr value entity tx-time]
-           :vaet [value attr entity tx-time]}}
+{:table :datoms
+ :fields {:op :keyword
+          :entity :ref
+          :attribute :keyword
+          :value :string
+          :tx :ref
+          :time :inst}
+ :indexes {:eavt [entity attribute value tx]
+           :aevt [attribute entity value tx]
+           :avet [attribute value entity tx]  ; indexed attrs
+           :vaet [value attribute entity tx]} ; reverse
+ :transform
+ (fn [blob]
+   (case (:data/type blob)
+     (:vault.entity/root :vault.entity/update)
+     (vault.data.core/blob->datoms blob)
+     nil))}
