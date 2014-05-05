@@ -40,10 +40,9 @@
         privkeys #(some-> test-keyring
                           (pgp/get-secret-key %)
                           (pgp/unlock-key "test password"))]
-    (let [blob (->> pubkey-id
-                    (sig/blob-signer blob-store privkeys)
-                    (edn-data/edn-blob value)
-                    (sig/verify blob-store))]
+    (let [blob (-> value
+                   (sig/signed-blob blob-store privkeys pubkey-id)
+                   (sig/verify blob-store))]
       #_
       (binding [puget/*colored-output* true]
         (println "Signed blob:")

@@ -52,13 +52,15 @@
       :signature pgp-sig)))
 
 
-(defn blob-signer
-  "Creates a function which signs a byte array with the PGP private key
-  matching the public key identified by a hash-id. Returns a sequence
-  containing the constructed signature map."
-  [store privkeys & pubkey-ids]
-  (fn [data]
-    (map (partial sign-bytes store privkeys data) pubkey-ids)))
+(defn signed-blob
+  "Constructs a data blob with the given value, signed with the given public
+  keys."
+  [value store privkeys & pubkey-ids]
+  (edn-data/edn-blob
+    value
+    (fn [value-bytes]
+      (map (partial sign-bytes store privkeys value-bytes)
+           pubkey-ids))))
 
 
 
@@ -90,7 +92,7 @@
   "Verifies that the inline signatures in a blob are correct. Returns an
   updated blob record with the :data/signatures key giving a set of the public
   key hash ids of the blob signatures."
-  [store blob]
+  [blob store]
   (if-let [signatures (inline-signatures blob)]
     (let [data (edn-data/primary-bytes blob)]
       (->>
