@@ -1,23 +1,22 @@
 Vault
 =====
 
-Vault is a time-travelling, content-addressable, hypermedia datastore which
-provides strong assertions about the integrity and provenance of stored data. If
-that shower of buzzwords didn't spark anything, don't worry. Read on for a
-general introduction, or see the docs for more detailed explanations of the
-various concepts.
+Vault is a content-addressable, version-controlled, hypermedia datastore which
+provides strong assertions about the integrity and provenance of stored data.
+Read on for a general introduction, or see the docs for more detailed
+explanations of the various concepts.
 
 This is heavily inspired by both [Camlistore](http://camlistore.org/) and
 [Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
 compatible with either, though many of the ideas are similar. Why use a new data
 storage system? See [some comparisons to other systems](doc/vs.md).
 
-## Concepts
+## System Layers
 
 This is a quick tour of the concepts in Vault. For more details, follow the
 links or browse around the [doc](doc/) folder.
 
-### Blob Layer
+### Blob Storage
 
 At the lowest level, Vault is built on [content-addressable
 storage](doc/blobs.md). Data is stored in _blobs_, which are opaque byte
@@ -32,7 +31,7 @@ A _blob store_ is a system which can store and retrieve blob data. Blob stores
 must support a very simple interface; mainly storing and retrieving blobs, and
 enumerating the stored blobs. A simple example is a file-based store.
 
-### Data Blobs
+### Data Format
 
 To represent [structured data](doc/data-structures.md), Vault uses
 [EDN](https://github.com/edn-format/edn). Data blobs are recognized by a magic
@@ -44,7 +43,18 @@ so it is simple to build data structures which automatically deduplicate shared
 data. These are similar to Clojure's persistent collections; see the schema for
 [hierarchical byte sequences](doc/schema/bytes.edn) for an example.
 
-### Mutable State
+Certain PGP objects can also be stored in Vault as a recognized data type. The
+primary case is storing public key blobs. Keys should be encoded as armored
+ascii text blobs.
+
+### Indexing
+
+A second fundamental component of the system is a set of
+[indexes](doc/indexing.md) of the data stored in Vault. Indexes can be thought
+of as a sorted list of tuples. Different indexes will store different subsets of
+the blob data.
+
+### Entity
 
 Mutable data is represented in Vault by [entities](doc/entities.md).
 - A _root blob_ serves as the static identifier of an entity.
@@ -55,12 +65,7 @@ Identity and ownership in Vault are handled by [cryptographic
 signatures](doc/signatures.md). These provide trust to data that is present in
 the blob layer.
 
-### Indexing
-
-The data layer implements efficient querying by [indexing](doc/indexing.md)
-entities and their attributes.
-
-### Application Layer
+### Application
 
 At the top level, applications are built on top of the data layer. An
 application defines semantics for a set of data types. Some example usages:

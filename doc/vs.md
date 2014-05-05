@@ -67,3 +67,6 @@ filesystem snapshot front anyway.
 ## Camlistore
 
 TODO: discuss
+* JSON is not as flexible as EDN
+* Go vs Clojure
+* Not as uniform treatment of data vs datoms
