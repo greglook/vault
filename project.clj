@@ -23,4 +23,5 @@
     [[mvxcvi/directive "0.1.0"]]}}
 
   :hiera
-  {:cluster-depth 2})
+  {:cluster-depth 2
+   :ignore-ns #{potemkin}})

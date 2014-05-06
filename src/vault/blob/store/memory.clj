@@ -1,7 +1,7 @@
 (ns vault.blob.store.memory
   (:require
     [clojure.java.io :as io]
-    [vault.blob.core :as blob :refer [BlobStore]]))
+    [vault.blob.store :as store :refer [BlobStore]]))
 
 
 (defn- blob-stats
@@ -19,7 +19,7 @@
   BlobStore
 
   (enumerate [this opts]
-    (blob/select-ids opts (keys @memory)))
+    (store/select-ids opts (keys @memory)))
 
 
   (stat [this id]

@@ -3,7 +3,9 @@
     [byte-streams]
     [clojure.java.io :as io]
     [clojure.string :as string]
-    [vault.blob.core :as blob :refer [BlobStore]])
+    (vault.blob
+      [digest :as digest]
+      [store :as store :refer [BlobStore]]))
   (:import
     java.io.File
     java.util.Date))
@@ -14,7 +16,7 @@
 (defn- id->file
   ^File
   [root id]
-  (let [id (blob/hash-id id)
+  (let [id (digest/hash-id id)
         {:keys [algorithm digest]} id]
     (io/file root
       (name algorithm)
@@ -33,7 +35,7 @@
     (let [[algorithm & digest] (-> file
                                    (subs (inc (count root)))
                                    (string/split #"/"))]
-      (blob/hash-id algorithm (string/join digest)))))
+      (digest/hash-id algorithm (string/join digest)))))
 
 
 (defmacro ^:private for-files
@@ -87,12 +89,12 @@
   (enumerate [this opts]
     (->> (enumerate-files (:root this))
          (map (partial file->id (:root this)))
-         (blob/select-ids opts)))
+         (store/select-ids opts)))
 
 
   (stat [this id]
     (when-blob-file this id
-      (merge (blob/record id)
+      (merge (store/record id)
              (blob-stats file))))
 
 
@@ -100,7 +102,7 @@
     (when-blob-file this id
       (-> file
           io/input-stream
-          blob/load
+          store/load
           (merge (blob-stats file)))))
 
 

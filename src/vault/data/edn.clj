@@ -17,8 +17,8 @@
       OutputStreamWriter
       PushbackReader
       Reader)
-    (java.nio.charset Charset)
-    vault.blob.core.HashID))
+    java.nio.charset.Charset
+    vault.blob.digest.HashID))
 
 
 ;; CONSTANTS & CONFIGURATION
