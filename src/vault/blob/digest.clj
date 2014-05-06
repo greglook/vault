@@ -90,7 +90,7 @@
           (str string)))))
 
 
-(defn- hex-str
+(defn hex-str
   "Converts a byte array into a lowercase hex string."
   [^bytes value]
   (let [width (* 2 (count value))

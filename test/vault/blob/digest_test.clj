@@ -53,6 +53,11 @@
     (is (= (digest/hash-id :sha256 (:digest blob-id)) blob-id))))
 
 
+(deftest zero-padding
+  (let [hex (digest/hex-str (byte-array 4))]
+    (is (= "00000000" hex))))
+
+
 (deftest content-hashing
   (testing "digest/hash"
     (is (= blob-id (digest/hash :sha256 blob-content)))

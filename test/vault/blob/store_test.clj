@@ -13,6 +13,15 @@
 
 ;; STORAGE FUNCTION TESTS
 
+(deftest blob-loading
+  (is (nil? (blob/load (byte-array 0))))
+  (is (nil? (blob/load "")))
+  (let [blob (blob/load "foo")]
+    (is (not (nil? blob)))
+    (is (not (nil? (:id blob))))
+    (is (not (empty? (:content blob))))))
+
+
 (deftest list-wrapper
   (let [store (reify BlobStore (enumerate [this opts] (vector :list opts)))]
     (is (= [:list nil] (blob/list store)))
