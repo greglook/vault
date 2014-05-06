@@ -1,6 +1,6 @@
 (ns vault.blob.store.codec
   (:require
-    [vault.blob.core :as blob :refer [BlobStore]]))
+    [vault.blob.store :as store :refer [BlobStore]]))
 
 
 (defrecord CodecBlobStore
@@ -9,15 +9,15 @@
   BlobStore
 
   (enumerate [this opts]
-    (blob/enumerate store opts))
+    (store/enumerate store opts))
 
 
   (stat [this id]
-    (blob/stat store id))
+    (store/stat store id))
 
 
   (get* [this id]
-    (when-let [blob (blob/get* store id)]
+    (when-let [blob (store/get* store id)]
       (reduce #(or (%2 %1) %1) blob decoders)))
 
 
@@ -26,7 +26,7 @@
       (->>
         encoders
         (reduce #(or (%2 %1) %1) blob)
-        (blob/put! store)))))
+        (store/put! store)))))
 
 
 (defn codec-store
