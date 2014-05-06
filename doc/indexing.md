@@ -25,14 +25,14 @@ This is the most basic index; it stores data about the blobs which have been
 seen by the indexer.
 
 ```clojure
-{:blob :ref         ; blob hash-id
- :size :long        ; blob byte length
- :type :keyword     ; data type
- :stored-at :inst}  ; time added to index
+{:blob      HashID      ; blob hash-id
+ :size      Long        ; blob byte length
+ :type      Keyword     ; data type
+ :stored-at DateTime}   ; time added to index
 
-[blob]
-[stored-at]
-[type stored-at]
+:blob/id   [blob]
+:blob/time [stored-at]
+:blob/type [type stored-at]
 ```
 
 This enables fast lookups for queries like, "Which blobs have been indexed
@@ -45,11 +45,29 @@ This index stores the references between blobs, giving quick access forwards
 and backwards.
 
 ```clojure
-{:source :ref       ; source hash-id
- :target :ref       ; target hash-id
- :type :keyword}    ; source blob type
+{:source HashID     ; source hash-id
+ :target HashID     ; target hash-id
+ :type   Keyword}   ; source blob type
 
-[target type source]
+:ref/from [source]
+:ref/to   [target type source]
+```
+
+## Entity Indexes
+
+The log index is simply a time-series of the entity root, update, and deletion
+blobs.
+
+```clojure
+{:owner  HashID     ; public key hash-id
+ :entity HashID     ; entity root hash-id
+ :tx     HashID     ; root/update/delete blob hash-id
+ :type   Keyword    ; blob type
+ :time   DateTime}  ; time from blob
+
+:entity/for     [owner entity]
+:entity/history [entity time]
+:entity/log     [time]
 ```
 
 ## Datom Indexes
@@ -58,12 +76,12 @@ These indexes are adaptations from Datomic, and store _datoms_, which are atomic
 data assertions. All datom indexes provide records like the following:
 
 ```clojure
-{:op :keyword           ; datom operation (:attr/set, :attr/add, etc)
- :entity :ref           ; entity root hash-id
- :attribute :keyword    ; attribute keyword
- :value :string         ; serialized EDN value
- :tx :ref               ; root or update blob hash-id
- :time :inst}           ; timestamp from root or update blob
+{:op        Keyword     ; datom operation (:attr/set, :attr/add, etc)
+ :entity    HashID      ; entity root hash-id
+ :attribute Keyword     ; attribute keyword
+ :value     String      ; serialized EDN value
+ :tx        HashID      ; root or update blob hash-id
+ :time      DateTime}   ; timestamp from root or update blob
 ```
 
 ### EAVT
@@ -72,7 +90,7 @@ The EAVT index provides efficient access to everything about a given entity.
 Conceptually this is very similar to row access style in a SQL database.
 
 ```clojure
-[entity attribute value]
+:datom/eavt [entity attribute value time]
 ```
 
 ### AEVT
@@ -81,7 +99,7 @@ The AEVT index provides efficient access to all values for a given attribute,
 comparable to traditional column acess style.
 
 ```clojure
-[attribute entity value]
+:datom/aevt [attribute entity value time]
 ```
 
 ### AVET
@@ -91,7 +109,7 @@ and value. This index only contains datoms for attributes which are marked
 `:db/unique` or `:db/index` in some schema definition.
 
 ```clojure
-[attribute value entity]
+:datom/avet [attribute value entity time]
 ```
 
 The major open question is where 'indexed attributes' are defined since there's
@@ -104,7 +122,7 @@ attribute's value. This enables efficient navigation of relationships in
 reverse.
 
 ```clojure
-[value attribute entity]
+:datom/vaet [value attribute entity time]
 ```
 
 This is similar to the edge index, but specific to entities and attributes.
