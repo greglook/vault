@@ -15,21 +15,11 @@ Since indexes are not intended to be durable, it is fine to delete and rebuild
 them at any time. Indexes can be treated as a type of blobstore which does not
 support the `get` operation.
 
-## Implementations
+## Graph Indexes
 
-Indexes can be implemented on many kinds of databases. Early support will
-probably consist of an in-memory implementation and later a SQLite3-backed
-index.
+The first two indexes are on the _nodes_ and _edges_ formed by the blob graph.
 
-## System Indexes
-
-Vault implements a several types of indexes to speed up data queries. Some of
-them are straight from Datomic, to handle sorted datom access.
-
-Unsolved use-cases:
-* What entities are owned by a key?
-
-### Blob stats
+### Node Index
 
 This is the most basic index; it stores data about the blobs which have been
 seen by the indexer.
@@ -48,6 +38,33 @@ seen by the indexer.
 This enables fast lookups for queries like, "Which blobs have been indexed
 already, and when?" and, "Which blobs have a given type?" which is needed to
 find entity root and update blobs.
+
+### Edge Index
+
+This index stores the references between blobs, giving quick access forwards
+and backwards.
+
+```clojure
+{:source :ref       ; source hash-id
+ :target :ref       ; target hash-id
+ :type :keyword}    ; source blob type
+
+[target type source]
+```
+
+## Datom Indexes
+
+These indexes are adaptations from Datomic, and store _datoms_, which are atomic
+data assertions. All datom indexes provide records like the following:
+
+```clojure
+{:op :keyword           ; datom operation (:attr/set, :attr/add, etc)
+ :entity :ref           ; entity root hash-id
+ :attribute :keyword    ; attribute keyword
+ :value :string         ; serialized EDN value
+ :tx :ref               ; root or update blob hash-id
+ :time :inst}           ; timestamp from root or update blob
+```
 
 ### EAVT
 
@@ -71,14 +88,14 @@ comparable to traditional column acess style.
 
 The AVET index provides efficient access to particular combinations of attribute
 and value. This index only contains datoms for attributes which are marked
-`:db/unique` or `:db/index` in some schema location. (Where?)
+`:db/unique` or `:db/index` in some schema definition.
 
 ```clojure
 [attribute value entity]
 ```
 
-The major open question here is where 'indexed attributes' are defined since
-there's no storage-wide schema.
+The major open question is where 'indexed attributes' are defined since there's
+no storage-wide schema.
 
 ### VAET
 
@@ -90,12 +107,18 @@ reverse.
 [value attribute entity]
 ```
 
-Ideally, this should support non-entity references too. E.g., if entity **A**
-has an attribute _x_ which refers to a tree of data blobs, one of which refers
-ultimately to entity **B**, then there should be a way to find out "what points
-to **B**" even if the source is not an entity.
+This is similar to the edge index, but specific to entities and attributes.
+This index is therefore time-sensitive, whereas the edge index stores
+references between all blobs.
 
-### Full-text
+## Full-text
 
 The full-text index provides a way to efficiently search for matches in text
-data. This may be in entities specifically or in blobs.
+data. How blobs are selected to be stored in the full-text index is still to be
+determined.
+
+## Implementations
+
+Indexes can be implemented on many kinds of databases. Early support will
+probably consist of an in-memory implementation and later a SQLite3-backed
+index.
