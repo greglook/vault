@@ -81,10 +81,8 @@
 (defrecord FileBlobStore
   [^File root])
 
-; Don't know why it has to be done this way, but if it's defined inline then
-; cloverage breaks.
-(extend-protocol BlobStore
-  FileBlobStore
+(extend-type FileBlobStore
+  BlobStore
 
   (enumerate [this opts]
     (->> (enumerate-files (:root this))
