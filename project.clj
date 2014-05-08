@@ -7,7 +7,7 @@
   :aliases
   {"tool-jar"
    ["with-profile" "tool" "uberjar"]
-   "tool-repl"
+   "trepl"
    ["with-profile" "repl" ["trampoline" "repl"]]}
 
   :dependencies
@@ -34,4 +34,6 @@
     :aot :all}
 
    :repl
-   {:source-paths ["repl"]}})
+   {:dependencies
+    [[org.clojure/tools.namespace "0.2.4"]]
+    :source-paths ["repl"]}})
