@@ -39,7 +39,7 @@
 
 (def ^:const ^:private type-key
   "Keyword which defines a map's data-type."
-  :vault.data/type)
+  :vault/type)
 
 
 (defn data-type
