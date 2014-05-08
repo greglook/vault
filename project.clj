@@ -11,7 +11,7 @@
    ["with-profile" "repl" ["trampoline" "repl"]]}
 
   :dependencies
-  [[byte-streams "0.1.6"]
+  [[byte-streams "0.1.10"]
    [potemkin "0.3.4"]
    [mvxcvi/clj-pgp "0.5.0"]
    [mvxcvi/puget "0.4.0-SNAPSHOT"]
