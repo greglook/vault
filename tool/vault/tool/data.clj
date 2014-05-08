@@ -35,7 +35,7 @@
 
 
 (defn- print-edn-blob
-  "Prints a sequence of EDN data values."
+  "Prints an EDN blob's values."
   [blob]
   (binding [puget/*colored-output* true]
     (edn-data/print-blob blob)))

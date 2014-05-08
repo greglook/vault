@@ -4,6 +4,12 @@
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
 
+  :aliases
+  {"tool-jar"
+   ["with-profile" "tool" "uberjar"]
+   "tool-repl"
+   ["with-profile" "repl" ["trampoline" "repl"]]}
+
   :dependencies
   [[byte-streams "0.1.6"]
    [potemkin "0.3.4"]
@@ -13,15 +19,19 @@
    [org.clojure/data.codec "0.1.0"]
    [org.clojure/tools.cli "0.2.4"]]
 
-  :profiles
-  {:dev
-   {:source-paths ["dev"]}
-
-   :tool
-   {:source-paths ["tool"]
-    :dependencies
-    [[mvxcvi/directive "0.1.0"]]}}
-
   :hiera
   {:cluster-depth 2
-   :ignore-ns #{potemkin}})
+   :ignore-ns #{potemkin}}
+
+  :profiles
+  {:tool
+   {:dependencies
+    [[mvxcvi/directive "0.1.0"]]
+    :source-paths ["tool"]
+    :jar-name "vault-tool-%s.jar"
+    :uberjar-name "vault-tool.jar"
+    :main vault.tool.main
+    :aot :all}
+
+   :repl
+   {:source-paths ["repl"]}})
