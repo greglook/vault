@@ -1,11 +1,7 @@
 (ns vault.tool.config
   (:require
-    [clojure.edn :as edn]
     [clojure.java.io :as io]
-    [puget.printer :refer [cprint]]
-    (vault.blob.store
-      [file :refer [file-store]]
-      [memory :refer [memory-store]])))
+    [puget.printer :refer [cprint]]))
 
 
 ;; CONFIGURATION FILE LOADING
@@ -15,19 +11,13 @@
   (str (get (System/getenv) "HOME") "/.config/vault"))
 
 
-(def ^:private config-readers
-  "Map of EDN readers for supported types in config files."
-  {'vault/file-store file-store
-   'vault/memory-store (fn [_] (memory-store))})
-
-
 (defn- find-configs
   "Locates a sequence of configuration files with a particular name pattern.
   For example, if `dir` is '/foo/bar/' and `k` is :baz, then file
-  '/foo/bar/baz.edn' comes first (if it exists), followed by the files in
+  '/foo/bar/baz.clj' comes first (if it exists), followed by the files in
   '/foo/bar/baz/' (if it exists) in lexical order."
   [dir k]
-  (let [config-file (io/file dir (str (name k) ".edn"))
+  (let [config-file (io/file dir (str (name k) ".clj"))
         config-dir  (io/file dir (str (name k)))]
     (filter
       identity
@@ -36,12 +26,17 @@
 
 
 (defn- read-config
-  "Reads an EDN configuration file."
+  "Reads a Clojure configuration file."
   [path]
   (try
-    (edn/read-string
-      {:readers config-readers}
-      (slurp path))
+    (binding [*ns* *ns*]
+      (in-ns 'vault.tool.config.blob-stores)
+      (refer-clojure)
+      (require
+        '(vault.blob.store
+           [file :refer [file-store]]
+           [memory :refer [memory-store]]))
+      (load-string (slurp path)))
     (catch Exception e
       (println "Error loading config file" (str path))
       (.printStackTrace e)
@@ -56,9 +51,8 @@
   [dir opts k]
   (let [config (->> (find-configs dir k)
                     (map read-config)
-                    (apply merge))
-        config (merge config (opts k))]
-    (assoc opts k config)))
+                    (apply merge))]
+    (assoc opts k (merge config (opts k)))))
 
 
 (defn initialize
@@ -76,7 +70,7 @@
 ;{:default :local, :local #vault/file-store (:sha256 "/home/$USER/var/vault")}
 
 
-(defn- select-blob-store
+(defn select-blob-store
   "Recursively selects a blob store in a config map."
   [stores selection]
   (->> (or selection :default)
