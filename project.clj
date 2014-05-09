@@ -6,16 +6,14 @@
 
   :aliases
   {"tool-jar"
-   ["with-profile" "tool" "uberjar"]
-   "trepl"
-   ["with-profile" "repl" ["trampoline" "repl"]]}
+   ["with-profile" "tool" "uberjar"]}
 
   :dependencies
   [[byte-streams "0.1.10"]
    [potemkin "0.3.4"]
    [mvxcvi/clj-pgp "0.5.0"]
    [mvxcvi/puget "0.4.0-SNAPSHOT"]
-   [org.clojure/clojure "1.5.1"]
+   [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
    [org.clojure/tools.cli "0.2.4"]]
 
@@ -35,5 +33,6 @@
 
    :repl
    {:dependencies
-    [[org.clojure/tools.namespace "0.2.4"]]
-    :source-paths ["repl"]}})
+    [[mvxcvi/directive "0.1.0"]
+     [org.clojure/tools.namespace "0.2.4"]]
+    :source-paths ["repl" "tool"]}})
