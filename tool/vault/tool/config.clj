@@ -1,6 +1,7 @@
 (ns vault.tool.config
   (:require
     [clojure.java.io :as io]
+    [clojure.stacktrace :refer [print-cause-trace]]
     [puget.printer :refer [cprint]]))
 
 
@@ -27,20 +28,19 @@
 
 (defn- read-config
   "Reads a Clojure configuration file."
-  [path]
-  (try
-    (binding [*ns* *ns*]
-      (in-ns 'vault.tool.config.blob-stores)
-      (refer-clojure)
-      (require
-        '(vault.blob.store
-           [file :refer [file-store]]
-           [memory :refer [memory-store]]))
-      (load-string (slurp path)))
-    (catch Exception e
-      (println "Error loading config file" (str path))
-      (.printStackTrace e)
-      nil)))
+  [requirements path]
+  (let [temp-ns (gensym)]
+    (try
+      (binding [*ns* (create-ns temp-ns)]
+        (clojure.core/refer-clojure)
+        (when (seq requirements)
+          (apply require requirements))
+        (load-string (slurp path)))
+      (catch Exception e
+        (println "Error loading config file" (str path))
+        (print-cause-trace e)
+        nil)
+      (finally (remove-ns temp-ns)))))
 
 
 (defn- load-configs
@@ -48,9 +48,9 @@
   merged value is then assigned to the key `k` in the `opts` map. If the map
   already contains a value for that key, that value is merged _into the merged
   config value_ so that command-line options take precedence."
-  [dir opts k]
-  (let [config (->> (find-configs dir k)
-                    (map read-config)
+  [opts k & requirements]
+  (let [config (->> (find-configs (:config-dir opts) k)
+                    (map (partial read-config requirements))
                     (apply merge))]
     (assoc opts k (merge config (opts k)))))
 
@@ -58,9 +58,14 @@
 (defn initialize
   "Initializes the configuration for the vault tool."
   [opts]
-  (let [config-dir (:config opts)
-        types [:blob-stores :keys :indexers]]
-    (reduce (partial load-configs config-dir) opts types)))
+  (->
+    opts
+    (load-configs :keys)
+    (load-configs :blob-stores
+      '(vault.blob.store
+         [file :refer [file-store]]
+         [memory :refer [memory-store]]))
+    (load-configs :indexers)))
 
 
 

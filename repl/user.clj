@@ -15,7 +15,7 @@
 
 (def config
   (->
-    {:config tool-conf/default-path}
+    {:config-dir tool-conf/default-path}
     tool-conf/initialize))
 
 
