@@ -4,6 +4,7 @@
     [vault.blob.core :as blob]
     [mvxcvi.crypto.pgp :as pgp])
   (:import
+    mvxcvi.crypto.pgp.keyring.KeyRing
     (org.bouncycastle.openpgp
       PGPPrivateKey
       PGPPublicKey

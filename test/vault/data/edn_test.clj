@@ -20,7 +20,7 @@
   (is (= (class :bar) (edn-data/data-type :bar)))
   (is (= (class []) (edn-data/data-type [:foo :bar])))
   (is (= (class {}) (edn-data/data-type {:x 'y})))
-  (is (= :test (edn-data/data-type {:vault.data/type :test}))))
+  (is (= :test (edn-data/data-type {:vault/type :test}))))
 
 
 
@@ -58,9 +58,9 @@
 
 
 (deftest read-data-blob
-  (let [blob (data-fixture "{:foo bar, :vault.data/type :x/y}")
+  (let [blob (data-fixture "{:foo bar, :vault/type :x/y}")
         data (edn-data/read-blob blob)]
-    (is (= [{:foo 'bar, :vault.data/type :x/y}]
+    (is (= [{:foo 'bar, :vault/type :x/y}]
            (:data/values data)))
     (is (= :x/y (:data/type data)))))
 
