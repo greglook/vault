@@ -11,15 +11,6 @@
       [config :as tool-conf])))
 
 
-;; UTILITY FUNCTIONS
-
-(defn cp
-  "Prints the last REPL value with Puget."
-  []
-  (cprint *1))
-
-
-
 ;; VAULT SYSTEM
 
 (def config
