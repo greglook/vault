@@ -36,3 +36,26 @@
     :vault.entity/delete
     :time (Date.)
     :target target))
+
+
+
+;; DATOM FUNCTIONS
+
+(defrecord Datom [op entity attribute value tx time])
+
+
+(defn blob->datoms
+  "Converts a blob into a sequence of datoms."
+  [blob]
+  (let [map-datoms
+        (fn [time entity updates]
+          (map
+            (fn [[op attr value]]
+              (Datom. op entity attr value (:id blob) time))
+            updates))
+        data (-> blob :data/values first :data)]
+    (case (:data/type blob)
+      :vault.entity/root
+      (map-datoms (:time data) (:id blob) data)
+      :vault.entity/update
+      (mapcat (partial apply map-datoms (:time data)) data))))
