@@ -108,13 +108,14 @@
           "gives false when removing a nonexistent blob"))))
 
 
-(deftest memory-blob-store
+(deftest test-memory-blob-store
   (let [store (memory-store)]
     (test-blob-store (memory-store))
     (vault.blob.store.memory/destroy!! store)))
 
 
-(deftest file-blob-store
+(defn test-file-blob-store
+  []
   (let [tmpdir (io/file "target" "test" "tmp"
                         (str "file-blob-store."
                              (System/currentTimeMillis)))

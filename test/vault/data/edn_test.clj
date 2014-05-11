@@ -40,7 +40,7 @@
 
 
 (deftest blob-printing
-  (is (= "#vault/data\n{:alpha \"foo\", :omega \"bar\"}\n"
+  (is (= "#vault/data\n{:alpha \"foo\" :omega \"bar\"}\n"
          (with-out-str
            (edn-data/print-blob {:data/values [{:omega "bar" :alpha "foo"}]}))))
   (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz\n"
