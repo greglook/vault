@@ -13,7 +13,7 @@
 
 ;; UTILITY FUNCTIONS
 
-(edn-data/register-tag! 'pgp/signature
+(edn-data/register-tag! pgp/signature
   PGPSignature pgp/encode
   pgp/decode-signature)
 

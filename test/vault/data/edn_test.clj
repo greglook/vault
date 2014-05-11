@@ -6,6 +6,12 @@
     [vault.data.edn :as edn-data]))
 
 
+; FIXME: This is necessary for some reason to placate Cloverage...
+(edn-data/register-tag! vault/ref
+  vault.blob.digest.HashID str
+  blob/parse-id)
+
+
 (defn data-fixture
   "Builds a string representing a data blob from the given sequence of values."
   [& values]

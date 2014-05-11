@@ -73,14 +73,27 @@
 (defmacro register-tag!
   "Registers a function as the data reader for an EDN tag."
   ([tag reader]
-   `(swap! data-readers assoc ~tag ~reader))
+   `(do
+      #_
+      (puget/with-color
+        (println
+          (str "Reading " (puget/color-text :tag (str \# '~tag))
+               " values with " (puget/color-text :function-symbol (str '~reader)))))
+      (swap! data-readers assoc '~tag ~reader)))
   ([tag t writer reader]
    `(do
-      (data/extend-tagged-value ~t ~tag ~writer)
-      (swap! data-readers assoc ~tag ~reader))))
+      #_
+      (puget/with-color
+        (println
+          (str "Writing " (puget/color-text :class-name (str '~t))
+               " values as " (puget/color-text :tag (str \# '~tag))
+               " with " (puget/color-text :function-symbol (str '~writer))
+               " read by " (puget/color-text :function-symbol (str '~reader)))))
+      (data/extend-tagged-value ~t '~tag ~writer)
+      (swap! data-readers assoc '~tag ~reader))))
 
 
-(register-tag! 'vault/ref
+(register-tag! vault/ref
   HashID str
   blob/parse-id)
 
