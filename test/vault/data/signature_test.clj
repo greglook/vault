@@ -34,12 +34,12 @@
        (blob/store! blob-store)
        :id))
 
-
 (deftest signed-blob
   (let [value {:foo "bar", :baz :frobble, :alpha 12345}
         privkeys #(some-> test-keyring
                           (pgp/get-secret-key %)
                           (pgp/unlock-key "test password"))]
+    #_ (puget/cprint (blob/hash (.getBytes "bar")))
     (let [blob (-> value
                    (sig/signed-blob blob-store privkeys pubkey-id)
                    (sig/verify blob-store))]
@@ -48,4 +48,4 @@
         (println "Signed blob:")
         (edn-data/print-blob blob)
         (newline) (newline)
-        (puget/pprint blob)))))
+        (puget/cprint (dissoc blob :content :data/values))))))

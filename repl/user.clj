@@ -3,6 +3,7 @@
     [clojure.java.io :as io]
     [clojure.string :as str]
     [clojure.tools.namespace.repl :refer [refresh]]
+    [puget.printer :as puget]
     [vault.blob.core :as blob]
     [vault.data.core :as data]
     [vault.entity.core :as entity]
