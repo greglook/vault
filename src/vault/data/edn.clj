@@ -121,14 +121,18 @@
 
 
 (defn edn-blob
-  "Constructs a data blob from a value. The second argument may be a function
-  which takes the bytes comprising the rendered primary value and returns a
-  sequence of secondary data values."
+  "Constructs a data blob from a value. The second argument may be a sequence
+  of secondary values, or a function which takes the bytes comprising the
+  rendered primary value and returns a sequence of secondary data values."
   ([value]
    (edn-blob value nil))
-  ([value f]
+  ([value secondaries]
    (let [value-str (edn-str value)
-         secondary-values (when f (f (.getBytes value-str blob-charset)))
+         secondary-values
+         (cond
+           (sequential? secondaries) secondaries
+           (fn? secondaries) (secondaries (.getBytes value-str blob-charset))
+           :else nil)
          content-bytes (ByteArrayOutputStream.)
          byte-range (atom [])]
      (with-open [content (OutputStreamWriter. content-bytes blob-charset)]
