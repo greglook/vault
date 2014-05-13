@@ -1,6 +1,10 @@
 Vault
 =====
 
+[![Build Status](https://travis-ci.org/greglook/vault.svg?branch=master)](https://travis-ci.org/greglook/vault)
+[![Coverage Status](https://coveralls.io/repos/greglook/vault/badge.png?branch=master)](https://coveralls.io/r/greglook/vault?branch=master)
+[![Dependency Status](https://www.versioneye.com/user/projects/53718feb14c158ff7b00007c/badge.png)](https://www.versioneye.com/user/projects/53718feb14c158ff7b00007c)
+
 Vault is a content-addressable, version-controlled, hypermedia datastore which
 provides strong assertions about the integrity and provenance of stored data.
 Read on for a general introduction, or see the docs for more detailed
