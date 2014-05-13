@@ -22,7 +22,11 @@
    :ignore-ns #{potemkin}}
 
   :profiles
-  {:tool
+  {:coverage
+   {:plugins
+    [[lein-cloverage "1.0.2"]]}
+
+   :tool
    {:dependencies
     [[mvxcvi/directive "0.1.0"]]
     :source-paths ["tool"]
