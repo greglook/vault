@@ -1,8 +1,7 @@
 (ns vault.entity.core
   (:require
-    [vault.data.core :as data])
-  (:import
-    java.util.Date))
+    [clj-time.core :as time]
+    [vault.data.core :as data]))
 
 
 (defn entity
@@ -14,7 +13,7 @@
   (data/typed-map
     :vault.entity/root
     :id "random-string"
-    :time (Date.)
+    :time (time/now)
     :owner owner))
 
 
@@ -24,7 +23,7 @@
   ; TODO: verify that each of the data keys is an entity root.
   (data/typed-map
     :vault.entity/update
-    :time (Date.)
+    :time (time/now)
     :data data))
 
 
@@ -34,7 +33,7 @@
   ; TODO: verify that target exists and is a root, update, or delete blob.
   (data/typed-map
     :vault.entity/delete
-    :time (Date.)
+    :time (time/now)
     :target target))
 
 

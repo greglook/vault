@@ -3,12 +3,14 @@
     [byte-streams]
     [clojure.java.io :as io]
     [clojure.string :as string]
+    (clj-time
+      [coerce :as ctime]
+      [core :as time])
     (vault.blob
       [digest :as digest]
       [store :as store]))
   (:import
-    java.io.File
-    java.util.Date))
+    java.io.File))
 
 
 ;; HELPER FUNCTIONS
@@ -71,7 +73,7 @@
   "Calculates statistics for a blob file."
   [^File file]
   {:stat/size (.length file)
-   :stat/stored-at (Date. (.lastModified file))
+   :stat/stored-at (ctime/from-long (.lastModified file))
    :stat/origin (.toURI file)})
 
 

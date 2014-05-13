@@ -1,6 +1,7 @@
 (ns vault.blob.store.memory
   (:require
     [clojure.java.io :as io]
+    [clj-time.core :as time]
     [vault.blob.store :as store]))
 
 
@@ -16,7 +17,7 @@
   (assoc blob
     :stat/size (count (:content blob))
     :stat/stored-at (or (:stat/stored-at blob)
-                        (java.util.Date.))))
+                        (time/now))))
 
 
 (defrecord MemoryBlobStore

@@ -1,6 +1,9 @@
 (ns vault.data.edn
   "Functions to handle structured data formatted as EDN."
   (:require
+    (clj-time
+      [core :as time]
+      [format :as ftime])
     [clojure.string :as str]
     [clojure.edn :as edn]
     (puget
@@ -18,6 +21,7 @@
       PushbackReader
       Reader)
     java.nio.charset.Charset
+    org.joda.time.DateTime
     vault.blob.digest.HashID))
 
 
@@ -67,7 +71,6 @@
 (def data-readers
   "Atom containing a map of tag readers supported by Vault."
   (atom
-    ; TODO: 'inst clj-time.core/read-inst
     {'bin data/read-bin
      'uri data/read-uri}
     :validator map?))
@@ -99,6 +102,12 @@
 (register-tag! vault/ref
   HashID str
   blob/parse-id)
+
+
+(register-tag! inst
+  DateTime
+  (ftime/unparse (ftime/formatters :date-time) this)
+  (partial ftime/parse (ftime/formatters :date-time)))
 
 
 
