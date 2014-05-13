@@ -24,8 +24,9 @@
 (deftest data-typing
   (is (= String (edn-data/data-type "foo")))
   (is (= (class :bar) (edn-data/data-type :bar)))
-  (is (= (class []) (edn-data/data-type [:foo :bar])))
-  (is (= (class {}) (edn-data/data-type {:x 'y})))
+  (is (= :map (edn-data/data-type {:x 'y})))
+  (is (= :set (edn-data/data-type #{:foo :bar})))
+  (is (= :vector (edn-data/data-type [:foo :bar])))
   (is (= :test (edn-data/data-type {:vault/type :test}))))
 
 
@@ -36,7 +37,7 @@
   (let [blob (edn-data/edn-blob [:foo])]
     (is (:id blob))
     (is (:content blob))
-    (is (= clojure.lang.PersistentVector (:data/type blob)))
+    (is (= :vector (:data/type blob)))
     (is (= [[:foo]] (:data/values blob)))
     (is (= [12 18] (:data/primary-bytes blob)))
     (is (= "[:foo]" (String. (edn-data/primary-bytes blob)))))

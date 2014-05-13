@@ -47,9 +47,12 @@
   class of the value. For maps, the type-key is used if present. This is the
   main way types are represented in the data layer."
   [value]
-  (or (when (map? value)
-        (get value type-key))
-      (class value)))
+  (cond
+    (map? value) (get value type-key :map)
+    (set? value) :set
+    (vector? value) :vector
+    (sequential? value) :sequence
+    :else (class value)))
 
 
 (defn typed-map
