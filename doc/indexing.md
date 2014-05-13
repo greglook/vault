@@ -78,7 +78,7 @@ adaptations from Datomic, and store _datoms_, which are atomic data assertions.
  :tx        HashID      ; root or update blob hash-id
  :time      DateTime}   ; assertion timestamp from blob
 
-:datom/log  [time tx entity attribute value op]   ; history index
+:datom/log  [time tx]                             ; history index
 :datom/eavt [entity attribute value time tx op]   ; row index
 :datom/aevt [attribute entity value time tx op]   ; column index
 :datom/avet [attribute value entity time tx op]   ; value index
@@ -88,7 +88,9 @@ adaptations from Datomic, and store _datoms_, which are atomic data assertions.
 #### Log
 
 The log provides a history of datoms over time, grouped by transaction blob.
-This could also be called the TEAV index.
+This is a little different than the other types in that it is not a _covering_
+index. Instead, it's just a time-sorted list of the entity root and update
+blobs, which are converted into a datom sequence as needed.
 
 #### EAVT
 
