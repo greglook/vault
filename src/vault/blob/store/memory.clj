@@ -1,7 +1,7 @@
 (ns vault.blob.store.memory
   (:require
     [clojure.java.io :as io]
-    [vault.blob.store :as store :refer [BlobStore]]))
+    [vault.blob.store :as store]))
 
 
 (defn- get-mem
@@ -23,7 +23,7 @@
   [memory])
 
 (extend-type MemoryBlobStore
-  BlobStore
+  store/BlobStore
 
   (enumerate [this opts]
     (store/select-ids opts (-> this :memory deref keys)))
@@ -43,19 +43,21 @@
       (or (get-mem this id)
           (let [blob (blob-stats blob)]
             (swap! (:memory this) assoc id blob)
-            blob)))))
+            blob))))
 
 
-(defn delete!
-  [store id]
-  (when (get-mem store id)
-    (swap! (:memory store) dissoc id)
-    true))
+  store/DestructiveBlobStore
+
+  (delete!
+    [this id]
+    (when (get-mem this id)
+      (swap! (:memory this) dissoc id)
+      true))
 
 
-(defn destroy!!
-  [store]
-  (swap! (:memory store) empty))
+  (destroy!!
+    [this]
+    (swap! (:memory this) empty)))
 
 
 (defn memory-store

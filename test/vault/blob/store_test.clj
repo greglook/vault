@@ -5,7 +5,7 @@
     [clojure.test :refer :all]
     (vault.blob
       [core :as blob]
-      [store :as store :refer [BlobStore]])
+      [store :as store])
     (vault.blob.store
       [memory :refer [memory-store]]
       [file :refer [file-store]])))
@@ -23,7 +23,7 @@
 
 
 (deftest list-wrapper
-  (let [store (reify BlobStore (enumerate [this opts] (vector :list opts)))]
+  (let [store (reify store/BlobStore (enumerate [this opts] (vector :list opts)))]
     (is (= [:list nil] (blob/list store)))
     (is (= [:list {:foo "bar" :baz 3}] (blob/list store :foo "bar" :baz 3)))))
 
@@ -31,7 +31,7 @@
 (deftest get-wrapper
   (let [content (.getBytes "foobarbaz")
         id (blob/hash :sha256 content)
-        store (reify BlobStore (get* [this id] (blob/load content)))
+        store (reify store/BlobStore (get* [this id] (blob/load content)))
         blob (blob/get store id)]
     (is (= id (:id blob)))
     (is (bytes= content (:content blob)))
@@ -111,7 +111,7 @@
 (deftest test-memory-blob-store
   (let [store (memory-store)]
     (test-blob-store (memory-store))
-    (vault.blob.store.memory/destroy!! store)))
+    (store/destroy!! store)))
 
 
 (defn test-file-blob-store
@@ -121,4 +121,4 @@
                              (System/currentTimeMillis)))
         store (file-store tmpdir)]
     (test-blob-store (file-store tmpdir))
-    (vault.blob.store.file/destroy!! store)))
+    (store/destroy!! store)))

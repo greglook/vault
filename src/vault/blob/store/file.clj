@@ -5,7 +5,7 @@
     [clojure.string :as string]
     (vault.blob
       [digest :as digest]
-      [store :as store :refer [BlobStore]]))
+      [store :as store]))
   (:import
     java.io.File
     java.util.Date))
@@ -82,7 +82,7 @@
   [^File root])
 
 (extend-type FileBlobStore
-  BlobStore
+  store/BlobStore
 
   (enumerate [this opts]
     (->> (enumerate-files (:root this))
@@ -112,22 +112,24 @@
         ; For some reason, io/copy is much faster than byte-streams/transfer here.
         (io/copy content file)
         (.setWritable file false false))
-      (merge blob (blob-stats file)))))
+      (merge blob (blob-stats file))))
 
 
-(defn delete!
-  [this id]
-  (when-blob-file this id
-    (.delete file)))
+  store/DestructiveBlobStore
+
+  (delete!
+    [this id]
+    (when-blob-file this id
+      (.delete file)))
 
 
-(defn destroy!!
-  [this]
-  (let [rm-r (fn rm-r [^File path]
-               (when (.isDirectory path)
-                 (->> path .listFiles (map rm-r) dorun))
-               (.delete path))]
-    (rm-r (:root this))))
+  (destroy!!
+    [this]
+    (let [rm-r (fn rm-r [^File path]
+                 (when (.isDirectory path)
+                   (->> path .listFiles (map rm-r) dorun))
+                 (.delete path))]
+      (rm-r (:root this)))))
 
 
 (defn file-store

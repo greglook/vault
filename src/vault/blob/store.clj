@@ -59,6 +59,17 @@
     with `stat` metadata."))
 
 
+(defprotocol DestructiveBlobStore
+  "Additional blob storage protocol to represent direct storage types which can
+  excise blob data."
+
+  (delete! [this id]
+    "Remove a blob from the store.")
+
+  (destroy!! [this]
+    "Completely remove all data from the store."))
+
+
 (defn list
   "Enumerates the stored blobs, returning a sequence of HashIDs.
   Options should be keyword/value pairs from the following:
