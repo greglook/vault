@@ -2,6 +2,7 @@
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.java.io :as io]
+    [clojure.string :as str]
     [clojure.test :refer :all]
     (vault.blob
       [core :as blob]
@@ -98,27 +99,36 @@
         (test-blob-content store id content))
       (let [[id content] (first (seq stored-content))]
         (test-restore-blob store id content))
-      #_
-      (doseq [id (keys blobs)]
-        (is (blob/delete! store id) "delete returns true"))
-      #_
-      (is (empty? (blob/list store)) "ends empty")
-      #_
-      (is (not (blob/delete! store (first (keys blobs))))
-          "gives false when removing a nonexistent blob"))))
+      (when (satisfies? store/DestructiveBlobStore store)
+        (doseq [id (keys stored-content)]
+          (is (store/delete! store id) "delete returns true"))
+        (is (empty? (blob/list store)) "ends empty")
+        (is (not (store/delete! store (first (keys stored-content))))
+          "gives false when removing a nonexistent blob")))))
 
 
-(deftest test-memory-blob-store
+(defn store-enabled?
+  "Uses the VAULT_STORE_TESTS environment variable to determine which tests
+  to run."
+  [store-type]
+  (some->
+    (System/getenv "VAULT_STORE_TESTS")
+    (str/split #",")
+    set
+    (contains? store-type)))
+
+
+(deftest test-memory-store
   (let [store (memory-store)]
     (test-blob-store (memory-store))
     (store/destroy!! store)))
 
 
-(defn test-file-blob-store
-  []
-  (let [tmpdir (io/file "target" "test" "tmp"
+(deftest test-file-store
+  (when (store-enabled? "file")
+   (let [tmpdir (io/file "target" "test" "tmp"
                         (str "file-blob-store."
                              (System/currentTimeMillis)))
         store (file-store tmpdir)]
     (test-blob-store (file-store tmpdir))
-    (store/destroy!! store)))
+    (store/destroy!! store))))
