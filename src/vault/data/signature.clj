@@ -26,7 +26,7 @@
     (when-not blob
       (throw (IllegalStateException.
                (str "No public key blob stored for " id))))
-    (when (not= :pgp/public-key (:data/type pubkey-blob))
+    (when-not (= :pgp/public-key (:data/type pubkey-blob))
       (throw (IllegalStateException.
                (str "Blob " id " is not a PGP public key"))))
     (first (:data/values pubkey-blob))))
