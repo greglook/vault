@@ -22,12 +22,12 @@
 
 
 (deftest data-typing
-  (is (= String (edn-data/data-type "foo")))
-  (is (= (class :bar) (edn-data/data-type :bar)))
-  (is (= :map (edn-data/data-type {:x 'y})))
-  (is (= :set (edn-data/data-type #{:foo :bar})))
-  (is (= :vector (edn-data/data-type [:foo :bar])))
-  (is (= :test (edn-data/data-type {:vault/type :test}))))
+  (is (= String (edn-data/type "foo")))
+  (is (= (class :bar) (edn-data/type :bar)))
+  (is (= :map (edn-data/type {:x 'y})))
+  (is (= :set (edn-data/type #{:foo :bar})))
+  (is (= :vector (edn-data/type [:foo :bar])))
+  (is (= :test (edn-data/type {:vault/type :test}))))
 
 
 
