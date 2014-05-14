@@ -1,4 +1,4 @@
-(ns vault.data.signature-test
+(ns vault.data.crypto-test
   (:require
     [clojure.java.io :as io]
     [clojure.test :refer :all]
@@ -10,7 +10,7 @@
     [vault.blob.store.memory :refer [memory-store]]
     (vault.data
       [edn :as edn-data]
-      [signature :as sig]))
+      [crypto :as crypto]))
   (:import
     ; FIXME: why is this necessary??
     ; clojure.lang.Compiler$HostExpr.tagToClass(Compiler.java:1060)
@@ -38,7 +38,7 @@
 (deftest no-signature-blob
   (let [blob (-> {:foo 'bar}
                  (edn-data/edn-blob [{:baz 123}])
-                 (sig/verify blob-store))]
+                 (crypto/verify-sigs blob-store))]
     (is (empty? (:data/signatures blob)))))
 
 
@@ -49,7 +49,7 @@
               [(edn-data/typed-map
                  :vault/signature
                  :key (blob/hash (.getBytes "bazbar")))])
-            (sig/verify blob-store)))))
+            (crypto/verify-sigs blob-store)))))
 
 
 (deftest non-pubkey-blob
@@ -60,7 +60,7 @@
                 [(edn-data/typed-map
                    :vault/signature
                    :key (:id non-key))])
-              (sig/verify blob-store))))))
+              (crypto/verify-sigs blob-store))))))
 
 
 (deftest signed-blob
@@ -69,8 +69,8 @@
                           (pgp/get-secret-key %)
                           (pgp/unlock-key "test password"))
         blob (-> value
-                 (sig/signed-blob blob-store privkeys pubkey-id)
-                 (sig/verify blob-store))]
+                 (crypto/signed-blob blob-store privkeys pubkey-id)
+                 (crypto/verify-sigs blob-store))]
     (is (= :map (:data/type blob)))
     (is (= 2 (count (:data/values blob))))
     (is (= #{pubkey-id} (:data/signatures blob)))))

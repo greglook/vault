@@ -1,5 +1,5 @@
-(ns vault.data.signature
-  "Signature handling functions."
+(ns vault.data.crypto
+  "Cryptographic provider functions."
   (:require
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
@@ -88,10 +88,10 @@
       )))
 
 
-(defn verify
+(defn verify-sigs
   "Verifies that the inline signatures in a blob are correct. Returns an
   updated blob record with the :data/signatures key giving a set of the public
-  key hash ids of the blob signatures."
+  key hash ids of the valid signatures."
   [blob store]
   (if-let [signatures (inline-signatures blob)]
     (let [data (edn-data/primary-bytes blob)]
