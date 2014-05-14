@@ -107,8 +107,8 @@
 
 (register-tag! inst
   DateTime
-  (ftime/unparse (ftime/formatters :date-time) this)
-  (partial ftime/parse (ftime/formatters :date-time)))
+  (partial ftime/unparse (ftime/formatters :date-time))
+  (partial ftime/parse   (ftime/formatters :date-time)))
 
 
 
