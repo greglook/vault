@@ -1,5 +1,5 @@
-(ns vault.data.signature
-  "Signature handling functions."
+(ns vault.data.crypto
+  "Cryptographic provider functions."
   (:require
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
@@ -11,14 +11,55 @@
       PGPSignature)))
 
 
-;; UTILITY FUNCTIONS
-
 (edn-data/register-tag! pgp/signature
   PGPSignature pgp/encode
   pgp/decode-signature)
 
 
-(defn- load-pubkey
+
+;; SIGNATURE PROVIDER PROTOCOL
+
+; TODO: Support an eventual PKCS#11-style implementation which doesn't directly
+; handle keys. Possible implementations include gpg-agent, gnome-keyring, OS X
+; keychain, etc.
+
+(defprotocol SignatureProvider
+  "Protocol for cryptographic signature providers."
+
+  (sign-content [this key-id content]
+    "Returns a PGP signature of the given byte content with the identified
+    private key."))
+
+
+
+;; PRIVATE KEY PROVIDER
+
+(defrecord PrivateKeySignatureProvider [hash-algorithm privkeys])
+
+
+(extend-type PrivateKeySignatureProvider
+  SignatureProvider
+
+  (sign-content [this key-id content]
+    (let [privkey ((:privkeys this) key-id)]
+      (pgp/sign content (:hash-algorithm this) privkey))))
+
+
+(defn privkey-signature-provider
+  "A signing implementation which directly uses private keys to sign content.
+  This must be provided with a `privkeys` function which maps numeric key-ids
+  to an unlocked private key."
+  [algorithm privkeys]
+  {:pre [(fn? privkeys)]}
+  (PrivateKeySignatureProvider. algorithm privkeys))
+
+
+
+;; UTILITY FUNCTIONS
+
+; Crypto functions generally need a blob store to load public keys:
+; load-pubkey :: BlobStore -> HashID -> PGPPublicKey
+(defn load-pubkey
   "Loads a PGP public key from a blob store."
   [store id]
   (let [blob (blob/get store id)
@@ -35,31 +76,25 @@
 
 ;; SIGNATURE CREATION
 
-(def ^:dynamic *hash-algorithm*
-  "Cryptographic hash algorithm to use for signature generation."
-  :sha1)
-
-
-(defn- sign-bytes
+(defn- signature-map
   "Signs a byte array with a single public key."
-  [store privkeys data pubkey-id]
+  [store provider content pubkey-id]
   (let [pubkey (load-pubkey store pubkey-id)
-        privkey (privkeys (pgp/key-id pubkey))
-        pgp-sig (pgp/sign data *hash-algorithm* privkey)]
-    (assoc
-      (edn-data/typed-map :vault/signature)
+        pgp-sig (sign-content provider (pgp/key-id pubkey) content)]
+    (edn-data/typed-map
+      :vault/signature
       :key pubkey-id
       :signature pgp-sig)))
 
 
-(defn signed-blob
+(defn sign-value
   "Constructs a data blob with the given value, signed with the given public
   keys."
-  [value store privkeys & pubkey-ids]
+  [value store provider & pubkey-ids]
   (edn-data/edn-blob
     value
-    (fn [value-bytes]
-      (map (partial sign-bytes store privkeys value-bytes)
+    (fn [content]
+      (map (partial signature-map store provider content)
            pubkey-ids))))
 
 
@@ -71,7 +106,7 @@
   [blob]
   (->>
     (rest (:data/values blob))
-    (filter #(= :vault/signature (edn-data/data-type %)))
+    (filter #(= :vault/signature (edn-data/type %)))
     seq))
 
 
@@ -88,10 +123,10 @@
       )))
 
 
-(defn verify
+(defn verify-sigs
   "Verifies that the inline signatures in a blob are correct. Returns an
   updated blob record with the :data/signatures key giving a set of the public
-  key hash ids of the blob signatures."
+  key hash ids of the valid signatures."
   [blob store]
   (if-let [signatures (inline-signatures blob)]
     (let [data (edn-data/primary-bytes blob)]

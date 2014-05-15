@@ -13,7 +13,7 @@
    [clj-time "0.7.0"]
    [potemkin "0.3.4"]
    [mvxcvi/clj-pgp "0.5.0"]
-   [mvxcvi/puget "0.5.0"]
+   [mvxcvi/puget "0.5.1"]
    [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
    [org.clojure/tools.cli "0.2.4"]]

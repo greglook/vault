@@ -1,5 +1,6 @@
 (ns vault.data.edn
   "Functions to handle structured data formatted as EDN."
+  (:refer-clojure :exclude [type])
   (:require
     (clj-time
       [core :as time]
@@ -42,11 +43,11 @@
 
 
 (def ^:const ^:private type-key
-  "Keyword which defines a map's data-type."
+  "Keyword which defines a map's data type."
   :vault/type)
 
 
-(defn data-type
+(defn type
   "Determines the 'type' of the given value. By default, the result is just the
   class of the value. For maps, the type-key is used if present. This is the
   main way types are represented in the data layer."
@@ -106,8 +107,8 @@
 
 (register-tag! inst
   DateTime
-  (ftime/unparse (ftime/formatters :date-time) this)
-  (partial ftime/parse (ftime/formatters :date-time)))
+  (partial ftime/unparse (ftime/formatters :date-time))
+  (partial ftime/parse   (ftime/formatters :date-time)))
 
 
 
@@ -157,7 +158,7 @@
      (assoc (blob/load (.toByteArray content-bytes))
        :data/primary-bytes @byte-range
        :data/values (vec (cons value secondary-values))
-       :data/type (data-type value)))))
+       :data/type (type value)))))
 
 
 (defn print-blob
@@ -242,7 +243,7 @@
           (assoc blob
             :data/primary-bytes byte-range
             :data/values (vec (cons pvalue svalues))
-            :data/type (data-type pvalue)))))))
+            :data/type (type pvalue)))))))
 
 
 (defn primary-bytes
