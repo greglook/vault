@@ -34,6 +34,15 @@
        (blob/store! blob-store)
        :id))
 
+(def sig-provider
+  (crypto/privkey-signature-provider
+    :sha1
+    #(some->
+       test-keyring
+       (pgp/get-secret-key %)
+       (pgp/unlock-key "test password"))))
+
+
 
 (deftest no-signature-blob
   (let [blob (-> {:foo 'bar}
@@ -65,11 +74,8 @@
 
 (deftest signed-blob
   (let [value {:foo "bar", :baz :frobble, :alpha 12345}
-        privkeys #(some-> test-keyring
-                          (pgp/get-secret-key %)
-                          (pgp/unlock-key "test password"))
         blob (-> value
-                 (crypto/signed-blob blob-store privkeys pubkey-id)
+                 (crypto/sign-value blob-store sig-provider pubkey-id)
                  (crypto/verify-sigs blob-store))]
     (is (= :map (:data/type blob)))
     (is (= 2 (count (:data/values blob))))
