@@ -42,7 +42,7 @@
   100)
 
 
-(def ^:const ^:private type-key
+(def ^:const type-key
   "Keyword which defines a map's data type."
   :vault/type)
 

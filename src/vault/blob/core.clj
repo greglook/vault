@@ -12,7 +12,8 @@
     hash
     path-str
     parse-id
-    hash-id)
+    hash-id
+    hash-id?)
   (vault.blob.store
     record
     load
