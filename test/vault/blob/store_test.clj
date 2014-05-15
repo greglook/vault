@@ -4,6 +4,7 @@
     [clojure.java.io :as io]
     [clojure.string :as str]
     [clojure.test :refer :all]
+    [environ.core :refer [env]]
     (vault.blob
       [core :as blob]
       [store :as store])
@@ -108,17 +109,19 @@
 
 
 (defn store-enabled?
-  "Uses the VAULT_STORE_TESTS environment variable to determine which tests
-  to run."
+  "Uses the VAULT_BLOB_STORE_TESTS environment variable to determine which
+  tests to run."
   [store-type]
   (some->
-    (System/getenv "VAULT_STORE_TESTS")
+    (env :vault-blob-store-tests)
     (str/split #",")
     set
     (contains? store-type)))
 
 
 (deftest test-memory-store
+  ; Always enabled.
+  (println "  - memory-store")
   (let [store (memory-store)]
     (test-blob-store (memory-store))
     (store/destroy!! store)))
@@ -126,9 +129,10 @@
 
 (deftest test-file-store
   (when (store-enabled? "file")
-   (let [tmpdir (io/file "target" "test" "tmp"
-                        (str "file-blob-store."
-                             (System/currentTimeMillis)))
-        store (file-store tmpdir)]
-    (test-blob-store (file-store tmpdir))
-    (store/destroy!! store))))
+    (println "  - file-store")
+    (let [tmpdir (io/file "target" "test" "tmp"
+                          (str "file-blob-store."
+                            (System/currentTimeMillis)))
+         store (file-store tmpdir)]
+      (test-blob-store (file-store tmpdir))
+      (store/destroy!! store))))
