@@ -9,7 +9,7 @@
     vault.blob.digest.HashID))
 
 
-;; ENTITY SCHEMAS
+;; COMMON SCHEMAS
 
 (def root-type   :vault.entity/root)
 (def update-type :vault.entity/update)
@@ -34,49 +34,22 @@
   {HashID DatomFragments})
 
 
+
+;; ENTITY ROOTS
+
 (def EntityRoot
   "Schema for an entity root value."
   {data/type-key (schema/eq root-type)
    :id String
    :owner HashID
    :time DateTime
-   :data DatomFragments})
+   (schema/optional-key :data) DatomFragments})
 
-
-(def EntityUpdate
-  "Schema for an entity update value."
-  {data/type-key (schema/eq update-type)
-   :time DateTime
-   :data DatomUpdates})
-
-
-
-;; UTILITY FUNCTIONS
 
 (defn root?
-  "Determines whether the given blob is an entity root."
-  [blob]
-  (= root-type (:data/type blob)))
-
-
-(defn update?
-  "Determines whether the given blob is an entity update."
-  [blob]
-  (= update-type (:data/type blob)))
-
-
-(defn get-owner
-  "Looks up the owner for the given entity root id. Throws an exception if any
-  of the ids is not an entity root."
-  [blob-store root-id]
-  (let [blob (data/read-blob blob-store (blob/get blob-store root-id))]
-    (when-not blob
-      (throw (IllegalArgumentException.
-               (str "Cannot get owner for nonexistent entity " root-id))))
-    (when-not (root? blob)
-      (throw (IllegalArgumentException.
-               (str "Cannot get owner for non-root blob " root-id))))
-    (:owner (data/value blob))))
+  "Determines whether the given value is an entity root."
+  [value]
+  (= root-type (data/type value)))
 
 
 (defn- random-id!
@@ -86,9 +59,6 @@
     (.nextBytes (java.security.SecureRandom.) buf)
     (.toString (BigInteger. 1 buf) 16)))
 
-
-
-;; BLOB CONSTRUCTORS
 
 (defn root-record
   "Constructs a new entity root value."
@@ -117,6 +87,36 @@
     blob-store
     sig-provider
     (:owner args)))
+
+
+
+;; ENTITY UPDATES
+
+(def EntityUpdate
+  "Schema for an entity update value."
+  {data/type-key (schema/eq update-type)
+   :time DateTime
+   :data DatomUpdates})
+
+
+(defn update?
+  "Determines whether the given value is an entity update."
+  [value]
+  (= update-type (data/type value)))
+
+
+(defn get-owner
+  "Looks up the owner for the given entity root id. Throws an exception if any
+  of the ids is not an entity root."
+  [blob-store root-id]
+  (let [blob (data/read-blob blob-store (blob/get blob-store root-id))]
+    (when-not blob
+      (throw (IllegalArgumentException.
+               (str "Cannot get owner for nonexistent entity " root-id))))
+    (when-not (root? (data/value blob))
+      (throw (IllegalArgumentException.
+               (str "Cannot get owner for non-root blob " root-id))))
+    (:owner (data/value blob))))
 
 
 (defn update-record
