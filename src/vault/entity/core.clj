@@ -1,40 +1,145 @@
 (ns vault.entity.core
   (:require
     [clj-time.core :as time]
-    [vault.data.core :as data]))
+    [schema.core :as schema]
+    [vault.blob.core :as blob]
+    [vault.data.core :as data])
+  (:import
+    org.joda.time.DateTime
+    vault.blob.digest.HashID))
 
 
-(defn entity
-  "Constructs a new entity value."
-  [owner]
-  ; TODO: verify public key exists
-  ; TODO: allow control of the id and time values.
-  ; TODO: allow optional initial data.
+;; ENTITY SCHEMAS
+
+(def root-type   :vault.entity/root)
+(def update-type :vault.entity/update)
+
+
+(def DatomFragment
+  "Schema for a fragment of a datom. Basically, a partial datom vector with
+  :op, :attr, and :value."
+  [(schema/one schema/Keyword "operation")
+   (schema/one schema/Keyword "attribute")
+   (schema/one (schema/pred some? "some?") "value")])
+
+
+(def DatomFragments
+  "Schema for a vector of one or more datom fragments."
+  [(schema/one DatomFragment "datoms")
+   DatomFragment])
+
+
+(def DatomUpdates
+  "Schema for a map from entity ids to vectors of datom fragments."
+  {HashID DatomFragments})
+
+
+(def EntityRoot
+  "Schema for an entity root value."
+  {data/type-key (schema/eq root-type)
+   :id String
+   :owner HashID
+   :time DateTime
+   :data DatomFragments})
+
+
+(def EntityUpdate
+  "Schema for an entity update value."
+  {data/type-key (schema/eq update-type)
+   :time DateTime
+   :data DatomUpdates})
+
+
+
+;; UTILITY FUNCTIONS
+
+(defn root?
+  "Determines whether the given blob is an entity root."
+  [blob]
+  (= root-type (:data/type blob)))
+
+
+(defn update?
+  "Determines whether the given blob is an entity update."
+  [blob]
+  (= update-type (:data/type blob)))
+
+
+(defn get-owner
+  "Looks up the owner for the given entity root id. Throws an exception if any
+  of the ids is not an entity root."
+  [blob-store root-id]
+  (let [blob (data/read-blob blob-store (blob/get blob-store root-id))]
+    (when-not blob
+      (throw (IllegalArgumentException.
+               (str "Cannot get owner for nonexistent entity " root-id))))
+    (when-not (root? blob)
+      (throw (IllegalArgumentException.
+               (str "Cannot get owner for non-root blob " root-id))))
+    (:owner (data/value blob))))
+
+
+(defn- random-id!
+  "Generates a random id string for entity roots."
+  []
+  (let [buf (byte-array 16)]
+    (.nextBytes (java.security.SecureRandom.) buf)
+    (.toString (BigInteger. 1 buf) 16)))
+
+
+
+;; BLOB CONSTRUCTORS
+
+(defn root-record
+  "Constructs a new entity root value."
+  [{:keys [owner id time data]}]
+  (when-not owner
+    (throw (IllegalArgumentException. "Cannot create entity without owner")))
+  (when data
+    (schema/validate DatomFragments data))
+  (->
+    (data/typed-map
+      root-type
+      :id (or id (random-id!))
+      :time (or time (time/now))
+      :owner owner)
+    (cond->
+      data (assoc :data data))))
+
+
+(defn root-blob
+  "Constructs a new entity blob for the given owner."
+  [blob-store sig-provider args]
+  ; TODO: explicitly check owner is a public key?
+  ; Happens automatically during signing anyway...
+  (data/sign-value
+    (root-record args)
+    blob-store
+    sig-provider
+    (:owner args)))
+
+
+(defn update-record
+  "Constructs a new entity update value."
+  [{:keys [time data]}]
+  (schema/validate DatomUpdates data)
   (data/typed-map
-    :vault.entity/root
-    :id "random-string"
-    :time (time/now)
-    :owner owner))
-
-
-(defn update
-  "Constructs a new update value."
-  [data]
-  ; TODO: verify that each of the data keys is an entity root.
-  (data/typed-map
-    :vault.entity/update
-    :time (time/now)
+    update-type
+    :time (or time (time/now))
     :data data))
 
 
-(defn delete
-  "Constructs a new delete marker value."
-  [target]
-  ; TODO: verify that target exists and is a root, update, or delete blob.
-  (data/typed-map
-    :vault.entity/delete
-    :time (time/now)
-    :target target))
+(defn update-blob
+  "Constructs a new update blob from the given args."
+  [blob-store sig-provider args]
+  (let [owners (sort (map (partial get-owner blob-store)
+                          (keys (:data args))))]
+    (apply
+      data/sign-value
+      (update-record args)
+      blob-store
+      sig-provider
+      owners)))
 
 
 
@@ -47,11 +152,11 @@
   "Converts a blob into a sequence of datoms."
   [blob]
   (let [map-datoms
-        (fn [time entity updates]
+        (fn [time entity fragments]
           (map
             (fn [[op attr value]]
               (Datom. op entity attr value (:id blob) time))
-            updates))
+            fragments))
         data (-> blob :data/values first :data)]
     (case (:data/type blob)
       :vault.entity/root
