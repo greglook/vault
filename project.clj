@@ -4,10 +4,6 @@
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
 
-  :aliases
-  {"tool-jar"
-   ["with-profile" "tool" "uberjar"]}
-
   :dependencies
   [[byte-streams "0.1.10"]
    [clj-time "0.7.0"]
@@ -23,6 +19,12 @@
   :hiera
   {:cluster-depth 2
    :ignore-ns #{potemkin}}
+
+  :aliases
+  {"tool-jar"
+   ["with-profile" "tool" "uberjar"]
+   "coverage"
+   ["with-profile" "+coverage" "cloverage"]}
 
   :profiles
   {:coverage
