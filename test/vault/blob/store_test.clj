@@ -90,7 +90,8 @@
 
 (defn test-blob-store
   "Tests a blob store implementation."
-  [store]
+  [store label]
+  (println "  *" label)
   (is (empty? (blob/list store)) "starts empty")
   (testing (str (-> store class .getSimpleName))
     (let [stored-content (store-test-blobs! store)]
@@ -121,18 +122,16 @@
 
 (deftest test-memory-store
   ; Always enabled.
-  (println "  - memory-store")
   (let [store (memory-store)]
-    (test-blob-store (memory-store))
+    (test-blob-store store "memory-store")
     (store/destroy!! store)))
 
 
 (deftest test-file-store
   (when (store-enabled? "file")
-    (println "  - file-store")
     (let [tmpdir (io/file "target" "test" "tmp"
                           (str "file-blob-store."
                             (System/currentTimeMillis)))
-         store (file-store tmpdir)]
-      (test-blob-store (file-store tmpdir))
+          store (file-store tmpdir)]
+      (test-blob-store store "file-store")
       (store/destroy!! store))))
