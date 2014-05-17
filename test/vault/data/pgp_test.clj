@@ -1,20 +1,16 @@
 (ns vault.data.pgp-test
   (:require
     [byte-streams :refer [bytes=]]
-    [clojure.java.io :as io]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
-    [vault.data.pgp :as pgp-data]))
+    (vault.data
+      [pgp :as pgp-data]
+      [test-keys :as keys])))
 
-
-(def test-keyring
-  (pgp/load-secret-keyring
-    (io/file (io/resource "test-resources/pgp/secring.gpg"))))
 
 (def pubkey
-  (pgp/get-public-key test-keyring "923b1c1c4392318a"))
-
+  (pgp/get-public-key keys/secring "923b1c1c4392318a"))
 
 
 (deftest pgp-typing

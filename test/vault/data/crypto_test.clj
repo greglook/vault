@@ -10,7 +10,8 @@
     [vault.blob.store.memory :refer [memory-store]]
     (vault.data
       [edn :as edn-data]
-      [crypto :as crypto]))
+      [crypto :as crypto]
+      [test-keys :as keys]))
   (:import
     ; FIXME: why is this necessary??
     ; clojure.lang.Compiler$HostExpr.tagToClass(Compiler.java:1060)
@@ -21,12 +22,8 @@
 
 (def blob-store (memory-store))
 
-(def test-keyring
-  (pgp/load-secret-keyring
-    (io/file (io/resource "test-resources/pgp/secring.gpg"))))
-
 (def pubkey
-  (pgp/get-public-key test-keyring "923b1c1c4392318a"))
+  (pgp/get-public-key keys/secring "923b1c1c4392318a"))
 
 (def pubkey-id
   (->> pubkey
@@ -38,7 +35,7 @@
   (crypto/privkey-signature-provider
     :sha1
     #(some->
-       test-keyring
+       keys/secring
        (pgp/get-secret-key %)
        (pgp/unlock-key "test password"))))
 
