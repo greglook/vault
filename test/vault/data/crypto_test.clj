@@ -7,38 +7,16 @@
       [data]
       [printer :as puget])
     [vault.blob.core :as blob]
-    [vault.blob.store.memory :refer [memory-store]]
     (vault.data
       [edn :as edn-data]
       [crypto :as crypto]
-      [test-keys :as keys]))
+      [test-keys :as keys :refer [blob-store pubkey pubkey-id]]))
   (:import
     ; FIXME: why is this necessary??
     ; clojure.lang.Compiler$HostExpr.tagToClass(Compiler.java:1060)
     (org.bouncycastle.openpgp
       PGPPrivateKey
       PGPSecretKey)))
-
-
-(def blob-store (memory-store))
-
-(def pubkey
-  (pgp/get-public-key keys/secring "923b1c1c4392318a"))
-
-(def pubkey-id
-  (->> pubkey
-       pgp/encode-ascii
-       (blob/store! blob-store)
-       :id))
-
-(def sig-provider
-  (crypto/privkey-signature-provider
-    :sha1
-    #(some->
-       keys/secring
-       (pgp/get-secret-key %)
-       (pgp/unlock-key "test password"))))
-
 
 
 (deftest no-signature-blob
@@ -72,7 +50,7 @@
 (deftest signed-blob
   (let [value {:foo "bar", :baz :frobble, :alpha 12345}
         blob (-> value
-                 (crypto/sign-value blob-store sig-provider pubkey-id)
+                 (crypto/sign-value blob-store keys/sig-provider pubkey-id)
                  (crypto/verify-sigs blob-store))]
     (is (= :map (:data/type blob)))
     (is (= 2 (count (:data/values blob))))
