@@ -1,6 +1,7 @@
 (ns vault.data.crypto
   "Cryptographic provider functions."
   (:require
+    [clojure.java.io :as io]
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
     (vault.data
@@ -8,6 +9,8 @@
       [pgp :as pgp-data]))
   (:import
     (org.bouncycastle.openpgp
+      PGPPrivateKey
+      PGPSecretKey
       PGPSignature)))
 
 
@@ -23,35 +26,16 @@
 ; handle keys. Possible implementations include gpg-agent, gnome-keyring, OS X
 ; keychain, etc.
 
+; IdentityProvider?
+; (key-ids [this] "Returns the set of PGP key ids associated with the identity")
+; TODO: how to map key-id -> public key hash-id? probably need an index
+
 (defprotocol SignatureProvider
   "Protocol for cryptographic signature providers."
 
   (sign-content [this key-id content]
     "Returns a PGP signature of the given byte content with the identified
     private key."))
-
-
-
-;; PRIVATE KEY PROVIDER
-
-(defrecord PrivateKeySignatureProvider [hash-algorithm privkeys])
-
-
-(extend-type PrivateKeySignatureProvider
-  SignatureProvider
-
-  (sign-content [this key-id content]
-    (let [privkey ((:privkeys this) key-id)]
-      (pgp/sign content (:hash-algorithm this) privkey))))
-
-
-(defn privkey-signature-provider
-  "A signing implementation which directly uses private keys to sign content.
-  This must be provided with a `privkeys` function which maps numeric key-ids
-  to an unlocked private key."
-  [algorithm privkeys]
-  {:pre [(fn? privkeys)]}
-  (PrivateKeySignatureProvider. algorithm privkeys))
 
 
 
@@ -137,3 +121,49 @@
         set
         (assoc blob :data/signatures)))
     blob))
+
+
+
+;; KEYRING SIGNATURE PROVIDER
+
+(defrecord PrivateKeySignatureProvider
+  [hash-algorithm get-key])
+
+
+(extend-type PrivateKeySignatureProvider
+  SignatureProvider
+
+  (sign-content [this key-id content]
+    (pgp/sign
+      content
+      (:hash-algorithm this)
+      ((:get-key this) key-id))))
+
+
+(defn privkey-sig-provider
+  "A signature provider which directly uses private keys to sign content. The
+  `get-key` function should map PGP numeric key identifiers to unlocked private
+  keys."
+  [hash-algorithm get-key]
+  {:pre [(keyword? hash-algorithm) (fn? get-key)]}
+  (PrivateKeySignatureProvider. hash-algorithm get-key))
+
+
+(defn keyring-sig-provider
+  "A signature provider which uses keys from a secret keyring to sign content.
+  The `ask-pass` function should return a passphrase for a numeric PGP key
+  identifier. The provider will cache unlocked private keys so the passphrase
+  will not be asked more than once per key."
+  [hash-algorithm secring ask-pass]
+  {:pre [(fn? ask-pass)]}
+  (let [privkeys (atom {})
+        unlock-pk #(some-> secring
+                           (pgp/get-secret-key %)
+                           (pgp/unlock-key (ask-pass %)))]
+    (privkey-sig-provider
+      hash-algorithm
+      (fn [key-id]
+        (or (get @privkeys key-id)
+            (when-let [privkey (unlock-pk key-id)]
+              (swap! privkeys assoc key-id privkey)
+              privkey))))))

@@ -42,9 +42,6 @@
 
 
 (def sig-provider
-  (crypto/privkey-signature-provider
-    :sha1
-    #(some->
-       secring
-       (pgp/get-secret-key %)
-       (pgp/unlock-key "test password"))))
+  (crypto/keyring-sig-provider
+    :sha1 secring
+    (constantly "test password")))
