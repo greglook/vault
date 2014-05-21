@@ -9,8 +9,6 @@
       [pgp :as pgp-data]))
   (:import
     (org.bouncycastle.openpgp
-      PGPPrivateKey
-      PGPSecretKey
       PGPSignature)))
 
 

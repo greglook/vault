@@ -4,13 +4,7 @@
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
     [vault.blob.store.memory :refer [memory-store]]
-    [vault.data.crypto :as crypto])
-  (:import
-    ; FIXME: why is this necessary??
-    ; clojure.lang.Compiler$HostExpr.tagToClass(Compiler.java:1060)
-    (org.bouncycastle.openpgp
-      PGPPrivateKey
-      PGPSecretKey)))
+    [vault.data.crypto :as crypto]))
 
 
 (def pubring
