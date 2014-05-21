@@ -74,12 +74,6 @@
    (HashID. (keyword algorithm) (str digest))))
 
 
-(defn hash-id?
-  "Determines whether the given value is a hash identifier."
-  [v]
-  (instance? HashID v))
-
-
 
 ;; CONTENT HASHING
 
