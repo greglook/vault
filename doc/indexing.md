@@ -65,6 +65,20 @@ certain identity.
    reference the public key.
 3. Filter blobs by checking the public keys used in their signatures.
 
+## Identity Index
+
+This index stores a mapping from numeric PGP key ids to the public key blob's
+hash-id.
+
+```clojure
+{:blob   HashID   ; public key hash-id
+ :key-id Long}    ; PGP key id
+
+:identity/key [key-id blob]
+```
+
+TODO: can this be handled by one of the other indexes?
+
 ## Entity Indexes
 
 Entity indexes address the higher-level data structures in Vault. These are
