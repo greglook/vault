@@ -115,7 +115,7 @@
       (->>
         signatures
         (map (partial verify-bytes store data))
-        (filter identity)
+        (remove nil?)
         set
         (assoc blob :data/signatures)))
     blob))

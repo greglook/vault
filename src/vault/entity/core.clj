@@ -67,14 +67,13 @@
     (throw (IllegalArgumentException. "Cannot create entity without owner")))
   (when data
     (schema/validate DatomFragments data))
-  (->
+  (cond->
     (data/typed-map
       root-type
       :id (or id (random-id!))
       :time (or time (time/now))
       :owner owner)
-    (cond->
-      data (assoc :data data))))
+    data (assoc :data data)))
 
 
 (defn root-blob
