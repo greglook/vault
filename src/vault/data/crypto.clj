@@ -39,8 +39,6 @@
 
 ;; UTILITY FUNCTIONS
 
-; Crypto functions generally need a blob store to load public keys:
-; load-pubkey :: BlobStore -> HashID -> PGPPublicKey
 (defn load-pubkey
   "Loads a PGP public key from a blob store."
   [store id]
