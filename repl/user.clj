@@ -11,6 +11,7 @@
       [data]
       [printer :as puget])
     [vault.blob.core :as blob]
+    vault.blob.store
     [vault.data.core :as data]
     [vault.entity.core :as entity]
     [vault.index.core :as index]

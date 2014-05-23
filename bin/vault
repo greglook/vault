@@ -1,3 +1,4 @@
 #!/bin/sh
 
-lein with-profile tool run -m vault.tool.main -- "$@"
+#lein with-profile tool run -m vault.tool.main -- "$@"
+grench main vault.tool.main "$@"

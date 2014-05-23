@@ -88,12 +88,10 @@
   [opts]
   (let [stores (:blob-stores opts)]
     (when-not stores
-      (println "No blob-stores configured!")
-      (System/exit 1))
+      (throw (IllegalStateException. "No blob-stores configured!")))
     (let [store (select-blob-store stores (:store opts))]
       (when-not store
-        (println "No blob-store selected!")
-        (System/exit 1))
+        (throw (IllegalStateException. "No blob-store selected!")))
       (assoc opts :store store))))
 
 

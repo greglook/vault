@@ -19,8 +19,7 @@
 
 (defn- not-yet-implemented
   [opts args]
-  (println "This command is not yet implemented")
-  (System/exit 1))
+  (println "This command is not yet implemented"))
 
 
 
@@ -120,9 +119,4 @@
 
 
 (defn -main [& args]
-  (try
-    (execute commands args)
-    (shutdown-agents)
-    (catch Exception e
-      (.printStackTrace e)
-      (System/exit 1))))
+  (execute commands args))

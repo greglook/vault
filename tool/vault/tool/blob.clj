@@ -1,9 +1,12 @@
 (ns vault.tool.blob
   (:require
     [clojure.java.io :as io]
+    [clojure.string :as str]
     [puget.printer :refer [cprint]]
-    [vault.blob.core :as blob]
-    [vault.blob.digest :as digest]))
+    (vault.blob
+      [core :as blob]
+      [digest :as digest]
+      [store :as store])))
 
 
 ;; HELPER FUNCTIONS
@@ -57,15 +60,13 @@
 (defn get-blob
   [opts args]
   (when (or (empty? args) (> (count args) 1))
-    (println "Must provide a single blobref or unique prefix.")
-    (System/exit 1))
+    (throw (IllegalArgumentException. "Must provide a single blobref or unique prefix.")))
   (let [store (:store opts)
         ids (enumerate-prefix store (first args))]
     (when (< 1 (count ids))
-      (println (count ids) "blobs match prefix:")
-      (doseq [blobref ids]
-        (println (str blobref)))
-      (System/exit 1))
+      (throw (IllegalArgumentException.
+               (str (count ids) " blobs match prefix: "
+                    (str/join ids " ")))))
     (let [blob (blob/get store (first ids))]
       (io/copy (:content blob) *out*))))
 
@@ -77,9 +78,8 @@
     (io/copy *in* copy-writer)
     (.flush copy-writer)
     (let [content (.toByteArray byte-copier)]
-      (when (empty? content)
+      (if (empty? content)
         (binding [*out* *err*]
           (println "(no content)"))
-        (System/exit 1))
-      (if-let [id (blob/put! (:store opts) content)]
-        (println (str id))))))
+        (if-let [id (blob/put! (:store opts) content)]
+          (println (str id)))))))
