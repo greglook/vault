@@ -34,7 +34,7 @@
     ["-h" "--help"    "Show usage information."]
 
     (init [opts]
-      (assoc opts :store sys/blobs))
+      (assoc opts :blob-store sys/blobs))
 
 
     (command "blob <action> [args]"
@@ -54,7 +54,7 @@
         [nil "--pretty" "Format the info over multiple lines for easier viewing."
          :default true]
 
-        (action blob-tool/blob-info))
+        (action blob-tool/stat-blob))
 
       (command "get <hash-id>"
         "Print the contents of a blob to stdout."

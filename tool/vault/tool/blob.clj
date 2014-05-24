@@ -36,16 +36,16 @@
 
 (defn list-blobs
   [opts args]
-  (let [store (:store opts)
+  (let [store (:blob-store opts)
         controls (select-keys opts [:after :prefix :limit])
         blobs (blob/list store controls)]
     (doseq [hash-id blobs]
       (println (str hash-id)))))
 
 
-(defn blob-info
+(defn stat-blob
   [opts args]
-  (let [store (:store opts)]
+  (let [store (:blob-store opts)]
     (doseq [hash-id (apply enumerate-prefix store args)]
       (let [info (blob/stat store hash-id)]
         (if (:pretty opts)
@@ -62,7 +62,7 @@
   [opts args]
   (when (or (empty? args) (> (count args) 1))
     (fail "Must provide a single hash-id or unique prefix."))
-  (let [store (:store opts)
+  (let [store (:blob-store opts)
         ids (enumerate-prefix store (first args))]
     (when (< 1 (count ids))
       (fail (str (count ids) " blobs match prefix: " (str/join ids " "))))
@@ -75,6 +75,6 @@
   (when (or (empty? args) (< 1 (count args)))
     (fail "Must provide a single source of blob data."))
   (let [source (io/file (first args))]
-    (if-let [blob (blob/store! (:store opts) source)]
+    (if-let [blob (blob/store! (:blob-store opts) source)]
       (println (str (:id blob)))
       (print-err "(no content)"))))
