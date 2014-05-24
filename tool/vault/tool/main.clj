@@ -63,7 +63,7 @@
 
         (action blob-tool/list-blobs))
 
-      (command "stat <blobref> [blobref ...]"
+      (command "stat <hash-id> [hash-id ...]"
         "Show information about a stored blob."
 
         [nil "--pretty" "Format the info over multiple lines for easier viewing."
@@ -71,12 +71,12 @@
 
         (action blob-tool/blob-info))
 
-      (command "get <blobref>"
+      (command "get <hash-id>"
         "Print the contents of a blob to stdout."
         (action blob-tool/get-blob))
 
       (command "put <source>"
-        "Store a blob of data and print the resulting blobref. If source is '-',
+        "Store a blob of data and print the resulting hash-id. If source is '-',
         data will be read from stdin. Otherwise, it should be a file to read
         content from."
         (action blob-tool/put-blob)))
@@ -85,7 +85,7 @@
     (command "data <action> [args]"
       "Interact with object entities and data."
 
-      (command "show <blobref> [blobref ...]"
+      (command "show <hash-id> [hash-id ...]"
         "Inspect the contents of the given blobs, pretty-printing EDN values and
         showing hex for binary blobs."
 

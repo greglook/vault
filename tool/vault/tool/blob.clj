@@ -12,7 +12,7 @@
 ;; HELPER FUNCTIONS
 
 (defn- prefix-id
-  "Adds the given algorithm to a blobref if none is specified."
+  "Adds the given algorithm to a hash-id if none is specified."
   [algorithm id]
   (if-not (some (partial = \:) id)
     (str (name algorithm) \: id)
@@ -38,22 +38,22 @@
   (let [store (:store opts)
         controls (select-keys opts [:after :prefix :limit])
         blobs (blob/list store controls)]
-    (doseq [blobref blobs]
-      (println (str blobref)))))
+    (doseq [hash-id blobs]
+      (println (str hash-id)))))
 
 
 (defn blob-info
   [opts args]
   (let [store (:store opts)]
-    (doseq [blobref (apply enumerate-prefix store args)]
-      (let [info (blob/stat store blobref)]
+    (doseq [hash-id (apply enumerate-prefix store args)]
+      (let [info (blob/stat store hash-id)]
         (if (:pretty opts)
           (do
-            (println (str blobref))
+            (println (str hash-id))
             (cprint info)
             (newline))
           (do
-            (print (str blobref) \space)
+            (print (str hash-id) \space)
             (prn info)))))))
 
 
