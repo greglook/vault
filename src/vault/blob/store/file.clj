@@ -24,7 +24,7 @@
       (name algorithm)
       (subs digest 0 3)
       (subs digest 3 6)
-      (subs digest 6))))
+      (digest/path-str id))))
 
 
 (defn- file->id
@@ -34,10 +34,11 @@
     (when-not (.startsWith file root)
       (throw (IllegalArgumentException.
                (str "File " file " is not a child of root directory " root))))
-    (let [[algorithm & digest] (-> file
-                                   (subs (inc (count root)))
-                                   (string/split #"/"))]
-      (digest/hash-id algorithm (string/join digest)))))
+    (-> file
+        (subs (inc (count root)))
+        (string/split #"/")
+        last
+        digest/parse-id)))
 
 
 (defmacro ^:private for-files
