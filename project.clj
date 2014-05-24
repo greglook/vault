@@ -29,7 +29,6 @@
     [[mvxcvi/directive "0.4.1"]
      [org.clojure/tools.namespace "0.2.4"]]
     :jvm-opts []
-    ;:main vault.tool.main
     :repl-options {:init-ns vault.system}
     :source-paths ["tool"]}
 

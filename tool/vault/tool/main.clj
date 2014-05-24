@@ -30,10 +30,8 @@
   (command "vault [global opts] <command> [command args]"
     "Command-line tool for the vault data store."
 
-    ["-v" "--verbose" "Show extra debugging messages."
-     :default false]
-    ["-h" "--help" "Show usage information."
-     :default false]
+    ["-v" "--verbose" "Show extra debugging messages."]
+    ["-h" "--help" "Show usage information."]
 
 
     (command "config <type>"
@@ -54,6 +52,9 @@
     (command "blob <action> [args]"
       "Low-level commands dealing with data blobs."
 
+      (init [opts]
+        (assoc opts :store sys/blobs))
+
       (command "list [opts]"
         "Enumerate the stored blobs."
 
@@ -70,12 +71,14 @@
 
         (action blob-tool/blob-info))
 
-      (command "get <blobref> > blob.dat"
+      (command "get <blobref>"
         "Print the contents of a blob to stdout."
         (action blob-tool/get-blob))
 
-      (command "put < blob.dat"
-        "Store a blob of data read from stdin and print the resulting blobref."
+      (command "put <source>"
+        "Store a blob of data and print the resulting blobref. If source is '-',
+        data will be read from stdin. Otherwise, it should be a file to read
+        content from."
         (action blob-tool/put-blob)))
 
 
@@ -83,7 +86,8 @@
       "Interact with object entities and data."
 
       (command "show <blobref> [blobref ...]"
-        "Inspect the contents of the given blobs, pretty-printing EDN values and showing hex for binary blobs."
+        "Inspect the contents of the given blobs, pretty-printing EDN values and
+        showing hex for binary blobs."
 
         ["-b" "--binary" "Print blobs as binary even if they appear to be textual."]
 

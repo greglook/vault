@@ -73,13 +73,10 @@
 
 (defn put-blob
   [opts args]
-  (let [byte-copier (java.io.ByteArrayOutputStream.)
-        copy-writer (java.io.OutputStreamWriter. byte-copier)]
-    (io/copy *in* copy-writer)
-    (.flush copy-writer)
-    (let [content (.toByteArray byte-copier)]
-      (if (empty? content)
-        (binding [*out* *err*]
-          (println "(no content)"))
-        (if-let [id (blob/put! (:store opts) content)]
-          (println (str id)))))))
+  (when (or (empty? args) (< 1 (count args)))
+    (throw (IllegalArgumentException. "Must provide a single source of blob data.")))
+  (let [source (io/file (first args))]
+    (if-let [blob (blob/store! (:store opts) source)]
+      (println (str (:id blob)))
+      (binding [*out* *err*]
+        (println "(no content)")))))
