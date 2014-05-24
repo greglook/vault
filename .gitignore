@@ -7,9 +7,10 @@ pom.xml.asc
 *.jar
 *.class
 .lein-deps-sum
+.lein-env
 .lein-failures
 .lein-plugins
 .lein-repl-history
 .nrepl-port
-ns-dep-graph.png
-TODO.*
+TODO.md
+/dev/var

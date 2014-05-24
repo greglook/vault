@@ -1,15 +1,19 @@
 (ns vault.tool.blob
   (:require
     [clojure.java.io :as io]
+    [clojure.string :as str]
+    [mvxcvi.directive :refer [fail print-err]]
     [puget.printer :refer [cprint]]
-    [vault.blob.core :as blob]
-    [vault.blob.digest :as digest]))
+    (vault.blob
+      [core :as blob]
+      [digest :as digest]
+      [store :as store])))
 
 
 ;; HELPER FUNCTIONS
 
 (defn- prefix-id
-  "Adds the given algorithm to a blobref if none is specified."
+  "Adds the given algorithm to a hash-id if none is specified."
   [algorithm id]
   (if-not (some (partial = \:) id)
     (str (name algorithm) \: id)
@@ -32,54 +36,45 @@
 
 (defn list-blobs
   [opts args]
-  (let [store (:store opts)
+  (let [store (:blob-store opts)
         controls (select-keys opts [:after :prefix :limit])
         blobs (blob/list store controls)]
-    (doseq [blobref blobs]
-      (println (str blobref)))))
+    (doseq [hash-id blobs]
+      (println (str hash-id)))))
 
 
-(defn blob-info
+(defn stat-blob
   [opts args]
-  (let [store (:store opts)]
-    (doseq [blobref (apply enumerate-prefix store args)]
-      (let [info (blob/stat store blobref)]
+  (let [store (:blob-store opts)]
+    (doseq [hash-id (apply enumerate-prefix store args)]
+      (let [info (blob/stat store hash-id)]
         (if (:pretty opts)
           (do
-            (println (str blobref))
+            (println (str hash-id))
             (cprint info)
             (newline))
           (do
-            (print (str blobref) \space)
+            (print (str hash-id) \space)
             (prn info)))))))
 
 
 (defn get-blob
   [opts args]
   (when (or (empty? args) (> (count args) 1))
-    (println "Must provide a single blobref or unique prefix.")
-    (System/exit 1))
-  (let [store (:store opts)
+    (fail "Must provide a single hash-id or unique prefix."))
+  (let [store (:blob-store opts)
         ids (enumerate-prefix store (first args))]
     (when (< 1 (count ids))
-      (println (count ids) "blobs match prefix:")
-      (doseq [blobref ids]
-        (println (str blobref)))
-      (System/exit 1))
+      (fail (str (count ids) " blobs match prefix: " (str/join ids " "))))
     (let [blob (blob/get store (first ids))]
       (io/copy (:content blob) *out*))))
 
 
 (defn put-blob
   [opts args]
-  (let [byte-copier (java.io.ByteArrayOutputStream.)
-        copy-writer (java.io.OutputStreamWriter. byte-copier)]
-    (io/copy *in* copy-writer)
-    (.flush copy-writer)
-    (let [content (.toByteArray byte-copier)]
-      (when (empty? content)
-        (binding [*out* *err*]
-          (println "(no content)"))
-        (System/exit 1))
-      (if-let [id (blob/put! (:store opts) content)]
-        (println (str id))))))
+  (when (or (empty? args) (< 1 (count args)))
+    (fail "Must provide a single source of blob data."))
+  (let [source (io/file (first args))]
+    (if-let [blob (blob/store! (:blob-store opts) source)]
+      (println (str (:id blob)))
+      (print-err "(no content)"))))

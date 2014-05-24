@@ -1,13 +1,16 @@
 Vault Command Line Tool
 =======================
 
-Vault comes with a stand-alone command-line tool for interacting with the
-system. For now, there's no built in script to call, so just make an alias for
-leiningen:
+Vault comes with a command-line tool for interacting with the system. To avoid
+long startup costs (and to preserve things such as in-memory indexes) the tool
+uses [grenchman](http://leiningen.org/grench.html) to communicate with a running
+REPL process.
 
-```sh
-alias vault='lein run --'
-vault help
+```bash
+$ cd /path/to/vault
+$ lein trampoline repl :headless
+$ alias vault="$PWD/bin/vault"
+$ vault help
 ```
 
 Use `-h` `--help` or `help` to show usage information for any command. General
@@ -23,7 +26,7 @@ is to specify blob stores in `$HOME/.config/vault/blob-stores.edn`:
 {:default :local
 
  :local
- #vault/file-store "/home/USER/var/vault"}
+ (file-store "/home/USER/var/vault")}
 ```
 
 ## Blobs

@@ -9,22 +9,15 @@
    [clj-time "0.7.0"]
    [environ "0.5.0"]
    [potemkin "0.3.4"]
-   [mvxcvi/clj-pgp "0.5.1"]
+   [mvxcvi/clj-pgp "0.5.2"]
    [mvxcvi/puget "0.5.1"]
    [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
-   [org.clojure/tools.cli "0.2.4"]
    [prismatic/schema "0.2.2"]]
 
   :hiera
   {:cluster-depth 2
    :ignore-ns #{potemkin}}
-
-  :aliases
-  {"tool-jar"
-   ["with-profile" "tool" "uberjar"]
-   "coverage"
-   ["with-profile" "+coverage" "cloverage"]}
 
   :profiles
   {:coverage
@@ -33,15 +26,10 @@
 
    :tool
    {:dependencies
-    [[mvxcvi/directive "0.1.0"]]
-    :source-paths ["tool"]
-    :jar-name "vault-tool-%s.jar"
-    :uberjar-name "vault-tool.jar"
-    :main vault.tool.main
-    :aot :all}
-
-   :repl
-   {:dependencies
-    [[mvxcvi/directive "0.1.0"]
+    [[mvxcvi/directive "0.5.0-SNAPSHOT" #_ "0.4.1"]
      [org.clojure/tools.namespace "0.2.4"]]
-    :source-paths ["repl" "tool"]}})
+    :jvm-opts []
+    :repl-options {:init-ns vault.system}
+    :source-paths ["tool"]}
+
+   :repl [:tool]})
