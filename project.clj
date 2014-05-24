@@ -27,15 +27,11 @@
 
    :tool
    {:dependencies
-    [[mvxcvi/directive "0.1.0"]]
-    :source-paths ["tool"]
-    :jar-name "vault-tool-%s.jar"
-    :uberjar-name "vault-tool.jar"
-    :main vault.tool.main
-    :aot :all}
-
-   :repl
-   {:dependencies
-    [[mvxcvi/directive "0.1.0"]
+    [[org.clojure/tools.cli "0.3.1"]
      [org.clojure/tools.namespace "0.2.4"]]
-    :source-paths ["repl" "tool"]}})
+    :jvm-opts []
+    ;:main vault.tool.main
+    :repl-options {:init-ns vault.system}
+    :source-paths ["tool"]}
+
+   :repl [:tool]})

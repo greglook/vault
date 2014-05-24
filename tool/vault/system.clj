@@ -1,4 +1,4 @@
-(ns user
+(ns vault.system
   (:require
     (clj-time
       [core :as time]
@@ -16,7 +16,7 @@
     [vault.entity.core :as entity]
     [vault.index.core :as index]
     (vault.tool
-      [config :as tool-conf])))
+      [config :as config])))
 
 
 ;; GENERAL CONFIG
@@ -28,34 +28,10 @@
 ;; VAULT SYSTEM
 
 (def config
-  (->
-    {:config-dir tool-conf/default-path}
-    tool-conf/initialize))
+  (config/load-configs "dev/config"))
 
 
 (def blobs
-  (tool-conf/select-blob-store
+  (config/select-blob-store
     (:blob-stores config)
     :default))
-
-
-
-;; LIFECYCLE FUNCTIONS
-
-(defn start
-  "Start the application."
-  []
-  nil)
-
-
-(defn stop
-  "Stop the application."
-  []
-  nil)
-
-
-(defn reset
-  "Reset the repl and reload state."
-  []
-  (stop)
-  (refresh :after 'user/start))
