@@ -47,7 +47,7 @@
             blob))))
 
 
-  store/DestructiveBlobStore
+  store/DestructableBlobStore
 
   (delete!
     [this id]

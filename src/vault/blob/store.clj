@@ -10,12 +10,6 @@
 (defrecord Blob [id ^bytes content])
 
 
-(defmethod print-method Blob
-  [v ^java.io.Writer w]
-  (let [v (dissoc v :content)]
-    (.write w (prn-str v))))
-
-
 (defn record
   "Constructs a new blob record with the given id and optional content."
   ([id]
@@ -59,7 +53,7 @@
     with `stat` metadata."))
 
 
-(defprotocol DestructiveBlobStore
+(defprotocol DestructableBlobStore
   "Additional blob storage protocol to represent direct storage types which can
   excise blob data."
 

@@ -101,7 +101,7 @@
         (test-blob-content store id content))
       (let [[id content] (first (seq stored-content))]
         (test-restore-blob store id content))
-      (when (satisfies? store/DestructiveBlobStore store)
+      (when (satisfies? store/DestructableBlobStore store)
         (doseq [id (keys stored-content)]
           (is (store/delete! store id) "delete returns true"))
         (is (empty? (blob/list store)) "ends empty")

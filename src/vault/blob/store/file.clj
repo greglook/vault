@@ -32,7 +32,7 @@
   (let [root (str root)
         file (str file)]
     (when-not (.startsWith file root)
-      (throw (IllegalArgumentException.
+      (throw (IllegalStateException.
                (str "File " file " is not a child of root directory " root))))
     (-> file
         (subs (inc (count root)))
@@ -118,7 +118,7 @@
       (merge blob (blob-stats file))))
 
 
-  store/DestructiveBlobStore
+  store/DestructableBlobStore
 
   (delete!
     [this id]
