@@ -31,22 +31,7 @@
     "Command-line tool for the vault data store."
 
     ["-v" "--verbose" "Show extra debugging messages."]
-    ["-h" "--help" "Show usage information."]
-
-
-    (command "config <type>"
-      "Show configuration information."
-
-      (command "dump"
-        "Prints out a raw version of the configuration map."
-
-        [nil "--pretty" "Formats the info over multiple lines for easier viewing."
-         :default true]
-
-        (action [opts args]
-          (if (:pretty opts)
-            (cprint sys/config)
-            (prn sys/config)))))
+    ["-h" "--help"    "Show usage information."]
 
 
     (command "blob <action> [args]"
