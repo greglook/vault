@@ -2,11 +2,11 @@
   (:require
     [mvxcvi.directive :refer [command execute]]
     [puget.printer :refer [pprint cprint]]
+    [vault.system :as sys]
     (vault.tool
-      [config :as config]
       [blob :as blob-tool]
       [data :as data-tool]))
-  (:gen-class :main true))
+  #_ (:gen-class :main true))
 
 
 ;; UTILITY ACTIONS
@@ -19,7 +19,8 @@
 
 (defn- not-yet-implemented
   [opts args]
-  (println "This command is not yet implemented"))
+  (binding [*out* *err*]
+    (println "This command is not yet implemented")))
 
 
 
@@ -29,16 +30,10 @@
   (command "vault [global opts] <command> [command args]"
     "Command-line tool for the vault data store."
 
-    ["--config" "Set path to vault configuration."
-     :default config/default-path]
-    ["--store" "Select blob store to use."
-     :parse-fn keyword]
     ["-v" "--verbose" "Show extra debugging messages."
-     :flag true :default false]
+     :default false]
     ["-h" "--help" "Show usage information."
-     :flag true :default false]
-
-    (init config/initialize)
+     :default false]
 
 
     (command "config <type>"
@@ -47,23 +42,17 @@
       (command "dump"
         "Prints out a raw version of the configuration map."
 
-        ["--pretty" "Formats the info over multiple lines for easier viewing."
-         :flag true :default false]
+        [nil "--pretty" "Formats the info over multiple lines for easier viewing."
+         :default true]
 
         (action [opts args]
           (if (:pretty opts)
-            (cprint opts)
-            (prn opts))))
-
-      (command "stores"
-        "List the available blob stores."
-        (action config/list-blob-stores)))
+            (cprint sys/config)
+            (prn sys/config)))))
 
 
     (command "blob <action> [args]"
       "Low-level commands dealing with data blobs."
-
-      (init config/setup-blob-store)
 
       (command "list [opts]"
         "Enumerate the stored blobs."
@@ -76,8 +65,8 @@
       (command "stat <blobref> [blobref ...]"
         "Show information about a stored blob."
 
-        ["--pretty" "Format the info over multiple lines for easier viewing."
-         :flag true :default true]
+        [nil "--pretty" "Format the info over multiple lines for easier viewing."
+         :default true]
 
         (action blob-tool/blob-info))
 
@@ -93,22 +82,19 @@
     (command "data <action> [args]"
       "Interact with object entities and data."
 
-      (init config/setup-blob-store)
-
       (command "show <blobref> [blobref ...]"
         "Inspect the contents of the given blobs, pretty-printing EDN values and showing hex for binary blobs."
 
-        ["-b" "--binary" "Print blobs as binary even if they appear to be textual."
-         :flag true]
+        ["-b" "--binary" "Print blobs as binary even if they appear to be textual."]
 
         (action data-tool/show-blob))
 
       (command "create [args]"
         "Create a new object."
 
-        ["--time" "Set the time to create the object root with. Defaults to the current time."]
-        ["--id" "Set an identity for the object root. Defaults to a random string."]
-        ["--attributes" "Provide an initial set of attributes for the object."]
+        ["-t" "--time" "Set the time to create the object root with. Defaults to the current time."]
+        ["-i" "--id" "Set an identity for the object root. Defaults to a random string."]
+        ["-a" "--attribute" "Provide an initial set of attributes for the object."]
 
         (action not-yet-implemented))
 

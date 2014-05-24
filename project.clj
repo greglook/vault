@@ -13,7 +13,6 @@
    [mvxcvi/puget "0.5.1"]
    [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
-   [org.clojure/tools.cli "0.2.4"]
    [prismatic/schema "0.2.2"]]
 
   :hiera
@@ -27,7 +26,7 @@
 
    :tool
    {:dependencies
-    [[org.clojure/tools.cli "0.3.1"]
+    [[mvxcvi/directive "0.4.1"]
      [org.clojure/tools.namespace "0.2.4"]]
     :jvm-opts []
     ;:main vault.tool.main
