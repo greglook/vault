@@ -33,12 +33,12 @@
     ["-v" "--verbose" "Show extra debugging messages."]
     ["-h" "--help"    "Show usage information."]
 
+    (init [opts]
+      (assoc opts :store sys/blobs))
+
 
     (command "blob <action> [args]"
       "Low-level commands dealing with data blobs."
-
-      (init [opts]
-        (assoc opts :store sys/blobs))
 
       (command "list [opts]"
         "Enumerate the stored blobs."
@@ -62,8 +62,8 @@
 
       (command "put <source>"
         "Store a blob of data and print the resulting hash-id. If source is '-',
-        data will be read from stdin. Otherwise, it should be a file to read
-        content from."
+              data will be read from stdin. Otherwise, it should be a file to read
+              content from."
         (action blob-tool/put-blob)))
 
 
@@ -72,7 +72,7 @@
 
       (command "show <hash-id> [hash-id ...]"
         "Inspect the contents of the given blobs, pretty-printing EDN values and
-        showing hex for binary blobs."
+              showing hex for binary blobs."
 
         ["-b" "--binary" "Print blobs as binary even if they appear to be textual."]
 
