@@ -2,6 +2,7 @@
   (:require
     [clojure.java.io :as io]
     [clojure.string :as str]
+    [mvxcvi.directive :refer [fail print-err]]
     [puget.printer :refer [cprint]]
     (vault.blob
       [core :as blob]
@@ -60,13 +61,11 @@
 (defn get-blob
   [opts args]
   (when (or (empty? args) (> (count args) 1))
-    (throw (IllegalArgumentException. "Must provide a single blobref or unique prefix.")))
+    (fail "Must provide a single hash-id or unique prefix."))
   (let [store (:store opts)
         ids (enumerate-prefix store (first args))]
     (when (< 1 (count ids))
-      (throw (IllegalArgumentException.
-               (str (count ids) " blobs match prefix: "
-                    (str/join ids " ")))))
+      (fail (str (count ids) " blobs match prefix: " (str/join ids " "))))
     (let [blob (blob/get store (first ids))]
       (io/copy (:content blob) *out*))))
 
@@ -74,9 +73,8 @@
 (defn put-blob
   [opts args]
   (when (or (empty? args) (< 1 (count args)))
-    (throw (IllegalArgumentException. "Must provide a single source of blob data.")))
+    (fail "Must provide a single source of blob data."))
   (let [source (io/file (first args))]
     (if-let [blob (blob/store! (:store opts) source)]
       (println (str (:id blob)))
-      (binding [*out* *err*]
-        (println "(no content)")))))
+      (print-err "(no content)"))))
