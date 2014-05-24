@@ -7,6 +7,7 @@
     [clojure.repl :refer :all]
     [clojure.string :as str]
     [clojure.tools.namespace.repl :refer [refresh]]
+    [environ.core :refer [env]]
     (puget
       [data]
       [printer :as puget])
@@ -21,14 +22,14 @@
 
 ;; GENERAL CONFIG
 
-(puget.data/extend-tagged-map vault.blob.store.Blob 'vault.repl/blob)
+(puget.data/extend-tagged-map vault.blob.store.Blob 'vault.tool/blob)
 
 
 
 ;; VAULT SYSTEM
 
 (def config
-  (config/load-configs "dev/config"))
+  (config/load-configs (env :vault-config "dev/config")))
 
 
 (def blobs
