@@ -58,11 +58,12 @@ uniquely identify a blob:
 ```
 % vault blob stat e0f2
 sha256:e0f2c726eca178f80ba12ff3720ba03c01f02f7a6e979ba78e3f26b9b522056a
-{:content-type "text/plain",
- :location #uri
- "file:/home/USER/var/vault/sha256/e0f/2c7/26eca178f80ba12ff3720ba03c01f02f7a6e979ba78e3f26b9b522056a",
- :since #inst "2013-11-16T05:09:56.000-00:00",
- :size 30}
+#vault.tool/blob
+{:content nil
+ :id #vault/ref "sha256:e0f2c726eca178f80ba12ff3720ba03c01f02f7a6e979ba78e3f26b9b522056a"
+ :stat/origin #uri "file:/home/$USER/vault/dev/var/blobs/sha256/e0f/2c7/sha256-e0f2c726eca178f80ba12ff3720ba03c01f02f7a6e979ba78e3f26b9b522056a"
+ :stat/size 30
+ :stat/stored-at #inst "2014-05-26T04:58:56.000Z"}
 
 % vault blob get e0f
 I made a blob for the README!
