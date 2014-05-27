@@ -17,7 +17,7 @@
 
   :hiera
   {:cluster-depth 2
-   :ignore-ns #{potemkin}}
+   :ignore-ns #{clojure potemkin}}
 
   :profiles
   {:coverage
@@ -26,7 +26,7 @@
 
    :tool
    {:dependencies
-    [[mvxcvi/directive "0.5.0-SNAPSHOT" #_ "0.4.1"]
+    [[mvxcvi/directive "0.4.2"]
      [org.clojure/tools.namespace "0.2.4"]]
     :jvm-opts []
     :repl-options {:init-ns vault.system}
