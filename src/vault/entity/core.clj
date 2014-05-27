@@ -108,14 +108,14 @@
   "Looks up the owner for the given entity root id. Throws an exception if any
   of the ids is not an entity root."
   [blob-store root-id]
-  (let [blob (data/read-blob blob-store (blob/get blob-store root-id))]
+  (let [blob (data/read-blob (blob/get blob-store root-id))]
     (when-not blob
       (throw (IllegalArgumentException.
                (str "Cannot get owner for nonexistent entity " root-id))))
-    (when-not (root? (data/value blob))
+    (when-not (root? (data/blob-value blob))
       (throw (IllegalArgumentException.
                (str "Cannot get owner for non-root blob " root-id))))
-    (:owner (data/value blob))))
+    (:owner (data/blob-value blob))))
 
 
 (defn update-record
@@ -156,7 +156,7 @@
             (fn [[op attr value]]
               (Datom. op entity attr value (:id blob) time))
             fragments))
-        data (-> blob :data/values first :data)]
+        data (:data (data/blob-value blob))]
     (case (:data/type blob)
       :vault.entity/root
       (map-datoms (:time data) (:id blob) data)
