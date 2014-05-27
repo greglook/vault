@@ -11,8 +11,8 @@
 
 ;; COMMON SCHEMAS
 
-(def root-type   :vault.entity/root)
-(def update-type :vault.entity/update)
+(def ^:const root-type   :vault.entity/root)
+(def ^:const update-type :vault.entity/update)
 
 
 (def DatomFragment
@@ -86,6 +86,22 @@
     blob-store
     sig-provider
     (:owner args)))
+
+
+(defn validate-root-blob
+  "Checks the structure and signatures on an entity root blob. Returns a blob
+  record with verified signatures."
+  [root blob-store]
+  (schema/validate EntityRoot (data/blob-value root))
+  (let [root (data/verify-sigs root blob-store)
+        sigs (:data/signatures root)
+        owner (:owner (data/blob-value root))]
+    (when-not (contains? sigs owner)
+      (throw (IllegalStateException.
+               (str "Entity root blob " (:id root)
+                    " does not have a valid signature by the owning key "
+                    owner))))
+    root))
 
 
 

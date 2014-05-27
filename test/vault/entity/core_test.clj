@@ -6,6 +6,8 @@
     [schema.core :as schema]
     [vault.blob.core :as blob]
     [vault.data.core :as data]
+    [vault.data.edn :as edn-data]
+    [vault.data.test-keys :as keys]
     [vault.entity.core :as entity]))
 
 
@@ -46,3 +48,19 @@
     (is (schema/validate entity/EntityUpdate record))
     (is (= dt (:time record)))
     (is (entity/update? record))))
+
+
+(deftest root-blobs
+   (let [root (entity/root-blob
+                keys/blob-store
+                keys/sig-provider
+                {:owner keys/pubkey-id
+                 :id "foobar"
+                 :time (time/date-time 2014 5 15 1 21 36)
+                 :data [[:attr/set :title "Thing #1"]]})]
+     (puget/with-color (edn-data/print-blob root))
+     (is (entity/validate-root-blob root keys/blob-store))
+     (is (thrown? RuntimeException
+           (entity/validate-root-blob
+             (update-in root [:data/values] (comp vector first))
+             keys/blob-store)))))
