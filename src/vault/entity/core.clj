@@ -1,6 +1,8 @@
 (ns vault.entity.core
   (:require
     [clj-time.core :as time]
+    [clojure.set :as set]
+    [clojure.string :as str]
     [schema.core :as schema]
     [vault.blob.core :as blob]
     [vault.data.core :as data])
@@ -79,8 +81,6 @@
 (defn root-blob
   "Constructs a new entity blob for the given owner."
   [blob-store sig-provider args]
-  ; TODO: explicitly check owner is a public key?
-  ; Happens automatically during signing anyway...
   (data/sign-value
     (root-record args)
     blob-store
@@ -91,17 +91,17 @@
 (defn validate-root-blob
   "Checks the structure and signatures on an entity root blob. Returns a blob
   record with verified signatures."
-  [root blob-store]
-  (schema/validate EntityRoot (data/blob-value root))
-  (let [root (data/verify-sigs root blob-store)
-        sigs (:data/signatures root)
-        owner (:owner (data/blob-value root))]
+  [blob blob-store]
+  (schema/validate EntityRoot (data/blob-value blob))
+  (let [blob (data/verify-sigs blob blob-store)
+        sigs (:data/signatures blob)
+        owner (:owner (data/blob-value blob))]
     (when-not (contains? sigs owner)
       (throw (IllegalStateException.
-               (str "Entity root blob " (:id root)
+               (str "Entity blob blob " (:id blob)
                     " does not have a valid signature by the owning key "
                     owner))))
-    root))
+    blob))
 
 
 
@@ -134,6 +134,15 @@
     (:owner (data/blob-value blob))))
 
 
+(defn- get-update-owners
+  "Given a map of DatomUpdates, returns a set of the hash-ids of the
+  keys which own the updated entities."
+  [blob-store updates]
+  (->> (keys updates)
+       (map (partial get-owner blob-store))
+       set))
+
+
 (defn update-record
   "Constructs a new entity update value."
   [{:keys [time data]}]
@@ -141,20 +150,35 @@
   (data/typed-map
     update-type
     :time (or time (time/now))
-    :data data))
+    :data (into (sorted-map) data)))
 
 
 (defn update-blob
   "Constructs a new update blob from the given args."
   [blob-store sig-provider args]
-  (let [owners (sort (map (partial get-owner blob-store)
-                          (keys (:data args))))]
-    (apply
-      data/sign-value
-      (update-record args)
-      blob-store
-      sig-provider
-      owners)))
+  (apply
+    data/sign-value
+    (update-record args)
+    blob-store
+    sig-provider
+    (get-update-owners blob-store (:data args))))
+
+
+(defn validate-update-blob
+  "Checks the structure and signatures on an entity update blob. Returns a blob
+  record with verified signatures."
+  [blob blob-store]
+  (schema/validate EntityUpdate (data/blob-value blob))
+  (let [blob (data/verify-sigs blob blob-store)
+        sigs (:data/signatures blob)
+        owners (get-update-owners blob-store (:data (data/blob-value blob)))
+        missing (set/difference owners sigs)]
+    (when-not (empty? missing)
+      (throw (IllegalStateException.
+               (str "Entity update blob " (:id blob)
+                    " is missing signatures by some owning keys: "
+                    (str/join " " missing)))))
+    blob))
 
 
 
@@ -172,9 +196,9 @@
             (fn [[op attr value]]
               (Datom. op entity attr value (:id blob) time))
             fragments))
-        data (:data (data/blob-value blob))]
-    (case (:data/type blob)
-      :vault.entity/root
-      (map-datoms (:time data) (:id blob) data)
-      :vault.entity/update
-      (mapcat (partial apply map-datoms (:time data)) data))))
+        record (data/blob-value blob)]
+    (condp = (:data/type blob)
+      root-type
+      (map-datoms (:time record) (:id blob) (:data record))
+      update-type
+      (mapcat (partial apply map-datoms (:time record)) (:data record)))))
