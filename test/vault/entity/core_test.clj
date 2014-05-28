@@ -93,7 +93,8 @@
                  keys/sig-provider
                  {:data updates
                   :time t})]
-    #_ (do
+    #_
+    (do
       (println "root-a" (str (:id root-a)))
       (puget/with-color (edn-data/print-blob root-a))
       (newline)
@@ -117,4 +118,8 @@
               (entity/->Datom :attr/set (:id root-a) :foo/bar 42 (:id update) t)
               (entity/->Datom :attr/set (:id root-b) :title "Entity B" (:id update) t)
               (entity/->Datom :attr/add (:id root-b) :baz/xyz :abc (:id update) t)]
-             (entity/blob->datoms update))))))
+             (entity/blob->datoms update))))
+    #_
+    (let [datoms (mapcat entity/blob->datoms [root-a root-b update])]
+      (puget/cprint (entity/entity-state (:id root-a) datoms))
+      (puget/cprint (entity/entity-state (:id root-b) datoms)))))

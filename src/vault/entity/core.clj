@@ -22,7 +22,7 @@
   :op, :attr, and :value."
   [(schema/one schema/Keyword "operation")
    (schema/one schema/Keyword "attribute")
-   (schema/one (schema/pred some? "some?") "value")])
+   (schema/optional (schema/pred some? "some?") "value")])
 
 
 (def DatomFragments
@@ -202,3 +202,53 @@
       (map-datoms (:time record) (:id blob) (:data record))
       update-type
       (mapcat (partial apply map-datoms (:time record)) (:data record)))))
+
+
+(defn apply-datom
+  "Applies a datom to an entity state map to produce an updated state value.
+  If the datom entity is not the same as the state value, it is ignored."
+  [entity {:keys [op attribute value] :as datom}]
+  (if (= (:vault.entity/id entity) (:entity datom))
+    (let [current (get entity attribute)]
+      (case op
+        :attr/set
+        (assoc entity attribute value)
+
+        :attr/add
+        (assoc entity attribute
+          (cond
+            (set? current)
+            (conj current value)
+
+            (nil? current)
+            (sorted-set value)
+
+            :else
+            (sorted-set current value)))
+
+        :attr/del
+        (cond
+          (nil? value)
+          (dissoc entity attribute)
+
+          (set? current)
+          (let [new-set (disj current value)]
+            (if (empty? new-set)
+              (dissoc entity attribute)
+              (assoc entity attribute new-set)))
+
+          (= current value)
+          (dissoc entity attribute)
+
+          :else
+          entity)))
+    entity))
+
+
+(defn entity-state
+  "Given a sequence of datoms, return a map giving the 'current' state of some
+  entity."
+  [root-id datoms]
+  (reduce apply-datom
+    (sorted-map :vault.entity/id root-id)
+    datoms))
