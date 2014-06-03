@@ -10,10 +10,10 @@
    [environ "0.5.0"]
    [potemkin "0.3.4"]
    [mvxcvi/clj-pgp "0.5.2"]
-   [mvxcvi/puget "0.5.1"]
+   [mvxcvi/puget "0.5.2"]
    [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
-   [prismatic/schema "0.2.2"]]
+   [prismatic/schema "0.2.3"]]
 
   :hiera
   {:cluster-depth 2
