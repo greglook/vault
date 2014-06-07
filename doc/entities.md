@@ -29,19 +29,17 @@ which updates to apply.
 ## Entity Attributes
 
 Entities act like a map, grouping together named _attributes_. These specify
-relationships between entities and values. Attribute should be given relatively
-primitive values, preferring to reference more complex data indirectly. Values
-may be either a primitive, such as a boolean, integer, double, or string, or a
-blobref. Attributes may either be scalars (single values) or sets (multiple
-values).
+relationships between entities and values. Attribute values must be primitive
+types, such as booleans, integers, doubles, strings, or hash-ids. Attributes can
+be single-valued (such as `:title`), or multi-valued (such as `:tags`).
+Multi-valued attributes are represented as unordered sets.
 
-Attributes are named by keywords, which should generally be namespaced.
-- `:identity` - a (unique) symbolic shortcut to give to the entity
-- `:content` - the 'state value' of the entity
-- `:title` - string naming the entity
-- `:description` - longer string describing the entity
+Attributes are named by keywords, which should generally be namespaced. Some
+potential system-level attributes are:
+- `:ident` - a (unique) symbolic shortcut to give to the entity
+- `:title` - a string naming the entity
+- `:description` - a longer string describing the entity in detail
 - `:tags` - set of string tags labeling the entity
-- `:http/content-type` - MIME type for the entity's content
 
 ## Temporal Ordering
 

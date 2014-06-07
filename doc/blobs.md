@@ -16,13 +16,17 @@ useful properties:
 
 ## Hash Identifiers
 
-Blobs are referenced by URN-like strings which specify the _cryptographic
-digest_ of the blob's contents. This can be represented a few different ways,
-with varying levels of verbosity.  The most succinct is to just prepend the
-shortened code for the algorithm which produced the hash. Other components could
-include the leading 'urn' scheme, and a fully-specified version could use the
-'hash' URN namespace. For example, the SHA-256 algorithm hashes the string
-"foobarbaz" to the following digest:
+Blobs are referenced by URN-like strings which specify the cryptographic digest
+of the blob's contents. The pairing of an algorithm and hex digest is a _hash
+identifier_, or hash-id.
+
+These ids can be represented a few different ways, with varying levels of
+verbosity. The most succinct is to just prepend the shortened code for the
+algorithm which produced the hash. Other components could include the leading
+'urn' scheme, and a fully-specified version could use the 'hash' URN namespace.
+
+For example, the SHA-256 algorithm hashes the string "foobarbaz" to the
+following ids:
 
 ```
 urn:hash:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
@@ -30,13 +34,12 @@ urn:sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 ```
 
-The pairing of an algorithm and hex digest is a _hash identifier_, also known as
-a _blobref_. In practice, the shorter `algo:digest` form will probably be used
-internally for brevity. External representations of the identifier can add the
-'urn' components as desired.
+In practice, the shorter `algo:digest` form will probably be used internally for
+brevity. External representations of the identifier can add the 'urn' components
+as desired.
 
 Another non-canonical syntax trades the colon (:) for a hyphen (-) to make the
-identifiers _path-safe_. This lets them be used in URLs and file paths.
+identifiers path-safe. This lets them be used in URLs and file paths.
 
 ## Storage Interface
 
@@ -55,7 +58,8 @@ The blob storage interface is straightforward:
 - `get` - return the bytes stored for a blob
 - `put!` - store a some bytes as a blob
 
-Optionally, some stores may _separately_ implement the following operations:
+Optionally, some stores may be _destructable_ and implement the following
+operations:
 - `remove!` - drop a blob from the store
 - `destroy!!` - completely remove the blob store
 
@@ -75,7 +79,7 @@ with no content. An example from a blob stored in S3 might look like:
 
 ```clojure
 {:id #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"
- :stat/origin #uri "s3://user-bucket/vault/sha256/53e/0b9/f7503729f698..."
+ :stat/origin #uri "s3://user-bucket/vault/sha256/53e/0b9/sha256-53e0b9f7503729f698..."
  :stat/size 12345
  :stat/stored-at #inst "2013-12-01T18:23:48Z"}
 ```

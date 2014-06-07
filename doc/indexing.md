@@ -12,13 +12,48 @@ authoritative stores of the blob data, and should not store entire blob
 contents.
 
 Since indexes are not intended to be durable, it is fine to delete and rebuild
-them at any time. Indexes can be treated as a type of blobstore which does not
-support the `get` operation.
+them at any time.
 
-## Graph Indexes
+## Searchable Interface
+
+In general, _searchables_ support most of the methods of a blob-store except
+the `get` operation. To index a blob, you simply `put!` it into the index. Each
+searchable contains some record structure of data and maps lookups through
+sorted indexes of the values of those attributes.
+
+As an example, if searchable Foo stores the following type of data, and sets up
+the `:foo/id` and `:foo/alpha` indexes:
+
+```clojure
+{:id    String
+ :alpha Long
+ :beta  Long}
+
+:foo/id    [id]
+:foo/alpha [alpha beta]
+```
+
+- A query specifying the `id` would be looked up in the `:foo/id` index.
+- A query by `alpha` value would use the `:foo/alpha` index.
+- A query for `beta` would result in a slow scan of `:foo/alpha`.
+- A query for `id` and `alpha` would be looked up in `:foo/id`, because it
+  fully specifies the index. The resulting values would be filtered by `alpha`.
+
+```clojure
+(index/search foo {:id "abcdefg"})
+; =>
+({:id "abcdefg"
+  :alpha 123
+  :beta 456})
+```
+
+The function `rsearch` will probably be available as well, to return results in
+reverse order.
+
+### Low-Level Indexes
 
 The first two indexes deal with blobs and references, mapping the nodes and
-edges of the blob graph.
+edges of the blob graph. The third deals with PGP key lookups by numeric id.
 
 ### Blob Index
 
@@ -65,7 +100,7 @@ certain identity.
    reference the public key.
 3. Filter blobs by checking the public keys used in their signatures.
 
-## Identity Index
+### Key Index
 
 This index stores a mapping from numeric PGP key ids to the public key blob's
 hash-id.

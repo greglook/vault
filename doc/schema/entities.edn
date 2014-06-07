@@ -24,8 +24,3 @@
   #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
   [[:attr/del :description]
    [:attr/set :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}}
-
-
-{:vault/type :vault.entity/delete
- :time #inst "2013-10-25T09:13:24.000-00:00"
- :target #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"}
