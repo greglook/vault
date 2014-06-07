@@ -32,8 +32,9 @@ URN:
 `sha256:2f72cc11a6fcd0271ecef8c61056ee1eb1243be3805bf9a9df98f92f7636b05c`
 
 A _blob store_ is a system which can store and retrieve blob data. Blob stores
-must support a very simple interface; mainly storing and retrieving blobs, and
-enumerating the stored blobs. A simple example is a file-based store.
+support a very simple interface; they must store, retrieve, and enumerate the
+contained blobs. The simplest type of blob storage is a hash map in memory.
+Another simple example is a file system, where blobs are stored as local files.
 
 ### Data Format
 
@@ -41,6 +42,22 @@ To represent [structured data](doc/data-structures.md), Vault uses
 [EDN](https://github.com/edn-format/edn). Data blobs are recognized by a magic
 header sequence: `#vault/data\n`. This has the advantage of still being a legal
 EDN tag, though it is stripped in practice.
+
+An example data blob representing a file might look like this:
+
+```clojure
+#vault/data
+{:change-time #inst "2013-10-23T20:06:13.000-00:00"
+ :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+ :group "users"
+ :group-id 500
+ :modify-time #inst "2013-10-25T09:13:24.000-00:00"
+ :name "foo.clj
+ :owner "greglook"
+ :owner-id 1000
+ :permissions "0755"
+ :vault/type :fs/file}
+```
 
 Blob references through hash-ids provide a secure way to link to immutable data,
 so it is simple to build data structures which automatically deduplicate shared
@@ -58,7 +75,7 @@ A second fundamental component of the system is a set of
 of as a sorted list of tuples. Different indexes will store different subsets of
 the blob data.
 
-### Entity
+### Entities and State
 
 Mutable data is represented in Vault by [entities](doc/entities.md).
 - A _root blob_ serves as the static identifier of an entity.
@@ -67,7 +84,14 @@ Mutable data is represented in Vault by [entities](doc/entities.md).
 
 Identity and ownership in Vault are handled by [cryptographic
 signatures](doc/signatures.md). These provide trust to data that is present in
-the blob layer.
+the blob layer. Signatures are provided as secondary values in a data blob,
+following the primary value:
+
+```clojure
+{:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+ :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
+ :vault/type :vault/signature}
+```
 
 ### Application
 
