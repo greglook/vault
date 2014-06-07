@@ -52,7 +52,7 @@ An example data blob representing a file might look like this:
  :group "users"
  :group-id 500
  :modify-time #inst "2013-10-25T09:13:24.000-00:00"
- :name "foo.clj
+ :name "foo.clj"
  :owner "greglook"
  :owner-id 1000
  :permissions "0755"
