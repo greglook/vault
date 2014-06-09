@@ -38,7 +38,7 @@ Another simple example is a file system, where blobs are stored as local files.
 
 ### Data Format
 
-To represent [structured data](doc/data-structures.md), Vault uses
+To represent [structured data](doc/structured-data.md), Vault uses
 [EDN](https://github.com/edn-format/edn). Data blobs are recognized by a magic
 header sequence: `#vault/data\n`. This has the advantage of still being a legal
 EDN tag, though it is stripped in practice.
