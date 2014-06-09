@@ -1,5 +1,4 @@
-; An entity root blob must contain two EDN values - the root node, and a
-; signature by the owner's key.
+; Entity root and update blobs must also contain a signature by the owner's key.
 
 
 {:vault/type :vault.entity/root
