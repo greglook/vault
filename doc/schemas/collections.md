@@ -1,4 +1,5 @@
-# Organizing Data
+Organizing Data
+===============
 
 Another desired feature of the system is an organizational layer on top of the
 permanode entities. In effect, one or more heirarchies of collections. In
