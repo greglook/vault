@@ -7,6 +7,8 @@ has some address based on its hash digest. If the user updates the document,
 they must keep a different address for the new version. The concept tying the
 different versions of the document together is _identity_.
 
+## Motivation
+
 As an example, suppose some data representing a financial transaction includes
 `to` and `from` attributes. The simplest way to identify the accounts involved
 would be to use a string to name them. Unfortunately, this does not scale well
@@ -16,17 +18,20 @@ An alternative is to refer to a blob of metadata about the account, but this is
 also brittle! Because data is immutable, if we need to update the metadata about
 the account, all the data must be re-stored with an updated hash reference.
 
+## Roots and Updates
+
 To get around these problems, _entities_ assign a continuous identity to a
-collection of attributes as they change over time. Entities are defined by data
-in a _root_ blob. This provides a stable address to reference the entity by.
+collection of _attributes_ as they change over time. Entities are defined by
+data in a _root_ blob. The address of this root provides a stable address to
+reference the entity by.
 
 Changes to the entity are enacted by adding further _update blobs_ to the store.
 These blobs specify modifications to the entity, so the 'current' state of the
 entity can be determined by applying the full sequence of updates made to it.
-Actually, the state of the entity at _any_ time can be recovered by selecting
-which updates to apply.
+This history allows  the state of the entity at any time can be recovered by
+selecting which updates to apply.
 
-## Entity Attributes
+## Attributes
 
 Entities act like a map, grouping together named _attributes_. These specify
 relationships between entities and values. Attribute values must be primitive
@@ -40,6 +45,60 @@ potential system-level attributes are:
 - `:title` - a string naming the entity
 - `:description` - a longer string describing the entity in detail
 - `:tags` - set of string tags labeling the entity
+
+## Datoms
+
+A _datom_ is an atomic fact about an entity. Datoms apply some _operation_ to a
+single attribute of an entity. Entity roots and updates may contain a sequence
+of datoms about entities.
+
+```clojure
+{:vault/type :vault.entity/root
+ :id "a123d1c0f82f2ea1"
+ :owner #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+ :time #inst "2013-10-23T20:06:13Z"
+ :data
+ [[:attr/set :name "Example Entity"]
+  [:attr/set :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"]
+  [:attr/add :tags "foo"]
+  [:attr/add :tags "bar"]]}
+
+
+{:vault/type :vault.entity/update
+ :time #inst "2013-10-25T09:13:24.000-00:00"
+ :data
+ {#vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+  [[:attr/set :name "A Thing"]
+   [:attr/add :tags "foo"]
+   [:attr/add :tags "bar"]
+   [:attr/del :tags "bar"]]
+  #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+  [[:attr/del :description]
+   [:attr/set :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}}
+```
+
+The datoms in a root or update blob are _transactional_, meaning they apply
+atomically to the entity states.
+
+## Data Signatures
+
+Vault makes use of the OpenPGP standard for public keys and digital signatures.
+Users of Vault are identified by _public key_ - the key itself is stored
+directly in the system as an ASCII 'armored' blob. The address of the key blob
+serves as an unambiguous identifier of the person controlling the corresponding
+private key.
+
+Users can sign data in the system with 'signature' structures. Signatures are
+maps which follow the primary value in a data blob, and reference the public key
+blob of the owner.
+
+```clojure
+{:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+ :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
+ :vault/type :vault/signature}
+```
+
+Entity roots and updates must be signed to be considered valid.
 
 ## Temporal Ordering
 
