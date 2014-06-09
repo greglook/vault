@@ -1,6 +1,9 @@
 TODO
 ----
 
+- record type for an entity which implements IAssociative and friends, and can
+  look up references from the blob-store.
+
 ## Tool
 Maybe switch to using profiles? E.g. keep my 'main' data store separate from
 media or 'sensitive' data. In general support more public/private delineation?

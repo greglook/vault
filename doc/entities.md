@@ -25,11 +25,40 @@ collection of _attributes_ as they change over time. Entities are defined by
 data in a _root_ blob. The address of this root provides a stable address to
 reference the entity by.
 
+```clojure
+{:vault/type :vault.entity/root
+ :id "a123d1c0f82f2ea1"
+ :owner #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+ :time #inst "2013-10-23T20:06:13Z"
+ :data
+ [[:attr/set :name "Example Entity"]
+  [:attr/set :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"]
+  [:attr/add :tags "foo"]
+  [:attr/add :tags "bar"]]}
+```
+
 Changes to the entity are enacted by adding further _update blobs_ to the store.
 These blobs specify modifications to the entity, so the 'current' state of the
 entity can be determined by applying the full sequence of updates made to it.
 This history allows  the state of the entity at any time can be recovered by
 selecting which updates to apply.
+
+```clojure
+{:vault/type :vault.entity/update
+ :time #inst "2013-10-25T09:13:24.000-00:00"
+ :data
+ {#vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
+  [[:attr/set :name "A Thing"]
+   [:attr/add :tags "foo"]
+   [:attr/add :tags "bar"]
+   [:attr/del :tags "bar"]]
+  #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+  [[:attr/del :description]
+   [:attr/set :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}}
+```
+
+Root and update blobs are _transactional_, meaning they apply atomically to the
+states of the relevant entities.
 
 ## Attributes
 
@@ -52,33 +81,16 @@ A _datom_ is an atomic fact about an entity. Datoms apply some _operation_ to a
 single attribute of an entity. Entity roots and updates may contain a sequence
 of datoms about entities.
 
-```clojure
-{:vault/type :vault.entity/root
- :id "a123d1c0f82f2ea1"
- :owner #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
- :time #inst "2013-10-23T20:06:13Z"
- :data
- [[:attr/set :name "Example Entity"]
-  [:attr/set :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"]
-  [:attr/add :tags "foo"]
-  [:attr/add :tags "bar"]]}
-
-
-{:vault/type :vault.entity/update
- :time #inst "2013-10-25T09:13:24.000-00:00"
- :data
- {#vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
-  [[:attr/set :name "A Thing"]
-   [:attr/add :tags "foo"]
-   [:attr/add :tags "bar"]
-   [:attr/del :tags "bar"]]
-  #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
-  [[:attr/del :description]
-   [:attr/set :content #vault/ref "sha256:53e0b9f7503729f698174615666322f00f916cceb4518e8e1c6f373e53b56180"]]}}
-```
-
-The datoms in a root or update blob are _transactional_, meaning they apply
-atomically to the entity states.
+Valid operations are:
+- `:attr/set` - Sets the value of an attribute to a single, provided value.
+- `:attr/add` - Adds a value to a multi-valued attribute. If the attribute was
+  single-valued prior to the operation, the result is a set containing both it
+  and the new value.
+- `:attr/del` - Removes an attribute value. If the value given to the operation
+  is nil, the attribute is completely removed from the entity. If the attribute
+  is multi-valued, the operation's value is removed from the set if it is
+  present. If the attribute is single-valued, the attribute is removed if the
+  value matches the operation's value.
 
 ## Data Signatures
 
