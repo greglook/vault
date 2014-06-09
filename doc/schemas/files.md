@@ -46,7 +46,7 @@ children references.
 File blobs are similar to directories, only instead of referencing a static set
 of child entries, they reference a blob which defines their content. This is
 specified either as a direct reference to a content blob or to a
-[byte-sequence](byte-sequence.md) data blob.
+[byte-sequence](byte-sequences.md) data blob.
 
 ```clojure
 {:vault/type :filesystem/file

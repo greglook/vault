@@ -25,12 +25,13 @@ changes mid-sequence.
 
 ## Sequence Structure
 
-A byte sequence is a data structure with type `:vault/bytes` containing
+A byte sequence is a data structure with type `:byte/seq` containing
 vector of `:parts`, each of which are maps specifying the binary data making up
 the sequence.
 
 ```clojure
-{:parts
+{:vault/type :byte/seq
+ :parts
  [{:size 10000}
   {:data #bin "iQIcBAABAgAGBQ..."
    :size 84}
@@ -38,8 +39,7 @@ the sequence.
    :size 1024}
   {:offset 492
    :parts #vault/ref "sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d"
-   :size 500}]
- :vault/type :vault/bytes}
+   :size 500}]}
 ```
 
 Each part in the vector must be a map containing a `:size` key. The value of
@@ -63,7 +63,7 @@ Content and recursive parts may specify an `:offset` key giving the number of
 bytes to skip at the start of the referenced data. The `:size` key specifies the
 number of bytes to take following the offset. If the part size is smaller than
 the size of the source data, extra bytes are omitted. The part size (plus
-offset) SHOULD NOT be larger than the source, but if so the part is padded with
+offset) should not be larger than the source, but if so the part is padded with
 trailing zero bytes.
 
 The size of a byte sequence can be trivially calculated by summing the sizes
