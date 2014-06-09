@@ -38,7 +38,7 @@ Another simple example is a file system, where blobs are stored as local files.
 
 ### Data Format
 
-To represent [structured data](doc/data-structures.md), Vault uses
+To represent [structured data](doc/structured-data.md), Vault uses
 [EDN](https://github.com/edn-format/edn). Data blobs are recognized by a magic
 header sequence: `#vault/data\n`. This has the advantage of still being a legal
 EDN tag, though it is stripped in practice.
@@ -62,7 +62,7 @@ An example data blob representing a file might look like this:
 Blob references through hash-ids provide a secure way to link to immutable data,
 so it is simple to build data structures which automatically deduplicate shared
 data. These are similar to Clojure's persistent collections; see the schema for
-[hierarchical byte sequences](doc/schema/bytes.edn) for an example.
+[hierarchical byte sequences](doc/schemas/byte-sequences.edn) for an example.
 
 Certain PGP objects can also be stored in Vault as a recognized data type. The
 primary case is storing public key blobs. Keys should be encoded as armored

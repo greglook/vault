@@ -22,7 +22,7 @@
   :op, :attr, and :value."
   [(schema/one schema/Keyword "operation")
    (schema/one schema/Keyword "attribute")
-   (schema/optional (schema/pred some? "some?") "value")])
+   (schema/one schema/Any "value")])
 
 
 (def DatomFragments
