@@ -77,15 +77,19 @@ the blob data.
 
 ### Entities and State
 
-Mutable data is represented in Vault by [entities](doc/entities.md).
-- A _root blob_ serves as the static identifier of an entity.
-- An _attribute_ is an entity property which is associated with one or more values.
-- _Update blobs_ transactionally modify entities' attributes.
+Mutable data is represented in Vault by [entities](doc/entities.md). An entity
+provides an identity to a collection of _attributes_. Attributes may be
+single-valued properties such as `:description` or multi-valued sets like
+`:contact/phone`.
 
-Identity and ownership in Vault are handled by [cryptographic
-signatures](doc/signatures.md). These provide trust to data that is present in
-the blob layer. Signatures are provided as secondary values in a data blob,
-following the primary value:
+Entities are created and modified by adding signed _transaction blobs_ to the
+store. A _root blob_ creates a new entity and serves as its identifier. _Update
+blobs_ can later modify entities' attributes.
+
+Identity and ownership in Vault are asserted by cryptographic signatures. These
+provide trust to the provenance of data that is present in the blob layer.
+Signatures are provided as secondary values in a data blob, following the
+primary value:
 
 ```clojure
 {:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"

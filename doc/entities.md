@@ -18,11 +18,11 @@ An alternative is to refer to a blob of metadata about the account, but this is
 also brittle! Because data is immutable, if we need to update the metadata about
 the account, all the data must be re-stored with an updated hash reference.
 
-## Roots and Updates
+## Transaction Blobs
 
 To get around these problems, _entities_ assign a continuous identity to a
 collection of _attributes_ as they change over time. Entities are defined by
-data in a _root_ blob. The address of this root provides a stable address to
+data in a _root_ blob. The address of this root provides a stable identifier to
 reference the entity by.
 
 ```clojure
@@ -40,7 +40,7 @@ reference the entity by.
 Changes to the entity are enacted by adding further _update blobs_ to the store.
 These blobs specify modifications to the entity, so the 'current' state of the
 entity can be determined by applying the full sequence of updates made to it.
-This history allows  the state of the entity at any time can be recovered by
+This history allows the state of the entity at any time can be recovered by
 selecting which updates to apply.
 
 ```clojure
