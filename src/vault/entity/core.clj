@@ -5,54 +5,11 @@
     [clojure.string :as str]
     [schema.core :as schema]
     [vault.blob.core :as blob]
-    [vault.data.core :as data])
-  (:import
-    org.joda.time.DateTime
-    vault.blob.digest.HashID))
+    [vault.data.core :as data]
+    [vault.entity.schema :refer :all]))
 
 
-;; COMMON SCHEMAS
-
-(def ^:const root-type   :vault.entity/root)
-(def ^:const update-type :vault.entity/update)
-
-
-(def DatomFragment
-  "Schema for a fragment of a datom. Basically, a partial datom vector with
-  :op, :attr, and :value."
-  [(schema/one schema/Keyword "operation")
-   (schema/one schema/Keyword "attribute")
-   (schema/one schema/Any "value")])
-
-
-(def DatomFragments
-  "Schema for a vector of one or more datom fragments."
-  [(schema/one DatomFragment "datoms")
-   DatomFragment])
-
-
-(def DatomUpdates
-  "Schema for a map from entity ids to vectors of datom fragments."
-  {HashID DatomFragments})
-
-
-
-;; ENTITY ROOTS
-
-(def EntityRoot
-  "Schema for an entity root value."
-  {data/type-key (schema/eq root-type)
-   :id String
-   :owner HashID
-   :time DateTime
-   (schema/optional-key :data) DatomFragments})
-
-
-(defn root?
-  "Determines whether the given value is an entity root."
-  [value]
-  (= root-type (data/type value)))
-
+;;;;; ENTITY ROOTS ;;;;;
 
 (defn- random-id!
   "Generates a random id string for entity roots."
@@ -107,20 +64,7 @@
 
 ;; ENTITY UPDATES
 
-(def EntityUpdate
-  "Schema for an entity update value."
-  {data/type-key (schema/eq update-type)
-   :time DateTime
-   :data DatomUpdates})
-
-
-(defn update?
-  "Determines whether the given value is an entity update."
-  [value]
-  (= update-type (data/type value)))
-
-
-(defn get-owner
+(defn- get-owner
   "Looks up the owner for the given entity root id. Throws an exception if any
   of the ids is not an entity root."
   [blob-store root-id]
@@ -182,73 +126,14 @@
 
 
 
-;; DATOM FUNCTIONS
-
-(defrecord Datom [op entity attribute value tx time])
 
 
-(defn blob->datoms
-  "Converts a blob into a sequence of datoms."
-  [blob]
-  (let [map-datoms
-        (fn [time entity fragments]
-          (map
-            (fn [[op attr value]]
-              (Datom. op entity attr value (:id blob) time))
-            fragments))
-        record (data/blob-value blob)]
-    (condp = (:data/type blob)
-      root-type
-      (map-datoms (:time record) (:id blob) (:data record))
-      update-type
-      (mapcat (partial apply map-datoms (:time record)) (:data record)))))
 
+;; ENTITY RECORD
 
-(defn apply-datom
-  "Applies a datom to an entity state map to produce an updated state value.
-  If the datom entity is not the same as the state value, it is ignored."
-  [entity {:keys [op attribute value] :as datom}]
-  (if (= (:vault.entity/id entity) (:entity datom))
-    (let [current (get entity attribute)]
-      (case op
-        :attr/set
-        (assoc entity attribute value)
-
-        :attr/add
-        (assoc entity attribute
-          (cond
-            (set? current)
-            (conj current value)
-
-            (nil? current)
-            (sorted-set value)
-
-            :else
-            (sorted-set current value)))
-
-        :attr/del
-        (cond
-          (nil? value)
-          (dissoc entity attribute)
-
-          (set? current)
-          (let [new-set (disj current value)]
-            (if (empty? new-set)
-              (dissoc entity attribute)
-              (assoc entity attribute new-set)))
-
-          (= current value)
-          (dissoc entity attribute)
-
-          :else
-          entity)))
-    entity))
-
-
-(defn entity-state
-  "Given a sequence of datoms, return a map giving the 'current' state of some
-  entity."
-  [root-id datoms]
-  (reduce apply-datom
-    (sorted-map :vault.entity/id root-id)
-    datoms))
+#_
+(defrecord Entity [root-id blob-store indexes]
+  clojure.lang.Associative
+  clojure.lang.ILookup
+  clojure.lang.IPersistentCollection
+  clojure.lang.Seqable)
