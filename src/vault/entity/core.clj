@@ -2,20 +2,20 @@
   (:require
     [potemkin :refer [import-vars]]
     (vault.entity
-      datom schema tx)))
+      datom tx)))
 
 
 (import-vars
   (vault.entity.datom
+    datom
     entity-state)
-  (vault.entity.schema
-    root?
-    update?)
   (vault.entity.tx
     root-record
     root-blob
+    root?
     update-record
     update-blob
+    update?
     validate-root-blob
     validate-update-blob))
 

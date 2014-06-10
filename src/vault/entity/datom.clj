@@ -6,10 +6,16 @@
     [schema.core :as schema]
     [vault.blob.core :as blob]
     [vault.data.core :as data]
-    [vault.entity.schema :refer :all]))
+    [vault.entity.tx :as tx]))
 
 
 (defrecord Datom [op entity attribute value tx time])
+
+
+(defn datom
+  "Constructs a new datom."
+  [o e a v tx t]
+  (->Datom o e a v tx t))
 
 
 (defn blob->datoms
@@ -23,9 +29,9 @@
             fragments))
         record (data/blob-value blob)]
     (condp = (:data/type blob)
-      root-type
+      tx/root-type
       (map-datoms (:time record) (:id blob) (:data record))
-      update-type
+      tx/update-type
       (mapcat (partial apply map-datoms (:time record)) (:data record)))))
 
 
