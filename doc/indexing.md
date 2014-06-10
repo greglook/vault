@@ -53,7 +53,7 @@ reverse order.
 ### Low-Level Indexes
 
 The first two indexes deal with blobs and references, mapping the nodes and
-edges of the blob graph. The third deals with PGP key lookups by numeric id.
+edges of the blob graph.
 
 ### Blob Index
 
@@ -64,15 +64,18 @@ seen by the indexer.
 {:blob      HashID      ; blob hash-id
  :size      Long        ; blob byte length
  :type      Keyword     ; data type
+ :label     String      ; type-specific annotation
  :stored-at DateTime}   ; time added to index
 
 :blob/id   [blob]
-:blob/type [type stored-at]
+:blob/type [type label]
 ```
 
 Use cases:
 - Implementing blob store `enumerate` and `stat` operations.
 - Search for arbitrary blobs by data type.
+- Looking up PGP keys by storing the hexadecimal key identifier as the blob
+  label.
 
 ### Ref Index
 
@@ -99,20 +102,6 @@ certain identity.
 2. Query for `:vault.entity/root` and `:vault.entity/update` blobs which
    reference the public key.
 3. Filter blobs by checking the public keys used in their signatures.
-
-### Key Index
-
-This index stores a mapping from numeric PGP key ids to the public key blob's
-hash-id.
-
-```clojure
-{:blob   HashID   ; public key hash-id
- :key-id Long}    ; PGP key id
-
-:identity/key [key-id blob]
-```
-
-TODO: can this be handled by one of the other indexes?
 
 ## Entity Indexes
 
