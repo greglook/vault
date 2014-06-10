@@ -18,8 +18,8 @@
   (->Datom o e a v tx t))
 
 
-(defn blob->datoms
-  "Converts a blob into a sequence of datoms."
+(defn tx-datoms
+  "Reads a sequence of datoms from a transaction blob."
   [blob]
   (let [map-datoms
         (fn [time entity fragments]
@@ -77,6 +77,4 @@
   "Given a sequence of datoms, return a map giving the 'current' state of some
   entity."
   [root-id datoms]
-  (reduce apply-datom
-    (sorted-map :vault.entity/id root-id)
-    datoms))
+  (reduce apply-datom {} datoms))

@@ -47,12 +47,12 @@
               (entity/datom :attr/add (:id root-b) :baz/xyz :abc (:id update) t)
               (entity/datom :attr/set (:id root-a) :title "Entity A" (:id update) t)
               (entity/datom :attr/set (:id root-a) :foo/bar 42 (:id update) t)]
-             (datom/blob->datoms update)))
+             (datom/tx-datoms update)))
       (is (= [(entity/datom :attr/set (:id root-a) :title "Entity A" (:id update) t)
               (entity/datom :attr/set (:id root-a) :foo/bar 42 (:id update) t)
               (entity/datom :attr/set (:id root-b) :title "Entity B" (:id update) t)
               (entity/datom :attr/add (:id root-b) :baz/xyz :abc (:id update) t)]
-             (datom/blob->datoms update))))))
+             (datom/tx-datoms update))))))
 
 
 (deftest entity-state
