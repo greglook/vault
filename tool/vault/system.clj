@@ -23,6 +23,9 @@
 ;; GENERAL CONFIG
 
 (puget.data/extend-tagged-map vault.blob.store.Blob 'vault.tool/blob)
+(puget.data/extend-tagged-value
+  vault.entity.datom.Datom 'vault.tool/datom
+  (juxt :op :entity :attribute :value :tx :time))
 
 
 
