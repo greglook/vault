@@ -17,7 +17,7 @@
 
   :hiera
   {:cluster-depth 2
-   :ignore-ns #{clojure potemkin}}
+   :ignore-ns #{clojure byte-streams clj-time potemkin}}
 
   :profiles
   {:coverage
