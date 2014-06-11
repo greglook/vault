@@ -77,4 +77,7 @@
   "Given a sequence of datoms, return a map giving the 'current' state of some
   entity."
   [root-id datoms]
-  (reduce apply-datom {} datoms))
+  (reduce
+    apply-datom
+    {:vault.entity/id root-id}
+    datoms))
