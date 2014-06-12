@@ -6,16 +6,10 @@
 (defprotocol Index
 
   (search
-    [this pattern]
-    [this pattern attr test key]
-    "Search the index for entries with values matching the given pattern.
-    Returns an ascending sequence.")
-
-  (rsearch
-    [this pattern]
-    [this pattern attr test key]
-    "Search the index for entries with values matching the given pattern.
-    Returns a descending sequence.")
+    [this pattern opts]
+    "Search the index for records with values matching the given pattern.
+    Options may include:
+    - :ascending   Whether to return the sequence in ascending order.")
 
   (update
     [this record]
