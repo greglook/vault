@@ -1,9 +1,11 @@
 (ns vault.index.core
   (:require
+    [puget.order :as order]
     [vault.blob.store :as store :refer [BlobStore]]))
 
 
 (defprotocol Index
+  "Protocol for a single index."
 
   (search
     [this pattern opts]
@@ -13,13 +15,50 @@
 
   (update
     [this record]
-    "Return an updated version of the index with information about the record."))
+    "Return an updated version of the index with information about the record.
+    Immutability of old index values is NOT guaranteed."))
 
+
+;; HELPER METHODS
+
+(defn update-sorted-in
+  "Like update-in, but creates intermediate maps sorted by Puget."
+  [m [k & ks] f & args]
+  (if ks
+    (assoc m k (apply update-sorted-in (get m k (sorted-map-by order/rank)) ks f args))
+    (assoc m k (apply f (get m k) args))))
+
+
+
+;; MEMORY INDEX
 
 (defrecord MemoryIndex [attrs index])
 
+
 (extend-type MemoryIndex
   Index
+
+  (search
+    [this pattern opts]
+    (loop [[attr & more :as attrs] (:attrs this)
+           index (:index this)
+           pattern pattern]
+      (println attrs pattern index)
+      ; Find leading attributes present in `pattern`.
+      (if-let [value (get pattern attr)]
+        ; Narrow scope by recursively getting next level of indexes.
+        (recur more (get index value) (dissoc pattern attr))
+        ; Filter remaining entries by remaining pattern attributes.
+        (let [records
+              (apply concat
+                     (nth (iterate (partial mapcat vals)
+                                   [index])
+                          (count attrs)))
+              matches?
+              (fn [record]
+                (every? #(= (get pattern %) (get record %))
+                        (keys pattern)))]
+          (filter matches? records)))))
 
   (update
     [{:keys [attrs index] :as this} record]
@@ -28,57 +67,13 @@
         (throw (IllegalArgumentException.
                  (str "Cannot update index with record missing required "
                       "attributes " (pr-str attrs) " " (pr-str record)))))
-      (->>
-        (->
-          index
-          (get key-vec (hash-set))
-          (conj record))
-        (assoc index key-vec)
-        (assoc this :index)))))
+      (assoc this :index
+             (update-sorted-in index
+                               key-vec
+                               (fnil conj (sorted-set-by order/rank)) record)))))
 
 
 (defn memory-index
-  [attr & attrs]
-  (MemoryIndex. (vec (cons attr attrs)) (sorted-map)))
-
-
-
-#_
-{:blob      HashID      ; blob hash-id
- :size      Long        ; blob byte length
- :type      Keyword     ; data type
- :stored-at DateTime}   ; time added to index
-
-#_
-(extend-type BlobIndex
-  Index
-
-  (search
-    [this prefix]
-    ()
-
-    )
-
-  BlobStore
-
-  (enumerate
-    [this opts]
-    nil)
-
-  (stat
-    [this id]
-    nil)
-
-  (put!
-    [this blob]
-
-    nil))
-
-
-
-#_
-(defn changes-by
-  [indexes pk-id]
-  (let [roots   (index/rsearch (:ref/to indexes) [pk-id :vault.entity/root])
-        updates (index/rsearch (:ref/to indexes) [pk-id :vault.entity/update])]
-    (rmerge-sort-by :time roots updates)))
+  [& attrs]
+  {:pre [(seq attrs)]}
+  (MemoryIndex. (vec attrs) (sorted-map)))

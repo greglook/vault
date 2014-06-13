@@ -1,4 +1,4 @@
-{:table :datoms
+{:collection :datoms
  :fields {:op :keyword
           :entity :ref
           :attribute :keyword
@@ -9,9 +9,5 @@
            :aevt [attribute entity value tx]
            :avet [attribute value entity tx]  ; indexed attrs
            :vaet [value attribute entity tx]} ; reverse
- :transform
- (fn [blob]
-   (case (:data/type blob)
-     (:vault.entity/root :vault.entity/update)
-     (vault.data.core/blob->datoms blob)
-     nil))}
+ :filter (comp #{:vault.entity/root :vault.entity/update} :data/type)
+ :transform vault.data.datom/tx-datoms}
