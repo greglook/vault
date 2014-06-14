@@ -14,14 +14,14 @@ contents.
 Since indexes are not intended to be durable, it is fine to delete and rebuild
 them at any time.
 
-## Searchable Interface
+## Search Interface
 
-In general, _searchables_ support most of the methods of a blob-store except
-the `get` operation. To index a blob, you simply `put!` it into the index. Each
-searchable contains some record structure of data and maps lookups through
-sorted indexes of the values of those attributes.
+In general, a _search engine_ supports most of the methods of a blob-store
+except the `get` operation. To index a blob, you simply `put!` it into the
+engine. Each index contains some record structure of data and maps lookups
+through sorted indexes of the values of those attributes.
 
-As an example, if searchable Foo stores the following type of data, and sets up
+As an example, if engine Foo stores the following type of data, and sets up
 the `:foo/id` and `:foo/alpha` indexes:
 
 ```clojure
@@ -47,8 +47,8 @@ the `:foo/id` and `:foo/alpha` indexes:
   :beta 456})
 ```
 
-The function `rsearch` will probably be available as well, to return results in
-reverse order.
+It should also be possible to return results in reverse order at no additional
+cost.
 
 ### Low-Level Indexes
 
@@ -166,3 +166,9 @@ determined.
 Indexes can be implemented on many kinds of databases. Early support will
 probably consist of an in-memory implementation and later a SQLite3-backed
 index.
+
+It is important to distinguish between individual indexes and higher-level
+collections of indexes on the same record structure. For example, the entity
+indexes all serve the same datoms. It makes sense in many implementations to
+store the datoms in a single database table and use multiple indexes on the
+table, rather than a table-per-index.
