@@ -1,43 +1,58 @@
 Data Indexing
 =============
 
-In order to access stored data efficiently, it must be searchable. While it is
-possible to exhaustively scan the entire data store and calculate the relevant
-information each time a query is performed, a much better aproach is to _index_
-the data.
+While it is possible to exhaustively scan the entire data store and calculate
+the relevant information each time a query is performed, a much better aproach
+is to _index_ the data in the blobs.
 
-In general, an index is a _view_ of the stored data which caches desired search
-criteria in a rapidly-accessible form. Indexes are **not** authoritative stores
-of the blob data, and should not store entire blob contents.
+In general, an index provides a _view_ of the stored data which caches desired
+search criteria in a rapidly-accessible form. Indexes are **not** authoritative
+stores of the blob data, and should not store entire blob contents.
 
-Since indexes are not intended to be durable, they can be destroyed and rebuilt
-at any time.
+Since index state is not intended to be durable, it can be destroyed and rebuilt
+at any time from the blob data.
 
 ## Corpus
 
-The various indexes on the blobs in a user's store are arranged into a _corpus_.
-The corpus supports most of the methods of a blob-store except the `get`
-operation. To index a blob, you simply `put!` it into the corpus.
+The various indexes on the blobs in a user's store are arranged into a
+_corpus_ (name to be improved). The corpus supports most of the methods of a
+blob-store except the `get` operation. To index a blob, you simply `put!` it
+into the corpus.
 
 The corpus uses one of the contained indexes to determine whether it's already
 seen a blob. See the [blob index](#Blob%20Index) below.
 
-(name to be improved)
-
 ## Search Interface
 
-Each index contains some _records_ of data and provides quick lookups based on
-values of those attributes. Lookups can be optimized by creating sorted value
-sequences for different query types.
-
-As an example, if index `foo` stores the following type of data, and sets up
-the `:foo/id` and `:foo/alpha` sequences:
+Each index contains _records_ of data and provides quick lookups based on the
+values of the record attributes. To search for matching records, the user
+provides a _pattern_ of attributes to match on.
 
 ```clojure
+; If records in 'foo' look like this:
 {:id    String
  :alpha Long
  :beta  Long}
 
+; Searches return a sequence of matching records:
+(index/search foo {:alpha 123})
+;=>
+({:id "abc", :alpha 123, :beta 456}
+ {:id "xyz", :alpha 123, :beta 897}
+ ...)
+```
+
+Ideally, the index should optimize lookups for common patterns. In a database,
+the records in an index would map to a table, and optimizations could be made by
+creating indexes on the relevant columns.
+
+### Sorted Lookups
+
+Index queries can be optimized by creating sorted value sequences for different
+query types.  As an example, if index `foo` stores the record type above and
+sets up the `:foo/id` and `:foo/alpha` sequences:
+
+```clojure
 :foo/id    [id]
 :foo/alpha [alpha beta]
 ```
@@ -48,19 +63,7 @@ the `:foo/id` and `:foo/alpha` sequences:
 - A query for `id` and `alpha` would be looked up in `:foo/id`, because it
   fully specifies the index. The resulting values would be filtered by `alpha`.
 
-```clojure
-(index/search foo {:id "abcdefg"})
-; =>
-({:id "abcdefg"
-  :alpha 123
-  :beta 456})
-```
-
-This is basic query optimization, commonly done in databases using indexes
-(unfortunate name collision). It should also be possible to return results in
-reverse order at no additional cost.
-
-### Low-Level Indexes
+## Low-Level Indexes
 
 The first two indexes deal with blobs and references, mapping the nodes and
 edges of the blob graph.
