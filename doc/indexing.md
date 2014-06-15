@@ -6,23 +6,32 @@ possible to exhaustively scan the entire data store and calculate the relevant
 information each time a query is performed, a much better aproach is to _index_
 the data.
 
-In general, indexing represents a _view_ of the stored data which caches
-desired search criteria in a rapidly-accessible form. Indexes are **not**
-authoritative stores of the blob data, and should not store entire blob
-contents.
+In general, an index is a _view_ of the stored data which caches desired search
+criteria in a rapidly-accessible form. Indexes are **not** authoritative stores
+of the blob data, and should not store entire blob contents.
 
-Since indexes are not intended to be durable, it is fine to delete and rebuild
-them at any time.
+Since indexes are not intended to be durable, they can be destroyed and rebuilt
+at any time.
+
+## Corpus
+
+The various indexes on the blobs in a user's store are arranged into a _corpus_.
+The corpus supports most of the methods of a blob-store except the `get`
+operation. To index a blob, you simply `put!` it into the corpus.
+
+The corpus uses one of the contained indexes to determine whether it's already
+seen a blob. See the [blob index](#Blob%20Index) below.
+
+(name to be improved)
 
 ## Search Interface
 
-In general, a _search engine_ supports most of the methods of a blob-store
-except the `get` operation. To index a blob, you simply `put!` it into the
-engine. Each index contains some record structure of data and maps lookups
-through sorted indexes of the values of those attributes.
+Each index contains some _records_ of data and provides quick lookups based on
+values of those attributes. Lookups can be optimized by creating sorted value
+sequences for different query types.
 
-As an example, if engine Foo stores the following type of data, and sets up
-the `:foo/id` and `:foo/alpha` indexes:
+As an example, if index `foo` stores the following type of data, and sets up
+the `:foo/id` and `:foo/alpha` sequences:
 
 ```clojure
 {:id    String
@@ -47,8 +56,9 @@ the `:foo/id` and `:foo/alpha` indexes:
   :beta 456})
 ```
 
-It should also be possible to return results in reverse order at no additional
-cost.
+This is basic query optimization, commonly done in databases using indexes
+(unfortunate name collision). It should also be possible to return results in
+reverse order at no additional cost.
 
 ### Low-Level Indexes
 
@@ -166,9 +176,3 @@ determined.
 Indexes can be implemented on many kinds of databases. Early support will
 probably consist of an in-memory implementation and later a SQLite3-backed
 index.
-
-It is important to distinguish between individual indexes and higher-level
-collections of indexes on the same record structure. For example, the entity
-indexes all serve the same datoms. It makes sense in many implementations to
-store the datoms in a single database table and use multiple indexes on the
-table, rather than a table-per-index.
