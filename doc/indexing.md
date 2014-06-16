@@ -5,22 +5,30 @@ While it is possible to exhaustively scan the entire data store and calculate
 the relevant information each time a query is performed, a much better aproach
 is to _index_ the data in the blobs.
 
-In general, an index provides a _view_ of the stored data which caches desired
-search criteria in a rapidly-accessible form. Indexes are **not** authoritative
-stores of the blob data, and should not store entire blob contents.
+An index provides a view of the stored data which caches desired blob properties
+as rapidly-accessible _records_. Indexes are **not** authoritative stores of the
+blob data, and should not store entire blob contents.
 
 Since index state is not intended to be durable, it can be destroyed and rebuilt
-at any time from the blob data.
+at any time from the source blob data.
 
-## Corpus
+## Architecture
 
-The various indexes on the blobs in a user's store are arranged into a
-_corpus_ (name to be improved). The corpus supports most of the methods of a
-blob-store except the `get` operation. To index a blob, you simply `put!` it
-into the corpus.
+An index is defined by a _record schema_ and a _projection function_ which
+transforms a blob into a sequence of records to store in the index. Blobs may
+map to zero records, indicating that the blob is not relevant to the index.
+Alternately, a single blob can map to many records, as in the case of datoms
+from an entity update blob.
 
-The corpus uses one of the contained indexes to determine whether it's already
-seen a blob. See the [blob index](#Blob%20Index) below.
+Each index is then implemented by an underlying _search engine_ which handles
+the record storage and querying. For example, a 'brute force' engine could be
+implemented with a backing blob store and the projection function. To answer a
+query, the entire blob store would be enumerated, each blob transformed into
+records, and the records matched against the given pattern.
+
+Engines can be implemented on many kinds of databases. Early support will
+probably consist of an in-memory implementation and later a SQLite3-backed
+engine.
 
 ## Search Interface
 
@@ -42,26 +50,19 @@ provides a _pattern_ of attributes to match on.
  ...)
 ```
 
-Ideally, the index should optimize lookups for common patterns. In a database,
-the records in an index would map to a table, and optimizations could be made by
-creating indexes on the relevant columns.
+Ideally, the index should optimize lookups for common patterns. In a relational
+database, the records in an index would map to rows in a table, and
+optimizations could be made by creating indexes on the relevant columns.
 
-### Sorted Lookups
+## Corpus
 
-Index queries can be optimized by creating sorted value sequences for different
-query types.  As an example, if index `foo` stores the record type above and
-sets up the `:foo/id` and `:foo/alpha` sequences:
+The various indexes on the blobs in a user's store are arranged into a
+_corpus_ (name to be improved). The corpus supports most of the methods of a
+blob-store except the `get` operation. To index a blob, you simply `put!` it
+into the corpus.
 
-```clojure
-:foo/id    [id]
-:foo/alpha [alpha beta]
-```
-
-- A query specifying the `id` would be looked up in the `:foo/id` index.
-- A query by `alpha` value would use the `:foo/alpha` index.
-- A query for `beta` would result in a slow scan of `:foo/alpha`.
-- A query for `id` and `alpha` would be looked up in `:foo/id`, because it
-  fully specifies the index. The resulting values would be filtered by `alpha`.
+The corpus uses one of the contained indexes to determine whether it's already
+seen a blob. See the [blob index](#blob-index) below.
 
 ## Low-Level Indexes
 
@@ -71,17 +72,19 @@ edges of the blob graph.
 ### Blob Index
 
 This is the most basic index; it stores data about the blobs which have been
-seen by the indexer.
+indexed. This lets the corpus implement the `enumerate` and `stat` blob-store
+operations.
 
 ```clojure
-{:blob      HashID      ; blob hash-id
+{:blob      HashID      ; blob hash-id (pk)
  :size      Long        ; blob byte length
  :type      Keyword     ; data type
  :label     String      ; type-specific annotation
  :stored-at DateTime}   ; time added to index
 
-:blob/id   [blob]
-:blob/type [type label]
+; Queries:
+[blob]              ; direct lookups
+[type label]        ; blobs by type/label
 ```
 
 Use cases:
@@ -173,9 +176,3 @@ reverse.
 The full-text index provides a way to efficiently search for matches in text
 data. How blobs are selected to be stored in the full-text index is still to be
 determined.
-
-## Implementations
-
-Indexes can be implemented on many kinds of databases. Early support will
-probably consist of an in-memory implementation and later a SQLite3-backed
-index.
