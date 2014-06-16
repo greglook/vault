@@ -56,7 +56,7 @@ optimizations could be made by creating indexes on the relevant columns.
 
 ## Corpus
 
-The various indexes on the blobs in a user's store are arranged into a
+The various indexes on the blobs in a user's store are collected into a
 _corpus_ (name to be improved). The corpus supports most of the methods of a
 blob-store except the `get` operation. To index a blob, you simply `put!` it
 into the corpus.
@@ -83,8 +83,8 @@ operations.
  :stored-at DateTime}   ; time added to index
 
 ; Queries:
-[blob]              ; direct lookups
-[type label]        ; blobs by type/label
+:direct [blob]          ; direct lookups
+:typed  [type label]    ; blobs by type/label
 ```
 
 Use cases:
@@ -99,13 +99,12 @@ This index stores the references between blobs, giving quick access forwards
 and backwards.
 
 ```clojure
-{:blob HashID     ; source hash-id
- :type Keyword    ; source blob type
- :ref  HashID     ; target hash-id
- :time DateTime}  ; source blob stored-at
+{:blob HashID         ; source hash-id
+ :type Keyword        ; source blob type
+ :ref  HashID}        ; target hash-id
 
-:ref/from [blob]
-:ref/to   [ref type time]
+:forward [blob]       ; forward lookups
+:reverse [ref type]   ; reverse lookups
 ```
 
 Use cases:
@@ -128,15 +127,15 @@ adaptations from Datomic, and store _datoms_, which are atomic data assertions.
 {:op        Keyword     ; datom operation (:attr/set, :attr/add, etc)
  :entity    HashID      ; entity root hash-id
  :attribute Keyword     ; attribute keyword
- :value     ???         ; serialized EDN value
+ :value     *           ; serialized EDN value
  :tx        HashID      ; root or update blob hash-id
  :time      DateTime}   ; assertion timestamp from blob
 
-:datom/log  [time tx]                             ; history index
-:datom/eavt [entity attribute value time tx op]   ; row index
-:datom/aevt [attribute entity value time tx op]   ; column index
-:datom/avet [attribute value entity time tx op]   ; value index
-:datom/vaet [value attribute entity time tx op]   ; reverse index
+:log  [time tx]                             ; history index
+:eavt [entity attribute value time tx op]   ; row index
+:aevt [attribute entity value time tx op]   ; column index
+:avet [attribute value entity time tx op]   ; value index
+:vaet [value attribute entity time tx op]   ; reverse index
 ```
 
 #### Log
@@ -176,3 +175,10 @@ reverse.
 The full-text index provides a way to efficiently search for matches in text
 data. How blobs are selected to be stored in the full-text index is still to be
 determined.
+
+```clojure
+{:blob HashID
+ :text String}
+
+; ...?
+```
