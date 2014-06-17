@@ -1,7 +1,7 @@
-(ns vault.search.index.memory
+(ns vault.index.engine.memory
   (:require
     [puget.order :as order]
-    [vault.search.index :refer [Index]]))
+    [vault.index.search :as search]))
 
 
 ;;;;; HELPER METHODS ;;;;;
@@ -10,15 +10,6 @@
   "Flattens a sorted map into a sequence of values n times."
   [m n]
   (apply concat (nth (iterate (partial mapcat vals) [m]) n)))
-
-
-(defn- matches?
-  "Determines whether every key set in the pattern map has an equal value in
-  the given record."
-  [pattern record]
-  (every? #(= (get pattern %)
-              (get record %))
-          (keys pattern)))
 
 
 (defn- update-sorted-in
@@ -43,7 +34,7 @@
 
 
 (extend-type MemoryIndex
-  Index
+  search/Engine
 
   (search
     [this pattern opts]
@@ -55,7 +46,7 @@
         ; Narrow scope by recursively getting next level of indexes.
         (recur more (get index value) (dissoc pattern attr))
         ; Filter remaining entries by pattern attributes.
-        (filter (partial matches? pattern)
+        (filter (partial search/matches? pattern)
                 (flatten-times index (count attrs))))))
 
   (update!
