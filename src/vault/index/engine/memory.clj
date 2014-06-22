@@ -1,7 +1,7 @@
 (ns vault.index.engine.memory
   (:require
     [puget.order :as order]
-    [vault.index.search :as search]))
+    [vault.index.engine :as engine]))
 
 
 ;;;;; HELPER METHODS ;;;;;
@@ -28,13 +28,27 @@
 
 
 
-;;;;; MEMORY INDEX ;;;;;
+;;;;; MEMORY SEARCH ENGINE ;;;;;
 
-(defrecord MemoryIndex [attrs index])
-
+(defrecord MemorySearchEngine [attrs index])
 
 (extend-type MemoryIndex
-  search/Engine
+  engine/SearchEngine
+
+  (init!
+    [this]
+    ; TODO: set up indexes per-lookup type
+    this)
+
+  (update!
+    [{:keys [attrs index] :as this} record]
+    (let [key-vec (vec (map record attrs))]
+      (when (some nil? key-vec)
+        (throw (IllegalArgumentException.
+                 (str "Cannot update index with record missing required "
+                      "attributes " (pr-str attrs) " " (pr-str record)))))
+      (swap! (:index this) update-record key-vec record))
+    this)
 
   (search
     [this pattern opts]
@@ -46,20 +60,11 @@
         ; Narrow scope by recursively getting next level of indexes.
         (recur more (get index value) (dissoc pattern attr))
         ; Filter remaining entries by pattern attributes.
-        (filter (partial search/matches? pattern)
-                (flatten-times index (count attrs))))))
-
-  (update!
-    [{:keys [attrs index] :as this} record]
-    (let [key-vec (vec (map record attrs))]
-      (when (some nil? key-vec)
-        (throw (IllegalArgumentException.
-                 (str "Cannot update index with record missing required "
-                      "attributes " (pr-str attrs) " " (pr-str record)))))
-      (swap! (:index this) update-record key-vec record))))
+        (filter (partial engine/matches? pattern)
+                (flatten-times index (count attrs)))))))
 
 
 (defn memory-index
   [& attrs]
   {:pre [(seq attrs)]}
-  (MemoryIndex. (vec attrs) (atom (sorted-map))))
+  (MemorySearchEngine. (vec attrs) (atom (sorted-map))))

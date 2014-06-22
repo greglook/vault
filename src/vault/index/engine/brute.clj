@@ -1,27 +1,35 @@
 (ns vault.index.engine.brute
   (:require
     [vault.blob.core :as blob]
-    [vault.index.search :as search]))
+    [vault.index.engine :as engine]))
 
 
-(defrecord BruteIndex [blob-store projection])
+(defrecord BruteSearchEngine
+  [blob-store projection])
 
-(extend-type BruteIndex
-  search/Engine
+(extend-type BruteSearchEngine
+  engine/SearchEngine
 
-  (search
-    [this pattern opts]
-    (filter (partial search/matches? pattern)
-            (mapcat projection
-                    (blob/list (:blob-store this)))))
+  (init!
+    [this]
+    ; no-op
+    this)
+
 
   (update!
     [this record]
-    ; It's not clear that this maps well to a brute-force search engine.
-    ; TODO: figure out better semantics here.
-    nil))
+    ; no-op
+    this)
+
+
+  (search
+    [this pattern opts]
+    ; exhaustively search projections of stored blobs
+    (filter (partial engine/matches? pattern)
+            (mapcat projection
+                    (blob/list (:blob-store this))))))
 
 
 (defn brute-index
   [blob-store projection]
-  (BruteIndex. blob-store projection))
+  (BruteSearchEngine. blob-store projection))
