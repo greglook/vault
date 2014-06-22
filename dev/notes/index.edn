@@ -1,13 +1,68 @@
-{:collection :datoms
- :fields {:op :keyword
-          :entity :ref
-          :attribute :keyword
-          :value :string
-          :tx :ref
-          :time :inst}
- :indexes {:eavt [entity attribute value tx]
-           :aevt [attribute entity value tx]
-           :avet [attribute value entity tx]  ; indexed attrs
-           :vaet [value attribute entity tx]} ; reverse
- :filter (comp #{:vault.entity/root :vault.entity/update} :data/type)
- :transform vault.data.datom/tx-datoms}
+;; Blob Index
+{:record-schema
+ {:blob      HashID      ; blob hash-id (pk)
+  :size      Long        ; blob byte length
+  :type      Keyword     ; data type
+  :label     String      ; type-specific annotation
+  :stored-at DateTime}   ; time added to index
+
+ :lookups
+ {:direct ^:unique [:blob]  ; direct lookups (pk)
+  :typed [:type :label]}    ; blobs by type/label
+
+ :projection
+ (fn [blob]
+   {:blob (:id blob)
+    :size ...})}
+
+
+;; Ref Index
+{:record-schema
+ {:blob HashID         ; source hash-id
+  :type Keyword        ; source blob type
+  :ref  HashID}        ; target hash-id
+
+ :lookups
+ {:forward [:blob]        ; references from a source blob
+  :reverse [:ref :type]}  ; references to a target blob (by type)
+
+ :projection
+ (fn [blob]
+   ...)}
+
+
+;; Transaction Log
+{:record-schema
+ {:tx    HashID       ; transaction blob hash-id
+  :type  Keyword      ; transaction type (root/update)
+  :time  DateTime     ; time of modification
+  :owner HashID}      ; owner's public-key hash-id
+
+ :lookups
+ {:history [:owner :time]}
+
+ :projection
+ (fn [blob]
+   ...)}
+
+
+;; Datom Index
+
+{:record-schema
+ {:op        Keyword     ; datom operation (:attr/set, :attr/add, etc)
+  :entity    HashID      ; entity root hash-id
+  :attribute Keyword     ; attribute keyword
+  :value     *           ; serialized EDN value
+  :tx        HashID      ; root or update blob hash-id
+  :time      DateTime}   ; assertion timestamp from blob
+
+ :lookups
+ {:eavt [:entity :attribute :value :time]
+  :aevt [:attribute :entity :value :time]
+  :avet [:attribute :value :entity :time]  ; indexed attrs
+  :vaet [:value :attribute :entity :time]} ; ref attrs
+
+ :projection
+ (index/filter-types
+   vault.data.datom/tx-datoms
+   #{:vault.entity/root :vault.entity/update})}
