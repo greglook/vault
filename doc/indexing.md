@@ -138,6 +138,13 @@ adaptations from Datomic, and store _datoms_, which are atomic data assertions.
 :vaet [value attribute entity time tx op]   ; reverse index
 ```
 
+These are presented to the system as a single index which can be searched for
+datoms, but internally the query will be mapped to whichever sub-index is most
+efficient.
+
+The datom index is configured with the _attribute schema_, which specifies which
+attributes should be part of the AVET index. Other uses for this schema TBD.
+
 #### Log
 
 The log provides a history of datoms over time, grouped by transaction blob.
