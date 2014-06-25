@@ -9,7 +9,7 @@
 (defn- update-vals
   "Maps a function over the values in a map, returning a new map."
   [m f & args]
-  (reduce (fn [m' [k v]] (assoc m k (apply f v args))) (empty m) m))
+  (reduce (fn [acc [k v]] (assoc acc k (apply f v args))) (empty m) m))
 
 
 (defn- flatten-times
@@ -68,8 +68,8 @@
 
 
 (defn- search-register
-  "Queries a register to find records matching the given pattern. Returns a seq
-  of the matched records."
+  "Queries a register to find records matching the given pattern. Returns a
+  sequence of the matched records."
   [register pattern opts]
   (loop [[attr & more :as attrs] (:attrs register)
          records (:records register)
@@ -103,7 +103,7 @@
 
   (search
     [this pattern opts]
-    (-> this :registers vals
+    (-> this :registers deref vals
         (select-register (keys pattern))
         (search-register pattern opts))))
 
