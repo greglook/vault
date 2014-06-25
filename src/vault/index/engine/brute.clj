@@ -4,10 +4,12 @@
     [vault.index.engine :as engine]))
 
 
-(defrecord BruteSearchEngine
+;;;;; BRUTE-FORCE INDEX ;;;;;
+
+(defrecord BruteForceIndex
   [blob-store projection])
 
-(extend-type BruteSearchEngine
+(extend-type BruteForceIndex
   engine/SearchEngine
 
   (init!
@@ -15,21 +17,19 @@
     ; no-op
     this)
 
-
   (update!
     [this record]
     ; no-op
     this)
 
-
   (search
     [this pattern opts]
     ; exhaustively search projections of stored blobs
     (filter (partial engine/matches? pattern)
-            (mapcat projection
+            (mapcat (:projection this)
                     (blob/list (:blob-store this))))))
 
 
-(defn brute-index
+(defn brute-force-index
   [blob-store projection]
-  (BruteSearchEngine. blob-store projection))
+  (BruteForceIndex. blob-store projection))
