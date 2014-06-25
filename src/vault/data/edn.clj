@@ -26,7 +26,7 @@
     vault.blob.digest.HashID))
 
 
-;; CONSTANTS & CONFIGURATION
+;;;;; CONSTANTS & CONFIGURATION ;;;;;
 
 (def ^Charset blob-charset
   (Charset/forName "UTF-8"))
@@ -37,9 +37,13 @@
   "#vault/data\n")
 
 
-(def ^:const ^:private blob-width
-  "Width of text to use in serialized blobs."
-  100)
+(def ^:const ^:private render-opts
+  "Options to use to render EDN values with Puget."
+  {:width 100
+   :strict true
+   :map-delimiter ""
+   :map-coll-separator :line
+   :print-meta false})
 
 
 (def ^:const type-key
@@ -67,7 +71,7 @@
 
 
 
-;; TAGGED VALUES
+;;;;; TAGGED VALUES ;;;;;
 
 (def data-readers
   "Atom containing a map of tag readers supported by Vault."
@@ -112,13 +116,12 @@
 
 
 
-;; SERIALIZATION
+;;;;; SERIALIZATION ;;;;;
 
 (defn- print-value
   "Prints the canonical EDN representation for the given Clojure value."
   [value]
-  (binding [puget/*strict-mode* true]
-    (puget/pprint value {:width blob-width})))
+  (puget/pprint value render-opts))
 
 
 (defn- edn-str
@@ -126,8 +129,8 @@
   Clojure value."
   ^String
   [value]
-  (binding [puget/*colored-output* false]
-    (str/trim (with-out-str (print-value value)))))
+  (let [opts (assoc render-opts :print-color false)]
+    (puget/pprint-str value opts)))
 
 
 (defn edn-blob
@@ -174,7 +177,7 @@
 
 
 
-;; DESERIALIZATION
+;;;;; DESERIALIZATION ;;;;;
 
 (defn- counting-reader
   "Wraps the given input stream with a proxy which counts the bytes read
