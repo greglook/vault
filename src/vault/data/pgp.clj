@@ -12,7 +12,7 @@
       PGPSignature)))
 
 
-;; CONSTANTS & CONFIGURATION
+;;;;; CONFIGURATION ;;;;;
 
 (def ^:const blob-header
   "Magic header which must appear as the first characters in a pgp blob."
@@ -49,7 +49,7 @@
 
 
 
-;; SERIALIZATION
+;;;;; SERIALIZATION ;;;;;
 
 (defn pgp-blob
   "Constructs a blob from a PGP object."
@@ -60,7 +60,7 @@
 
 
 
-;; DESERIALIZATION
+;;;;; DESERIALIZATION ;;;;;
 
 (defn- check-header
   "Reads the first few bytes from a blob's content to determine whether it is a

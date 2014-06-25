@@ -6,7 +6,7 @@
     java.security.MessageDigest))
 
 
-;; DIGEST ALGORITHMS
+;;;;; DIGEST ALGORITHMS ;;;;;
 
 (def algorithms
   "Map of content hashing algorithms to system names."
@@ -21,7 +21,7 @@
 
 
 
-;; HASH IDENTIFIER
+;;;;; HASH IDENTIFIER ;;;;;
 
 (defrecord HashID
   [algorithm ^String digest]
@@ -75,7 +75,7 @@
 
 
 
-;; CONTENT HASHING
+;;;;; CONTENT HASHING ;;;;;
 
 (defn- zero-pad
   "Pads a string with leading zeroes up to the given width."

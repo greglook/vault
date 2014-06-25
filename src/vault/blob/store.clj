@@ -5,7 +5,7 @@
     [vault.blob.digest :as digest]))
 
 
-;; BLOB RECORD
+;;;;; BLOB RECORD ;;;;;
 
 (defrecord Blob [id ^bytes content])
 
@@ -27,7 +27,7 @@
 
 
 
-;; STORAGE INTERFACE
+;;;;; STORAGE INTERFACE ;;;;;
 
 (defprotocol BlobStore
   "Protocol for content storage providers, keyed by hash ids."
@@ -99,7 +99,7 @@
 
 
 
-;; UTILITY FUNCTIONS
+;;;;; UTILITY FUNCTIONS ;;;;;
 
 (defn select-ids
   "Selects hash identifiers from a lazy sequence based on input criteria.

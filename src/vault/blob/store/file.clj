@@ -13,7 +13,7 @@
     java.io.File))
 
 
-;; HELPER FUNCTIONS
+;;;;; HELPER FUNCTIONS ;;;;;
 
 (defn- id->file
   ^File
@@ -79,7 +79,7 @@
 
 
 
-;; FILE STORE
+;;;;; FILE STORE ;;;;;
 
 (defrecord FileBlobStore
   [^File root])

@@ -18,7 +18,7 @@
 
 
 
-;; SIGNATURE PROVIDER PROTOCOL
+;;;;; SIGNATURE PROVIDER PROTOCOL ;;;;;
 
 ; TODO: Support an eventual PKCS#11-style implementation which doesn't directly
 ; handle keys. Possible implementations include gpg-agent, gnome-keyring, OS X
@@ -37,7 +37,7 @@
 
 
 
-;; UTILITY FUNCTIONS
+;;;;; UTILITY FUNCTIONS ;;;;;
 
 (defn load-pubkey
   "Loads a PGP public key from a blob store."
@@ -54,7 +54,7 @@
 
 
 
-;; SIGNATURE CREATION
+;;;;; SIGNATURE CREATION ;;;;;
 
 (defn- signature-map
   "Signs a byte array with a single public key."
@@ -79,7 +79,7 @@
 
 
 
-;; SIGNATURE VERIFICATION
+;;;;; SIGNATURE VERIFICATION ;;;;;
 
 (defn- inline-signatures
   "Collects the inline signatures from a data blob."
@@ -120,7 +120,7 @@
 
 
 
-;; KEYRING SIGNATURE PROVIDER
+;;;;; KEYRING SIGNATURE PROVIDER ;;;;;
 
 (defrecord PrivateKeySignatureProvider
   [hash-algorithm get-key])

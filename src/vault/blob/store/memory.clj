@@ -5,6 +5,8 @@
     [vault.blob.store :as store]))
 
 
+;;;;; HELPER FUNCTIONS ;;;;;
+
 (defn- get-mem
   "Gets a blob out of a memory blob store by id."
   [store id]
@@ -19,6 +21,9 @@
     :stat/stored-at (or (:stat/stored-at blob)
                         (time/now))))
 
+
+
+;;;;; MEMORY STORE ;;;;;
 
 (defrecord MemoryBlobStore
   [memory])

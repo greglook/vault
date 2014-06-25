@@ -21,7 +21,7 @@
 
 
 
-;; ENTITY RECORD
+;;;;; ENTITY RECORD ;;;;;
 
 #_
 (defrecord Entity [root-id blob-store indexes]
