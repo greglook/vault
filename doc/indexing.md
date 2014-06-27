@@ -12,16 +12,19 @@ blob data, and should not store entire blob contents.
 Since index state is not intended to be durable, it can be destroyed and rebuilt
 at any time from the source blob data.
 
-## Architecture
+## Index Definition
 
-An index is defined by a _record schema_ and a _projection function_ which
-transforms a blob into a sequence of records to store in the index. Blobs may
-map to zero records, indicating that the blob is not relevant to the index.
-Alternately, a single blob can map to many records, as in the case of datoms
-from an entity update blob.
+An index is defined by three properties:
+- A _record schema_ which specifies the properties being indexed.
+- A _projection function_ which transforms a blob into a sequence of records.
+- A set of _query types_ which give the attributes used to search the index.
+
+Blobs may map to zero records, indicating that the blob is not relevant to the
+index. Alternately, a single blob can map to many records, as in the case of
+datoms from an entity update blob.
 
 Each index is then implemented by an underlying _search engine_ which handles
-the record storage and querying. For example, a 'brute force' engine could be
+the record storage and querying. For example, a brute-force engine could be
 implemented with a backing blob store and the projection function. To answer a
 query, the entire blob store would be enumerated, each blob transformed into
 records, and the records matched against the given pattern.
@@ -54,15 +57,14 @@ Ideally, the index should optimize lookups for common patterns. In a relational
 database, the records in an index would map to rows in a table, and
 optimizations could be made by creating indexes on the relevant columns.
 
-## Corpus
+## Catalogue
 
 The various indexes on the blobs in a user's store are collected into a
-_corpus_ (name to be improved). The corpus supports most of the methods of a
-blob-store except the `get` operation. To index a blob, you simply `put!` it
-into the corpus.
+_catalogue_. The catalogue supports most of the methods of a blob-store except
+the `get` operation. To index a blob, you simply `put!` it into the catalogue.
 
-The corpus uses one of the contained indexes to determine whether it's already
-seen a blob. See the [blob index](#blob-index) below.
+The catalogue uses one of the contained indexes to determine whether it's
+already seen a blob. See the [blob index](#blob-index) below.
 
 ## Low-Level Indexes
 
@@ -72,7 +74,7 @@ edges of the blob graph.
 ### Blob Index
 
 This is the most basic index; it stores data about the blobs which have been
-indexed. This lets the corpus implement the `enumerate` and `stat` blob-store
+indexed. This lets the catalogue implement the `enumerate` and `stat` blob-store
 operations.
 
 ```clojure
@@ -145,24 +147,24 @@ efficient.
 The datom index is configured with the _attribute schema_, which specifies which
 attributes should be part of the AVET index. Other uses for this schema TBD.
 
-#### Log
+### Transaction Log
 
-The log provides a history of datoms over time, grouped by transaction blob.
-This is a little different than the other types in that it is not a _covering_
-index. Instead, it's just a time-sorted list of the entity root and update
-blobs, which are converted into a datom sequence as needed.
+The transaction log provides a history of datoms over time, grouped by
+transaction blob.  This is a little different than the other types in that it is
+not a _covering_ index. Instead, it's just a time-sorted list of the entity root
+and update blobs, which are converted into a datom sequence as needed.
 
-#### EAVT
+### EAVT
 
 The EAVT index provides efficient access to everything about a given entity.
 Conceptually this is very similar to row access style in a SQL database.
 
-#### AEVT
+### AEVT
 
 The AEVT index provides efficient access to all values for a given attribute,
 comparable to traditional column acess style.
 
-#### AVET
+### AVET
 
 The AVET index provides efficient access to particular combinations of attribute
 and value. This index only contains datoms for attributes which are marked
@@ -171,7 +173,7 @@ and value. This index only contains datoms for attributes which are marked
 The major open question is where 'indexed attributes' are defined since there's
 no storage-wide schema.
 
-#### VAET
+### VAET
 
 The VAET index contains all datoms with references to other blobs as the
 attribute's value. This enables efficient navigation of relationships in
