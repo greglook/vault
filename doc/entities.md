@@ -27,7 +27,7 @@ reference the entity by.
 
 ```clojure
 {:vault/type :vault.entity/root
- :id "a123d1c0f82f2ea1"
+ :source-id "a123d1c0f82f2ea1"
  :owner #vault/ref "sha256:00f916cce73e53b5618069817fb451853e0b9f7529fe8e1c6f34615666322037"
  :time #inst "2013-10-23T20:06:13Z"
  :data

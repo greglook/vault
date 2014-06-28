@@ -26,7 +26,7 @@
   Options may include:
   * :ascending   Wether to return the sequence in ascending order."
   ([engine query]
-   (search* engine nil))
+   (search* engine query nil))
   ([engine query opts]
    (search* engine query opts))
   ([engine query opt-key opt-val & opts]

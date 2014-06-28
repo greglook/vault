@@ -28,6 +28,13 @@
 
 ;; VAULT SYSTEM
 
+#_
+{:blob-stores {:default :local
+               :local (file-store "/home/...")}
+ :catalog (index/catalog {:blobs ...} :blobs)
+ :sig-provider (crypto/keyring-provider ...)}
+
+
 (def config
   (conf/load-configs (env :vault-config "dev/config")))
 

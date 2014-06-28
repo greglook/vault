@@ -32,6 +32,7 @@
   (stat
     [this id]
     (when id
+      ; TODO: rename :size to :stat/size, etc.
       (-> (get-blob-index this)
           (engine/search {:blob id})
           first)))
