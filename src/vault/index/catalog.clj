@@ -18,14 +18,6 @@
 (defrecord IndexCatalog
   [indexes blob-key])
 
-; Blob index schema:
-#_
-{:blob      HashID      ; blob hash-id (pk)
- :size      Long        ; blob byte length
- :type      Keyword     ; data type
- :label     String      ; type-specific annotation
- :stored-at DateTime}   ; time added to index
-
 (extend-type IndexCatalog
   store/BlobStore
 
@@ -34,25 +26,26 @@
     (store/select-ids opts
       ; TODO: this is where being able to do real queries would help;
       ; specifically, for :after and :prefix.
-      (engine/search (get-blob-index this) {} nil)))
+      (engine/search (get-blob-index this) {})))
 
 
   (stat
     [this id]
-    (-> (get-blob-index this)
-        (engine/search {:blob id} nil)
-        first))
+    (when id
+      (-> (get-blob-index this)
+          (engine/search {:blob id})
+          first)))
 
 
-  (put! [this blob]
-    ; TODO: check whether blob has been seen
-    (when blob
+  (put!
+    [this blob]
+    (when-not (store/stat this (:id blob))
       ; TODO: ensure blob has been parsed?
-      (for [index (vals (:indexes this))]
+      (doseq [index (vals (:indexes this))]
         (when-let [projection (:projection index)]
-          (for [record (projection blob)]
-            (engine/update! index record))))
-      blob)))
+          (doseq [record (projection blob)]
+            (engine/update! index record)))))
+    blob))
 
 
 (defn index-catalog
