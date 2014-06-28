@@ -48,7 +48,7 @@
     blob))
 
 
-(defn index-catalog
+(defn catalog
   "Creates a new catalog out of the given indexes. The keyword given names
   the index to look up blob stats from."
   [indexes blob-key]
