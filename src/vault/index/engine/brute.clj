@@ -22,9 +22,9 @@
     ; no-op
     this)
 
-  (search
+  (search*
     [this pattern opts]
-    ; exhaustively search projections of stored blobs
+    ; Exhaustively search projections of stored blobs.
     (filter (partial engine/matches? pattern)
             (mapcat (:projection this)
                     (blob/list (:blob-store this))))))

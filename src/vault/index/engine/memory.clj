@@ -101,7 +101,7 @@
     (swap! (:registers this) update-vals update-register record)
     this)
 
-  (search
+  (search*
     [this pattern opts]
     (-> this :registers deref vals
         (select-register (keys pattern))

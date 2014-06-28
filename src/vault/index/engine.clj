@@ -15,12 +15,22 @@
     [this record]
     "Adds a record to the index for searching.")
 
-  (search
-    [this pattern opts]
-    "Search the index for records with values matching the given pattern.
+  (search*
+    [this query opts]
+    "Search the index for records with values matching the given query."))
 
-    Options may include:
-    - :ascending   Whether to return the sequence in ascending order."))
+
+(defn search
+  "Search the index for records with values matching the given query.
+
+  Options may include:
+  * :ascending   Wether to return the sequence in ascending order."
+  ([engine query]
+   (search* engine nil))
+  ([engine query opts]
+   (search* engine query opts))
+  ([engine query opt-key opt-val & opts]
+   (search* engine query (apply hash-map opt-key opt-val opts))))
 
 
 
