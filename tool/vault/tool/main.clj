@@ -90,7 +90,13 @@
       (command "update <entity> <type> [args]"
         "Apply an update to an existing object."
 
-        (action not-yet-implemented)))))
+        (action not-yet-implemented)))
+
+
+    (command "search <query>"
+      "Search entity attributes for properties."
+
+      (action not-yet-implemented))))
 
 
 (defn -main [& args]
