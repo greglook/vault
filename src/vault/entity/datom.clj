@@ -9,6 +9,7 @@
     [vault.entity.tx :as tx]))
 
 
+; TODO: make this deftype instead, implement equality checks and such.
 (defrecord Datom [op entity attribute value tx time])
 
 
