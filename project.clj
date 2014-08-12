@@ -5,15 +5,15 @@
             :url "http://unlicense.org/"}
 
   :dependencies
-  [[byte-streams "0.1.11"]
-   [clj-time "0.7.0"]
+  [[byte-streams "0.1.13"]
+   [clj-time "0.8.0"]
    [environ "0.5.0"]
-   [potemkin "0.3.4"]
-   [mvxcvi/clj-pgp "0.5.2"]
-   [mvxcvi/puget "0.6.2"]
+   [potemkin "0.3.8"]
+   [mvxcvi/clj-pgp "0.5.3"]
+   [mvxcvi/puget "0.6.3"]
    [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
-   [prismatic/schema "0.2.4"]]
+   [prismatic/schema "0.2.6"]]
 
   :hiera
   {:cluster-depth 2
