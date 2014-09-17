@@ -37,12 +37,12 @@ poorly when handling large binary data. There have been some projects like
 
 Additionally, version control systems are generally designed to allow multiple
 "world lines" (branches) to exist and support splitting and merging them. For a
-data store, this is generally overkill. Note that such semantics can still be
-built on top of Vault, it just doesn't include them in the base entity model.
+data store, this is overkill. Note that such semantics can still be built on top
+of Vault, it just doesn't include them in the base entity model.
 
-VCS options generally solve the mutability and versioning problems, but fail to
-address references and indexing. In addition, there's still no standard syntax
-for structured data.
+VCS options solve the mutability and versioning problems, but fail to address
+references and indexing. In addition, there's still no standard syntax for
+structured data.
 
 ## Datomic
 

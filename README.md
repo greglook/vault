@@ -23,27 +23,29 @@ links or browse around the [doc](doc/) folder.
 ### Blob Storage
 
 At the lowest level, Vault is built on [content-addressable
-storage](doc/blobs.md). Data is stored in _blobs_, which are opaque byte
-sequences addressed by a cryptographic hash of their contents. The combination
-of a hash algorithm and the corresponding digest is enough information to
-securely and uniquely identify a blob. These _hash-ids_ are formatted like a
-URN:
+storage](doc/blobs.md). Data is stored in _blobs_, which are byte sequences
+identified by a cryptographic hash of their contents. The combination of a hash
+algorithm and the corresponding digest is enough information to securely and
+uniquely identify a blob. These _hash-ids_ are formatted like a URN:
 
 `sha256:2f72cc11a6fcd0271ecef8c61056ee1eb1243be3805bf9a9df98f92f7636b05c`
 
-A _blob store_ is a system which can store and retrieve blob data. Blob stores
+A _blob store_ is a system which saves and retrieves blob data. Blob stores
 support a very simple interface; they must store, retrieve, and enumerate the
 contained blobs. The simplest type of blob storage is a hash map in memory.
-Another simple example is a file system, where blobs are stored as local files.
+Another simple example is a store backed by a local file system, where blobs are
+stored as files.
 
 ### Data Format
 
-To represent [structured data](doc/structured-data.md), Vault uses
-[EDN](https://github.com/edn-format/edn). Data blobs are recognized by a magic
-header sequence: `#vault/data\n`. This has the advantage of still being a legal
-EDN tag, though it is stripped in practice.
+By default, blobs are treated as opaque binary data. However, Vault recognizes
+certain special kinds of data. To represent structured data, Vault uses
+[EDN](https://github.com/edn-format/edn). Certain PGP objects can also be stored
+in Vault as a recognized data type; this is primarily for public key blobs.
 
-An example data blob representing a file might look like this:
+[Data blobs](doc/structured-data.md) are UTF-8 encoded EDN values recognized by
+a magic header sequence: `#vault/data\n`. An example data blob representing a
+file might look like this:
 
 ```clojure
 #vault/data
@@ -64,21 +66,10 @@ so it is simple to build data structures which automatically deduplicate shared
 data. These are similar to Clojure's persistent collections; see the schema for
 [hierarchical byte sequences](doc/schemas/byte-sequences.edn) for an example.
 
-Certain PGP objects can also be stored in Vault as a recognized data type. The
-primary case is storing public key blobs. Keys should be encoded as armored
-ascii text blobs.
-
-### Indexing
-
-A second fundamental component of the system is a set of
-[indexes](doc/indexing.md) of the data stored in Vault. Indexes can be thought
-of as a sorted list of tuples. Different indexes will store different subsets of
-the blob data.
-
 ### Entities and State
 
 Mutable data is represented in Vault by [entities](doc/entities.md). An entity
-provides an identity to a collection of _attributes_. Attributes may be
+provides a stable identity to a collection of _attributes_. Attributes may be
 single-valued properties such as `:description` or multi-valued sets like
 `:contact/phone`.
 
@@ -97,7 +88,14 @@ primary value:
  :vault/type :vault/signature}
 ```
 
-### Application
+### Indexing
+
+Another important component of the system is a set of
+[indexes](doc/indexing.md) of the data stored in Vault. Indexes can be thought
+of as a sorted list of tuples. Different indexes will store different subsets of
+the blob data.
+
+### Applications
 
 At the top level, applications are built on top of the data layer. An
 application defines semantics for a set of data types. Some example usages:
