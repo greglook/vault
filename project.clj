@@ -16,7 +16,8 @@
    [prismatic/schema "0.2.6"]]
 
   :hiera
-  {:cluster-depth 2
+  {:vertical? false
+   :cluster-depth 2
    :ignore-ns #{clojure byte-streams clj-time potemkin}}
 
   :profiles
