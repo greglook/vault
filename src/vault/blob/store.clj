@@ -43,7 +43,7 @@
     * :stat/stored-at   date blob was added to store
     * :stat/origin      a resource location for the blob")
 
-  (get [this id]
+  (get* [this id]
     "Loads content from the store and returns a Blob record. Returns nil if no
     matching content is found. The Blob record may include data as from the
     `stat` function.")
@@ -67,11 +67,18 @@
    (enumerate store (apply hash-map opt-key opt-val opts))))
 
 
+; This is only necessary to work around the fact that `get` is already a method
+; defined on record types, since they implement Clojure's map interface. If a
+; record implements the BlobStore protocol inline, the resulting class has two
+; `get` methods with the same arity.
+(def get get*)
+
+
 (defn get'
   "Retrieves data for the given blob and returns the blob record. This function
   verifies that the id matches the actual digest of the data returned."
   [store id]
-  (when-let [blob (get store id)]
+  (when-let [blob (get* store id)]
     (let [digest (digest/hash (:algorithm id) (:content blob))]
       (when (not= id digest)
         (throw (RuntimeException.

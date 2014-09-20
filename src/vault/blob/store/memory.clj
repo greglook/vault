@@ -40,7 +40,7 @@
       (dissoc blob :content)))
 
 
-  (get [this id]
+  (get* [this id]
     (get-mem this id))
 
 
