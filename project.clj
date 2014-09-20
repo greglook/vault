@@ -7,8 +7,8 @@
   :dependencies
   [[byte-streams "0.1.13"]
    [clj-time "0.8.0"]
-   [environ "0.5.0"]
-   [potemkin "0.3.8"]
+   [environ "1.0.0"]
+   [potemkin "0.3.9"]
    [mvxcvi/clj-pgp "0.5.3"]
    [mvxcvi/puget "0.6.3"]
    [org.clojure/clojure "1.6.0"]
@@ -27,7 +27,7 @@
    :tool
    {:dependencies
     [[mvxcvi/directive "0.4.2"]
-     [org.clojure/tools.namespace "0.2.4"]]
+     [org.clojure/tools.namespace "0.2.7"]]
     :jvm-opts []
     :repl-options {:init-ns vault.system}
     :source-paths ["tool"]}
