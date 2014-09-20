@@ -60,6 +60,8 @@ selecting which updates to apply.
 Root and update blobs are _transactional_, meaning they apply atomically to the
 states of the relevant entities.
 
+Entity roots and updates must be signed to be considered valid.
+
 ## Attributes
 
 Entities act like a map, grouping together named _attributes_. These specify
@@ -91,26 +93,6 @@ Valid operations are:
   is multi-valued, the operation's value is removed from the set if it is
   present. If the attribute is single-valued, the attribute is removed if the
   value matches the operation's value.
-
-## Data Signatures
-
-Vault makes use of the OpenPGP standard for public keys and digital signatures.
-Users of Vault are identified by _public key_ - the key itself is stored
-directly in the system as an ASCII 'armored' blob. The address of the key blob
-serves as an unambiguous identifier of the person controlling the corresponding
-private key.
-
-Users can sign data in the system with 'signature' structures. Signatures are
-maps which follow the primary value in a data blob, and reference the public key
-blob of the owner.
-
-```clojure
-{:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
- :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
- :vault/type :vault/signature}
-```
-
-Entity roots and updates must be signed to be considered valid.
 
 ## Temporal Ordering
 

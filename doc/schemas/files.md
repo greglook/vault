@@ -52,8 +52,8 @@ specified either as a direct reference to a content blob or to a
 {:vault/type :filesystem/file
  ; common metadata...
  ; Files contain ONE of the two following entries:
- :byte/content #vault/ref "algo:digest" ; direct reference to file contents
- :byte/parts #vault/ref "algo:digest"}  ; reference to a :byte/seq structure
+ :content/bytes #vault/ref "algo:digest" ; direct reference to file contents
+ :content/parts #vault/ref "algo:digest"}  ; reference to a :byte/seq structure
 ```
 
 ## Symlinks
