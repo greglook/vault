@@ -7,32 +7,24 @@ classified into one of three types:
 - Cryptographic keys are stored as _key blobs_.
 - All other content is considered _raw blobs_.
 
-Data blobs are stored as [EDN](https://github.com/edn-format/edn) text. Key
+Data blobs are stored as EDN text. Key
 blobs follow the OpenPGP standard and are stored as ASCII 'armored' text. Raw
 blobs are not further interpreted.
 
 ## Data Blobs
 
-Structured data in Vault is represented by blobs containing EDN values. These
-blobs:
-- MUST consist of UTF-8 encoded text
-- MUST contain EDN-formatted data
-- SHOULD NOT contain trailing whitespace
-- MUST start with the line `#vault/data`
-- MUST contain at least one 'primary' value
-- MAY contain additional special values
-    - only signatures, so far
-
-Data blobs are recognized by the 'magic header' EDN tag prefix. The value
-following the header is the _primary_ value of the blob. Additional _secondary_
-EDN values may follow in order to provide things such as content signatures.
+Structured data in Vault is represented by blobs containing UTF-8 encoded
+[EDN](https://github.com/edn-format/edn) text. Data blobs are recognized by the
+magic header `#vault/data` EDN tag. The value following the header is the
+_primary_ value of the blob. Additional _secondary_ values may follow in order
+to provide things such as content signatures.
 
 Values in data blobs are given a 'type'; for basic EDN values like strings,
 numbers, vectors, etc., the type is just their class. For maps, the system
 checks a special `:vault/type` key. If this key has a keyword value, that is
-taken to be the type, otherwise it is treated as a generic map.
+taken to be the type, otherwise the data is treated as a generic map.
 
-An example data blob:
+An example blob:
 
 ```clojure
 #vault/data
@@ -69,13 +61,13 @@ which follow the primary value in a data blob, and reference the public key blob
 of the owner.
 
 ```clojure
-{:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
- :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
- :vault/type :vault/signature}
+{:vault/type :vault/signature
+ :key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+ :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMr..."}
 ```
 
-The signature must match the byte sequence of the UTF-8 encoding of the
-characters which form the primary value in the blob, excluding the header.
+The signature must match the UTF-8 encoded byte sequence of the characters which
+form the primary value in the blob (not including the header).
 
 ## Blob Graph
 
