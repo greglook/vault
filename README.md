@@ -43,9 +43,9 @@ certain special kinds of data. To represent structured data, Vault uses
 [EDN](https://github.com/edn-format/edn). Certain PGP objects can also be stored
 in Vault as a recognized data type; this is primarily for public key blobs.
 
-[Data blobs](doc/structured-data.md) are UTF-8 encoded EDN values recognized by
-a magic header sequence: `#vault/data\n`. An example data blob representing a
-file might look like this:
+[Data blobs](doc/data.md) are UTF-8 encoded EDN values recognized by a header
+tag: `#vault/data`. An example data blob representing a file might look like
+this:
 
 ```clojure
 #vault/data

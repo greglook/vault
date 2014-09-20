@@ -40,9 +40,24 @@ An example blob:
  :content/bytes #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"}
 ```
 
-This value has the type `:filesystem/file`. The `#vault/ref` tag marks a string
-as a hash identifier; in this case, the `:content/bytes` key points to a blob
-which directly contains the byte content of the file.
+This value has the type `:filesystem/file`. The `:content/bytes` key points to a
+blob which directly contains the byte content of the file.
+
+### Supported Tags
+
+Vault supports several EDN tags in addition to those supported by default in
+Clojure.
+
+| Tag              | Type           | Definition |
+|------------------|----------------|------------|
+| `#bin`           | `byte[]`       | Binary data encoded in Base64.
+| `#uri`           | `URI`          | Uniform Resource Identifier string.
+| `#inst`          | `DateTime`     | An instant in time, rendered as an ISO-8601 string.
+| `#vault/ref`     | `HashID`       | A hash identifier string for a blob of data.
+| `#pgp/signature` | `PGPSignature` | A binary-encoded PGP signature packet.
+
+The system _should_ provide a standard mechanism for registering additional tag
+readers in API clients.
 
 ## Key Blobs
 
