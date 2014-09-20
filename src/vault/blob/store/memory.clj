@@ -26,9 +26,8 @@
 ;;;;; MEMORY STORE ;;;;;
 
 (defrecord MemoryBlobStore
-  [memory])
+  [memory]
 
-(extend-type MemoryBlobStore
   store/BlobStore
 
   (enumerate [this opts]

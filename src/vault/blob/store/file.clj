@@ -82,9 +82,8 @@
 ;;;;; FILE STORE ;;;;;
 
 (defrecord FileBlobStore
-  [^File root])
+  [^File root]
 
-(extend-type FileBlobStore
   store/BlobStore
 
   (enumerate [this opts]
