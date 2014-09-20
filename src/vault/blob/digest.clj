@@ -67,9 +67,9 @@
 (defn hash-id
   "Constructs a hash identifier from the arguments."
   ([x]
-   (cond
-     (instance? HashID x) x
-     :else (parse-id (str x))))
+   (if (instance? HashID x)
+     x
+     (parse-id (str x))))
   ([algorithm digest]
    (HashID. (keyword algorithm) (str digest))))
 

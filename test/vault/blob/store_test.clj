@@ -30,15 +30,15 @@
     (is (= [:list {:foo "bar" :baz 3}] (blob/list store :foo "bar" :baz 3)))))
 
 
-(deftest get-wrapper
+(deftest checked-get
   (let [content (.getBytes "foobarbaz")
         id (blob/hash :sha256 content)
-        store (reify store/BlobStore (get* [this id] (blob/load content)))
+        store (reify store/BlobStore (get [this id] (blob/load content)))
         blob (blob/get store id)]
     (is (= id (:id blob)))
     (is (bytes= content (:content blob)))
     (is (thrown? RuntimeException
-                 (blob/get store (:id (blob/load "bazbarfoo")))))))
+                 (blob/get' store (:id (blob/load "bazbarfoo")))))))
 
 
 (deftest hash-id-selection
@@ -101,12 +101,9 @@
         (test-blob-content store id content))
       (let [[id content] (first (seq stored-content))]
         (test-restore-blob store id content))
-      (when (satisfies? store/DestructableBlobStore store)
-        (doseq [id (keys stored-content)]
-          (is (store/delete! store id) "delete returns true"))
-        (is (empty? (blob/list store)) "ends empty")
-        (is (not (store/delete! store (first (keys stored-content))))
-          "gives false when removing a nonexistent blob")))))
+      (doseq [id (keys stored-content)]
+        (store/delete! store id))
+      (is (empty? (blob/list store)) "ends empty"))))
 
 
 (defn store-enabled?
@@ -115,6 +112,7 @@
   [store-type]
   (some->
     (env :vault-blob-store-tests)
+    str/lower-case
     (str/split #",")
     set
     (contains? store-type)))
@@ -123,8 +121,7 @@
 (deftest test-memory-store
   ; Always enabled.
   (let [store (memory-store)]
-    (test-blob-store store "memory-store")
-    (store/destroy!! store)))
+    (test-blob-store store "memory-store")))
 
 
 (deftest test-file-store
@@ -134,4 +131,4 @@
                             (System/currentTimeMillis)))
           store (file-store tmpdir)]
       (test-blob-store store "file-store")
-      (store/destroy!! store))))
+      (vault.blob.store.file/destroy!! store))))

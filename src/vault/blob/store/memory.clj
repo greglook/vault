@@ -40,7 +40,7 @@
       (dissoc blob :content)))
 
 
-  (get* [this id]
+  (get [this id]
     (get-mem this id))
 
 
@@ -52,18 +52,8 @@
             blob))))
 
 
-  store/DestructableBlobStore
-
-  (delete!
-    [this id]
-    (when (get-mem this id)
-      (swap! (:memory this) dissoc id)
-      true))
-
-
-  (destroy!!
-    [this]
-    (swap! (:memory this) empty)))
+  (delete! [this id]
+    (swap! (:memory this) dissoc id)))
 
 
 (defn memory-store

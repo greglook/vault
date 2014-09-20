@@ -13,7 +13,7 @@
 (defn record
   "Constructs a new blob record with the given id and optional content."
   ([id]
-   (record id nil))
+   (Blob. id nil))
   ([id content]
    (Blob. id content)))
 
@@ -43,33 +43,22 @@
     * :stat/stored-at   date blob was added to store
     * :stat/origin      a resource location for the blob")
 
-  (get* [this id]
+  (get [this id]
     "Loads content from the store and returns a Blob record. Returns nil if no
     matching content is found. The Blob record may include data as from the
     `stat` function.")
 
   (put! [this blob]
     "Saves a blob into the store. Returns the blob record, potentially updated
-    with `stat` metadata."))
-
-
-(defprotocol DestructableBlobStore
-  "Additional blob storage protocol to represent direct storage types which can
-  excise blob data."
+    with `stat` metadata.")
 
   (delete! [this id]
-    "Remove a blob from the store.")
-
-  (destroy!! [this]
-    "Completely remove all data from the store."))
+    "Removes a blob from the store."))
 
 
 (defn list
   "Enumerates the stored blobs, returning a sequence of HashIDs.
-  Options should be keyword/value pairs from the following:
-  * :after    start enumerating ids lexically following this string
-  * :prefix   only return ids matching the given string
-  * :limit    limit the number of results returned"
+  See `select-ids` for the available query options."
   ([store]
    (enumerate store nil))
   ([store opts]
@@ -78,11 +67,11 @@
    (enumerate store (apply hash-map opt-key opt-val opts))))
 
 
-(defn get
+(defn get'
   "Retrieves data for the given blob and returns the blob record. This function
   verifies that the id matches the actual digest of the data returned."
   [store id]
-  (when-let [blob (get* store id)]
+  (when-let [blob (get store id)]
     (let [digest (digest/hash (:algorithm id) (:content blob))]
       (when (not= id digest)
         (throw (RuntimeException.
@@ -92,7 +81,9 @@
 
 
 (defn store!
-  "Stores data from the given byte source and returns the blob record."
+  "Stores data from the given byte source and returns the blob record. This
+  method accepts any data source which can be handled as a byte stream by
+  `load`."
   [store source]
   (when-let [blob (load source)]
     (put! store blob)))
@@ -102,7 +93,7 @@
 ;;;;; UTILITY FUNCTIONS ;;;;;
 
 (defn select-ids
-  "Selects hash identifiers from a lazy sequence based on input criteria.
+  "Selects hash identifiers from a sequence based on input criteria.
   Available options:
   * :after    start enumerating ids lexically following this string
   * :prefix   only return ids matching the given string

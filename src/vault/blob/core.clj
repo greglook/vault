@@ -16,8 +16,10 @@
   (vault.blob.store
     record
     load
-    stat
-    put!
     list
+    stat
     get
-    store!))
+    get'
+    put!
+    store!
+    delete!))

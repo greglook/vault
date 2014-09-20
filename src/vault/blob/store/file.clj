@@ -99,7 +99,7 @@
              (blob-stats file))))
 
 
-  (get* [this id]
+  (get [this id]
     (when-blob-file this id
       (-> file
           io/input-stream
@@ -118,21 +118,19 @@
       (merge blob (blob-stats file))))
 
 
-  store/DestructableBlobStore
-
-  (delete!
-    [this id]
+  (delete! [this id]
     (when-blob-file this id
-      (.delete file)))
+      (.delete file))))
 
 
-  (destroy!!
-    [this]
-    (let [rm-r (fn rm-r [^File path]
-                 (when (.isDirectory path)
-                   (->> path .listFiles (map rm-r) dorun))
-                 (.delete path))]
-      (rm-r (:root this)))))
+(defn destroy!!
+  "Completely removes a file blob store."
+  [store]
+  (let [rm-r (fn rm-r [^File path]
+               (when (.isDirectory path)
+                 (->> path .listFiles (map rm-r) dorun))
+               (.delete path))]
+    (rm-r (:root store))))
 
 
 (defn file-store
