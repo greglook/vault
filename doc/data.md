@@ -67,7 +67,21 @@ directly in the system as an ASCII 'armored' blob. The address of the key blob
 serves as an unambiguous identifier of the person controlling the corresponding
 private key.
 
-TODO: add example
+```
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: BCPG v1.50
+
+mI0EUr3KFwEEANAfzcKxWqBYhkUGo4xi6d2zZy2RAewFRKVp/BA2bEHLAquDnpn7
+abgrpsCFbBW/LEwiMX6cfYLMxvGzbg5oTfQHMs27OsnKCqFas9UkT6DYS1PM9u4C
+3qlJytK9AFQnSYOrSs8pe6VRdeHZb7FM+PawqH0cuoYfcMZiGAylddXhABEBAAG0
+IVRlc3QgVXNlciA8dGVzdEB2YXVsdC5tdnhjdmkuY29tPoi4BBMBAgAiBQJSvcoX
+AhsDBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAKCRCSOxwcQ5IxioerBACBfXLk
+j4ryCBcmJ+jtL1/W5jUQ/E4LWW7gG34tkHBJk00YulXUe4lwY1x9//6zowVV7DvW
+ndmjcb0R6Duw76+xLsnEKomW0aV+ydoTtFZ7bX0kChX/IegPLMB0OnenzOoWKieN
+GLFUpzICH+i7Or5X2bmekHtnbHPfJmQAuvmUnrACAAA=
+=3aKz
+-----END PGP PUBLIC KEY BLOCK-----
+```
 
 ## Data Signatures
 
