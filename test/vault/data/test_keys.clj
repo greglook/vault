@@ -4,8 +4,8 @@
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
     [vault.blob.store.memory :refer [memory-store]]
-    [vault.data.pgp :as pgp-data]
-    [vault.data.crypto :as crypto]))
+    [vault.data.key :as key]
+    [vault.data.signature :as sig]))
 
 
 (def pubring
@@ -31,12 +31,12 @@
 
 (def pubkey-id
   (->> pubkey
-       pgp-data/key->blob
+       key/key->blob
        (blob/put! blob-store)
        :id))
 
 
 (def sig-provider
-  (crypto/keyring-sig-provider
+  (sig/keyring-sig-provider
     :sha1 secring
     (constantly "test password")))

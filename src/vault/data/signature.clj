@@ -1,12 +1,12 @@
-(ns vault.data.crypto
+(ns vault.data.signature
   "Cryptographic provider functions."
   (:require
     [clojure.java.io :as io]
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
     (vault.data
-      [edn :as edn-data]
-      [pgp :as pgp-data]))
+      [key :as key]
+      [edn :as edn-data]))
   (:import
     (org.bouncycastle.openpgp
       PGPSignature)))
@@ -43,7 +43,7 @@
   "Loads a PGP public key from a blob store."
   [store id]
   (let [blob (blob/get store id)
-        pubkey-blob (pgp-data/parse-blob blob)]
+        pubkey-blob (key/parse-blob blob)]
     (when-not blob
       (throw (IllegalStateException.
                (str "No public key blob stored for " id))))

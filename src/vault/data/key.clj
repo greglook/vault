@@ -1,4 +1,4 @@
-(ns vault.data.pgp
+(ns vault.data.key
   "Functions to read blobs containing pgp data."
   (:require
     [vault.blob.core :as blob]
