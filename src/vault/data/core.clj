@@ -26,7 +26,7 @@
   (if (:data/type blob)
     blob
     (or (edn-data/read-blob blob)
-        (pgp-data/read-blob blob)
+        (pgp-data/parse-blob blob)
         (assoc blob :data/type :raw))))
 
 

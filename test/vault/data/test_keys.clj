@@ -4,6 +4,7 @@
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.core :as blob]
     [vault.blob.store.memory :refer [memory-store]]
+    [vault.data.pgp :as pgp-data]
     [vault.data.crypto :as crypto]))
 
 
@@ -30,8 +31,8 @@
 
 (def pubkey-id
   (->> pubkey
-       pgp/encode-ascii
-       (blob/store! blob-store)
+       pgp-data/key->blob
+       (blob/put! blob-store)
        :id))
 
 

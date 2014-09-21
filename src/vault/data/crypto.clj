@@ -43,13 +43,14 @@
   "Loads a PGP public key from a blob store."
   [store id]
   (let [blob (blob/get store id)
-        pubkey-blob (pgp-data/read-blob blob)]
+        pubkey-blob (pgp-data/parse-blob blob)]
     (when-not blob
       (throw (IllegalStateException.
                (str "No public key blob stored for " id))))
     (when-not (= :pgp/public-key (:data/type pubkey-blob))
       (throw (IllegalStateException.
-               (str "Blob " id " is not a PGP public key"))))
+               (str "Blob " id " is not a PGP public key: "
+                    (:data/type pubkey-blob)))))
     (first (:data/values pubkey-blob))))
 
 
