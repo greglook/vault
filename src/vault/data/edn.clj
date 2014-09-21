@@ -28,16 +28,16 @@
 
 ;;;;; CONSTANTS & CONFIGURATION ;;;;;
 
-(def ^Charset blob-charset
+(def ^Charset data-charset
   (Charset/forName "UTF-8"))
 
 
-(def ^:const blob-header
+(def ^:const data-header
   "Magic header which must appear as the first characters in a data blob."
   "#vault/data\n")
 
 
-(def ^:const ^:private render-opts
+(def ^:const ^:private print-opts
   "Options to use to render EDN values with Puget."
   {:width 100
    :strict true
@@ -60,7 +60,7 @@
     (map? value) (get value type-key :map)
     (set? value) :set
     (vector? value) :vector
-    (sequential? value) :sequence
+    (sequential? value) :list
     :else (class value)))
 
 
@@ -121,7 +121,7 @@
 (defn- print-value
   "Prints the canonical EDN representation for the given Clojure value."
   [value]
-  (puget/pprint value render-opts))
+  (puget/pprint value print-opts))
 
 
 (defn- edn-str
@@ -129,37 +129,33 @@
   Clojure value."
   ^String
   [value]
-  (let [opts (assoc render-opts :print-color false)]
+  (let [opts (assoc print-opts :print-color false)]
     (puget/pprint-str value opts)))
 
 
-(defn edn-blob
-  "Constructs a data blob from a value. The second argument may be a sequence
-  of secondary values, or a function which takes the bytes comprising the
-  rendered primary value and returns a sequence of secondary data values."
+(defn data-blob
+  "Constructs a data blob from a value. The second argument may be a function
+  which takes the bytes comprising the rendered primary value and returns a
+  sequence of secondary data values."
   ([value]
-   (edn-blob value nil))
-  ([value secondaries]
+   (data-blob value nil))
+  ([value f]
    (let [value-str (edn-str value)
-         secondary-values
-         (cond
-           (sequential? secondaries) secondaries
-           (fn? secondaries) (secondaries (.getBytes value-str blob-charset))
-           :else nil)
+         secondary-values (when f (f (.getBytes value-str data-charset)))
          content-bytes (ByteArrayOutputStream.)
-         byte-range (atom [])]
-     (with-open [content (OutputStreamWriter. content-bytes blob-charset)]
-       (.write content blob-header)
+         byte-range (long-array 2)]
+     (with-open [content (OutputStreamWriter. content-bytes data-charset)]
+       (.write content data-header)
        (.flush content)
-       (swap! byte-range conj (.size content-bytes))
+       (aset byte-range 0 (.size content-bytes))
        (.write content value-str)
        (.flush content)
-       (swap! byte-range conj (.size content-bytes))
+       (aset byte-range 1 (.size content-bytes))
        (doseq [v secondary-values]
          (.write content "\n\n")
          (.write content (edn-str v))))
      (assoc (blob/read (.toByteArray content-bytes))
-       :data/primary-bytes @byte-range
+       :data/primary-bytes (vec byte-range)
        :data/values (vec (cons value secondary-values))
        :data/type (type value)))))
 
@@ -169,7 +165,7 @@
   colorized version of the values in an EDN data blob."
   [blob]
   (when-let [values (:data/values blob)]
-    (print (puget/color-text :tag blob-header))
+    (print (puget/color-text :tag data-header))
     (print-value (first values))
     (doseq [v (rest values)]
       (newline)
@@ -188,7 +184,7 @@
     (read []
       (let [c (.read reader)]
         (when-not (= c -1)
-          (let [len (count (.getBytes (str (char c)) blob-charset))]
+          (let [len (count (.getBytes (str (char c)) data-charset))]
             (swap! counter + len)))
         c))
     (skip [n]
@@ -202,7 +198,7 @@
   "Reads the first few bytes from a blob's content to determine whether it is a
   data blob. The result is true if the header matches, otherwise false."
   [^bytes content]
-  (let [header (.getBytes blob-header blob-charset)
+  (let [header (.getBytes data-header data-charset)
         len (count header)]
     (= (seq header) (take len (seq content)))))
 
@@ -237,10 +233,10 @@
     (let [bytes-read (atom 0)]
       (with-open [reader (-> (:content blob)
                              ByteArrayInputStream.
-                             (InputStreamReader. blob-charset)
+                             (InputStreamReader. data-charset)
                              (counting-reader bytes-read)
                              PushbackReader.)]
-        (.skip reader (count blob-header))
+        (.skip reader (count data-header))
         (let [[pvalue byte-range] (read-primary-value! reader bytes-read)
               svalues (read-secondary-values! reader)]
           (assoc blob

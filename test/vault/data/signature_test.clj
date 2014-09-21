@@ -21,7 +21,8 @@
 
 (deftest no-signature-blob
   (let [blob (-> {:foo 'bar}
-                 (edn-data/edn-blob [{:baz 123}])
+                 (edn-data/data-blob
+                   (constantly [{:baz 123}]))
                  (sig/verify-sigs blob-store))]
     (is (empty? (:data/signatures blob)))))
 
@@ -29,10 +30,11 @@
 (deftest no-pubkey-blob
   (is (thrown? IllegalStateException
         (-> {:foo 'bar}
-            (edn-data/edn-blob
-              [(edn-data/typed-map
-                 :vault/signature
-                 :key (blob/hash (.getBytes "bazbar")))])
+            (edn-data/data-blob
+              (constantly
+                [(edn-data/typed-map
+                   :vault/signature
+                   :key (blob/hash (.getBytes "bazbar")))]))
             (sig/verify-sigs blob-store)))))
 
 
@@ -40,10 +42,11 @@
   (let [non-key (blob/store! blob-store "foobar")]
     (is (thrown? IllegalStateException
           (-> {:foo 'bar}
-              (edn-data/edn-blob
-                [(edn-data/typed-map
-                   :vault/signature
-                   :key (:id non-key))])
+              (edn-data/data-blob
+                (constantly
+                  [(edn-data/typed-map
+                     :vault/signature
+                     :key (:id non-key))]))
               (sig/verify-sigs blob-store))))))
 
 

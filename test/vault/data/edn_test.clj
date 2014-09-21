@@ -34,14 +34,14 @@
 ;; SERIALIZATION
 
 (deftest blob-creation
-  (let [blob (edn-data/edn-blob [:foo])]
+  (let [blob (edn-data/data-blob [:foo])]
     (is (:id blob))
     (is (:content blob))
     (is (= :vector (:data/type blob)))
     (is (= [[:foo]] (:data/values blob)))
     (is (= [12 18] (:data/primary-bytes blob)))
     (is (= "[:foo]" (String. (edn-data/primary-bytes blob)))))
-  (let [blob (edn-data/edn-blob {:alpha 'omega} (comp vector count))]
+  (let [blob (edn-data/data-blob {:alpha 'omega} (comp vector count))]
     (is (= [{:alpha 'omega} 14] (:data/values blob)))
     (is (= [12 26] (:data/primary-bytes blob)))))
 
@@ -81,7 +81,7 @@
           values (:data/values data)
           primary-bytes (edn-data/primary-bytes data)]
       (is (= [[1 \2 :three] :x/y "foo"] values))
-      (is (bytes= (.getBytes primary-value edn-data/blob-charset) primary-bytes))))
+      (is (bytes= (.getBytes primary-value edn-data/data-charset) primary-bytes))))
   (testing "non-data blob"
     (let [blob (blob/read "frobble babble")]
       (is (bytes= (:content blob) (edn-data/primary-bytes blob))))))
@@ -91,5 +91,5 @@
   (let [value-str "\"€18.50\""
         blob (data-fixture value-str)
         data (edn-data/read-blob blob)]
-    (is (bytes= (.getBytes value-str edn-data/blob-charset)
+    (is (bytes= (.getBytes value-str edn-data/data-charset)
                 (edn-data/primary-bytes data)))))

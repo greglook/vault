@@ -72,7 +72,7 @@
   "Constructs a data blob with the given value, signed with the given public
   keys."
   [value store provider & pubkey-ids]
-  (edn-data/edn-blob
+  (edn-data/data-blob
     value
     (fn [content]
       (map (partial signature-map store provider content)
