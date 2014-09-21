@@ -1,5 +1,5 @@
 (ns vault.blob.core
-  (:refer-clojure :exclude [get hash list load])
+  (:refer-clojure :exclude [get hash list read])
   (:require
     [potemkin :refer [import-vars]]
     (vault.blob
@@ -10,12 +10,13 @@
 (import-vars
   (vault.blob.digest
     hash
-    path-str
+    hash-id
     parse-id
-    hash-id)
+    path-str)
   (vault.blob.store
     record
-    load
+    read
+    write
     list
     stat
     get

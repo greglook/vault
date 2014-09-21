@@ -102,7 +102,7 @@
     (when-blob-file this id
       (-> file
           io/input-stream
-          store/load
+          store/read
           (merge (blob-stats file)))))
 
 

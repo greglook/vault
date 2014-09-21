@@ -18,7 +18,7 @@
   (->> values
        (interpose "\n\n")
        (apply str "#vault/data\n")
-       blob/load))
+       blob/read))
 
 
 (deftest data-typing
@@ -59,7 +59,7 @@
 ;; DESERIALIZATION
 
 (deftest read-non-edn-blob
-  (let [blob (blob/load "foobarbaz not a data blob")
+  (let [blob (blob/read "foobarbaz not a data blob")
         data (edn-data/read-blob blob)]
     (is (nil? data))))
 
@@ -83,7 +83,7 @@
       (is (= [[1 \2 :three] :x/y "foo"] values))
       (is (bytes= (.getBytes primary-value edn-data/blob-charset) primary-bytes))))
   (testing "non-data blob"
-    (let [blob (blob/load "frobble babble")]
+    (let [blob (blob/read "frobble babble")]
       (is (bytes= (:content blob) (edn-data/primary-bytes blob))))))
 
 

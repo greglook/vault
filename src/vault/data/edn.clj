@@ -158,7 +158,7 @@
        (doseq [v secondary-values]
          (.write content "\n\n")
          (.write content (edn-str v))))
-     (assoc (blob/load (.toByteArray content-bytes))
+     (assoc (blob/read (.toByteArray content-bytes))
        :data/primary-bytes @byte-range
        :data/values (vec (cons value secondary-values))
        :data/type (type value)))))

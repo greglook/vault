@@ -16,9 +16,9 @@
 ;; STORAGE FUNCTION TESTS
 
 (deftest blob-loading
-  (is (nil? (blob/load (byte-array 0))))
-  (is (nil? (blob/load "")))
-  (let [blob (blob/load "foo")]
+  (is (nil? (blob/read (byte-array 0))))
+  (is (nil? (blob/read "")))
+  (let [blob (blob/read "foo")]
     (is (not (nil? blob)))
     (is (not (nil? (:id blob))))
     (is (not (empty? (:content blob))))))
@@ -33,12 +33,12 @@
 (deftest checked-get
   (let [content (.getBytes "foobarbaz")
         id (blob/hash :sha256 content)
-        store (reify store/BlobStore (get* [this id] (blob/load content)))
+        store (reify store/BlobStore (get* [this id] (blob/read content)))
         blob (blob/get store id)]
     (is (= id (:id blob)))
     (is (bytes= content (:content blob)))
     (is (thrown? RuntimeException
-                 (blob/get' store (:id (blob/load "bazbarfoo")))))))
+                 (blob/get' store (:id (blob/read "bazbarfoo")))))))
 
 
 (deftest hash-id-selection

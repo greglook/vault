@@ -1,5 +1,5 @@
 (ns vault.blob.store
-  (:refer-clojure :exclude [get list load])
+  (:refer-clojure :exclude [get list read])
   (:require
     byte-streams
     [vault.blob.digest :as digest]))
@@ -18,12 +18,20 @@
    (Blob. id content)))
 
 
-(defn load
-  "Buffers data in memory and hashes it to identify the blob."
+(defn read
+  "Reads data into memory from the given source and hashes it to identify the
+  blob. This can handle any source supported by the byte-streams library."
   [source]
   (let [content (byte-streams/to-byte-array source)]
     (when-not (empty? content)
       (record (digest/hash content) content))))
+
+
+(defn write
+  "Writes blob data to a byte stream."
+  [blob sink]
+  (when-let [content (:content blob)]
+    (byte-streams/transfer content sink)))
 
 
 
@@ -92,7 +100,7 @@
   method accepts any data source which can be handled as a byte stream by
   `load`."
   [store source]
-  (when-let [blob (load source)]
+  (when-let [blob (read source)]
     (put! store blob)))
 
 
