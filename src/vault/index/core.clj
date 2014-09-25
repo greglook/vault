@@ -3,13 +3,12 @@
     [potemkin :refer [import-vars]]
     (vault.index
       [catalog :as catalog]
-      [engine :as engine])))
+      [search :as search])))
 
 
 (import-vars
   (vault.index.catalog
     catalog)
-  (vault.index.engine
-    init!
+  (vault.index.search
     update!
     search))

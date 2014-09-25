@@ -1,7 +1,7 @@
 (ns vault.index.search.memory
   (:require
     [puget.order :as order]
-    [vault.index.engine :as engine]))
+    [vault.index.search :as search]))
 
 
 ;;;;; HELPER FUNCTIONS ;;;;;
@@ -79,7 +79,7 @@
       ; Narrow scope by recursively getting next level of records.
       (recur more (get records value) (dissoc pattern attr))
       ; Filter remaining entries by pattern attributes.
-      (filter (partial engine/matches? pattern)
+      (filter (partial search/matches? pattern)
               (flatten-times records (count attrs))))))
 
 
@@ -89,12 +89,7 @@
 (defrecord MemoryIndex [registers])
 
 (extend-type MemoryIndex
-  engine/SearchEngine
-
-  (init!
-    [this]
-    ; no-op
-    this)
+  search/SearchEngine
 
   (update!
     [this record]

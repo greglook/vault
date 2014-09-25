@@ -1,7 +1,7 @@
 (ns vault.index.search.brute
   (:require
     [vault.blob.core :as blob]
-    [vault.index.engine :as engine]))
+    [vault.index.search :as search]))
 
 
 ;;;;; BRUTE-FORCE INDEX ;;;;;
@@ -10,7 +10,7 @@
   [blob-store projection])
 
 (extend-type BruteForceIndex
-  engine/SearchEngine
+  search/SearchEngine
 
   (init!
     [this]
@@ -25,7 +25,7 @@
   (search*
     [this pattern opts]
     ; Exhaustively search projections of stored blobs.
-    (filter (partial engine/matches? pattern)
+    (filter (partial search/matches? pattern)
             (mapcat (:projection this)
                     (blob/list (:blob-store this))))))
 

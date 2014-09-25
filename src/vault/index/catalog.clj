@@ -2,7 +2,7 @@
   (:require
     [clj-time.core :as time]
     [vault.blob.store :as store]
-    [vault.index.engine :as engine]))
+    [vault.index.search :as search]))
 
 
 ;;;;; HELPER FUNCTIONS ;;;;;
@@ -26,7 +26,7 @@
     (store/select-ids opts
       ; TODO: this is where being able to do real queries would help;
       ; specifically, for :after and :prefix.
-      (engine/search (get-blob-index this) {})))
+      (search/search (get-blob-index this) {})))
 
 
   (stat
@@ -34,7 +34,7 @@
     (when id
       ; TODO: rename :size to :stat/size, etc.
       (-> (get-blob-index this)
-          (engine/search {:blob id})
+          (search/search {:blob id})
           first)))
 
 
@@ -45,7 +45,7 @@
       (doseq [index (vals (:indexes this))]
         (when-let [projection (:projection index)]
           (doseq [record (projection blob)]
-            (engine/update! index record)))))
+            (search/update! index record)))))
     blob))
 
 
