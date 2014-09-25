@@ -1,4 +1,4 @@
-(ns vault.index.engine.memory
+(ns vault.index.search.memory
   (:require
     [puget.order :as order]
     [vault.index.engine :as engine]))

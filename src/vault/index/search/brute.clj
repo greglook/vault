@@ -1,4 +1,4 @@
-(ns vault.index.engine.brute
+(ns vault.index.search.brute
   (:require
     [vault.blob.core :as blob]
     [vault.index.engine :as engine]))
