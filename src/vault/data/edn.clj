@@ -1,10 +1,9 @@
 (ns vault.data.edn
   "Functions to handle structured data formatted as EDN."
-  (:refer-clojure :exclude [type])
   (:require
     (clj-time
       [core :as time]
-      [format :as ftime])
+      [format :as time-fmt])
     [clojure.string :as str]
     [clojure.edn :as edn]
     (puget
@@ -47,14 +46,18 @@
 
 
 (def ^:const type-key
-  "Keyword which defines a map's data type."
+  "Keyword which sets the data type of a map value."
   :vault/type)
 
 
-(defn type
-  "Determines the 'type' of the given value. By default, the result is just the
-  class of the value. For maps, the type-key is used if present. This is the
-  main way types are represented in the data layer."
+(defn value-type
+  "Determines the 'type' of the given value.
+
+  If the value is a standard Clojure data collection, it is given a type of
+  `:map`, `:set`, `:vector`, or `:list` appropriately. For maps, if the
+  [[type-key]] `:vault/type` is present, its value is used instead.
+
+  All other values return their class."
   [value]
   (cond
     (map? value) (get value type-key :map)
@@ -65,7 +68,7 @@
 
 
 (defn typed-map
-  "Constructs a new value with the given data type."
+  "Constructs a new map value with the given data type."
   [t & entries]
   (apply hash-map type-key t entries))
 
@@ -111,8 +114,8 @@
 
 (register-tag! inst
   DateTime
-  (partial ftime/unparse (ftime/formatters :date-time))
-  (partial ftime/parse   (ftime/formatters :date-time)))
+  (partial time-fmt/unparse (time-fmt/formatters :date-time))
+  (partial time-fmt/parse   (time-fmt/formatters :date-time)))
 
 
 
@@ -157,7 +160,7 @@
      (assoc (blob/read (.toByteArray content-bytes))
        :data/primary-bytes (vec byte-range)
        :data/values (vec (cons value secondary-values))
-       :data/type (type value)))))
+       :data/type (value-type value)))))
 
 
 (defn print-blob
@@ -242,7 +245,7 @@
           (assoc blob
             :data/primary-bytes byte-range
             :data/values (vec (cons pvalue svalues))
-            :data/type (type pvalue)))))))
+            :data/type (value-type pvalue)))))))
 
 
 (defn primary-bytes

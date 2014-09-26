@@ -63,13 +63,13 @@
 (defn root?
   "Determines whether the given value is an entity root."
   [value]
-  (= root-type (data/type value)))
+  (= root-type (data/value-type value)))
 
 
 (defn update?
   "Determines whether the given value is an entity update."
   [value]
-  (= update-type (data/type value)))
+  (= update-type (data/value-type value)))
 
 
 

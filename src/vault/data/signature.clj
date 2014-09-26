@@ -86,7 +86,7 @@
   [blob]
   (->>
     (rest (:data/values blob))
-    (filter #(= :vault/signature (edn/type %)))
+    (filter #(= :vault/signature (edn/value-type %)))
     seq))
 
 

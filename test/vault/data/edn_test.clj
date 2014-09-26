@@ -22,13 +22,13 @@
 
 
 (deftest data-typing
-  ; TODO: use `are`
-  (is (= String (edn/type "foo")))
-  (is (= (class :bar) (edn/type :bar)))
-  (is (= :map (edn/type {:x 'y})))
-  (is (= :set (edn/type #{:foo :bar})))
-  (is (= :vector (edn/type [:foo :bar])))
-  (is (= :test (edn/type {:vault/type :test}))))
+  (are [t v] (is (= t (edn/value-type v)))
+    String  "foo"
+    clojure.lang.Keyword :bar
+    :map    {:x 'y}
+    :set    #{:foo :bar}
+    :vector [:foo :bar]
+    :test   {:vault/type :test}))
 
 
 

@@ -1,5 +1,4 @@
 (ns vault.data.core
-  (:refer-clojure :exclude [type])
   (:require
     [potemkin :refer [import-vars]]
     (vault.data
@@ -10,7 +9,7 @@
 
 (import-vars
   (vault.data.edn
-    type
+    value-type
     type-key
     typed-map)
   (vault.data.signature
