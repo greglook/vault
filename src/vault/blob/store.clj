@@ -97,7 +97,7 @@
 (defn store!
   "Stores data from the given byte source and returns the blob record. This
   method accepts any data source which can be handled as a byte stream by
-  `load`."
+  `read`."
   [store source]
   (when-let [blob (read source)]
     (put! store blob)))

@@ -108,7 +108,8 @@
 
 
 (defn hash
-  "Calculates the digest of the given byte array and returns a HashID."
+  "Calculates the digest of the given byte array and returns a HashID. If the
+  algorithm is not specified, the value of `*algorithm*` is used."
   ([content]
    (hash *algorithm* content))
   ([algorithm ^bytes content]
