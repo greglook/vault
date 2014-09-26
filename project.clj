@@ -4,6 +4,9 @@
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
 
+  :plugins
+  [[codox "0.8.10"]]
+
   :dependencies
   [[byte-streams "0.1.13"]
    [clj-time "0.8.0"]
@@ -14,6 +17,11 @@
    [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
    [prismatic/schema "0.2.6"]]
+
+  :codox
+  {:output-dir "target/doc"
+   :src-dir-uri "https://github.com/greglook/vault/blob/develop/"
+   :src-linenum-anchor-prefix "L"}
 
   :hiera
   {:vertical? false
