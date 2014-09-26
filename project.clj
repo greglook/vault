@@ -19,7 +19,8 @@
    [prismatic/schema "0.2.6"]]
 
   :codox
-  {:output-dir "target/doc"
+  {:exclude [vault.blob.core vault.data.core]
+   :output-dir "target/doc"
    :src-dir-uri "https://github.com/greglook/vault/blob/develop/"
    :src-linenum-anchor-prefix "L"}
 
