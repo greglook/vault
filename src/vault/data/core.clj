@@ -18,14 +18,14 @@
     verify-sigs))
 
 
-(defn read-blob    ; TODO: change to parse-blob
+(defn parse-blob
   "Reads the contents of the given blob and attempts to parse its structure.
   Returns an updated copy of the blob with a :data/type key set."
   [blob]
   ; If blob has a data type, assume it's already been processed.
   (if (:data/type blob)
     blob
-    (or (edn/read-blob blob)
+    (or (edn/parse-blob blob)
         (key/parse-blob blob)
         (assoc blob :data/type :raw))))
 

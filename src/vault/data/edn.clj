@@ -225,7 +225,7 @@
     (doall (take-while not-eos? edn-stream))))
 
 
-(defn read-blob
+(defn parse-blob
   "Reads the contents of the given blob and attempts to parse it as an EDN data
   structure. Returns an updated blob record, or nil if the content is not EDN."
   [blob]

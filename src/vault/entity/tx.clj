@@ -132,7 +132,7 @@
   "Looks up the owner for the given entity root id. Throws an exception if any
   of the ids is not an entity root."
   [blob-store root-id]
-  (let [blob (data/read-blob (blob/get blob-store root-id))]
+  (let [blob (data/parse-blob (blob/get blob-store root-id))]
     (when-not blob
       (throw (IllegalArgumentException.
                (str "Cannot get owner for nonexistent entity " root-id))))
