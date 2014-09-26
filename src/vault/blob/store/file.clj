@@ -81,9 +81,9 @@
 
 ;;;;; FILE STORE ;;;;;
 
-(defrecord FileBlobStore
-  [^File root]
+(defrecord FileBlobStore [^File root])
 
+(extend-type FileBlobStore
   store/BlobStore
 
   (enumerate [this opts]
@@ -98,7 +98,7 @@
              (blob-stats file))))
 
 
-  (get* [this id]
+  (get [this id]
     (when-blob-file this id
       (-> file
           io/input-stream

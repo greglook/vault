@@ -25,9 +25,9 @@
 
 ;;;;; MEMORY STORE ;;;;;
 
-(defrecord MemoryBlobStore
-  [memory]
+(defrecord MemoryBlobStore [memory])
 
+(extend-type MemoryBlobStore
   store/BlobStore
 
   (enumerate [this opts]
@@ -39,7 +39,7 @@
       (dissoc blob :content)))
 
 
-  (get* [this id]
+  (get [this id]
     (get-mem this id))
 
 

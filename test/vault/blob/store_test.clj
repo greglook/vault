@@ -39,7 +39,7 @@
 (deftest checked-get
   (let [content (.getBytes "foobarbaz")
         id (blob/hash :sha256 content)
-        store (reify store/BlobStore (get* [this id] (blob/read content)))
+        store (reify store/BlobStore (get [this id] (blob/read content)))
         blob (blob/get store id)]
     (is (= id (:id blob)))
     (is (bytes= content (:content blob)))
