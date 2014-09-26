@@ -39,7 +39,7 @@
              (str "Class " (class value) " does not represent a public key.")))))
 
 
-(defn parse-blob
+(defn parse-key
   "Reads the contents of a blob and attempts to parse it as a PGP key. Returns
   an updated blob record, or nil if the content is not a PGP public key."
   [blob]

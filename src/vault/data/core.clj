@@ -24,8 +24,8 @@
   ; If blob has a data type, assume it's already been processed.
   (if (:data/type blob)
     blob
-    (or (edn/parse-blob blob)
-        (key/parse-blob blob)
+    (or (edn/parse-data blob)
+        (key/parse-key blob)
         (assoc blob :data/type :raw))))
 
 

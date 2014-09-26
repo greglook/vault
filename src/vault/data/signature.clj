@@ -43,7 +43,7 @@
   "Loads a PGP public key from a blob store."
   [store id]
   (let [blob (blob/get store id)
-        pubkey-blob (key/parse-blob blob)]
+        pubkey-blob (key/parse-key blob)]
     (when-not blob
       (throw (IllegalStateException.
                (str "No public key blob stored for " id))))

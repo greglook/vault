@@ -15,7 +15,6 @@
       ByteArrayInputStream
       ByteArrayOutputStream
       FilterReader
-      InputStream
       InputStreamReader
       OutputStreamWriter
       PushbackReader
@@ -25,7 +24,76 @@
     vault.blob.digest.HashID))
 
 
-;;;;; CONSTANTS & CONFIGURATION ;;;;;
+;;;;; VALUE TYPING ;;;;;
+
+(def ^:const type-key
+  "Keyword which sets the data type of a map value."
+  :vault/type)
+
+
+(defn typed-map
+  "Constructs a new map value with the given data type. Additional key-value
+  pairs may be provided."
+  [t & entries]
+  (apply hash-map type-key t entries))
+
+
+(defn value-type
+  "Determines the 'type' of the given value.
+
+  If the value is a standard Clojure data collection, it is given a type of
+  `:map`, `:set`, `:vector`, or `:list` appropriately. For maps, if the
+  [[type-key]] is present, its value is used instead.
+
+  All other values return their class."
+  {:doc/format :markdown}
+  [value]
+  (cond
+    (map? value) (get value type-key :map)
+    (set? value) :set
+    (vector? value) :vector
+    (sequential? value) :list
+    :else (class value)))
+
+
+
+;;;;; TAGGED VALUES ;;;;;
+
+(def ^:no-doc data-readers
+  "Atom containing a map of tag readers supported by Vault."
+  (atom
+    {'bin data/read-bin
+     'uri data/read-uri}
+    :validator map?))
+
+
+(defmacro register-tag!
+  "Registers handlers for an EDN tag.
+  - `tag`    should be the unquoted tag symbol
+  - `cls`    class type to assign a tagged representation to
+  - `writer` function to generate the serialized value
+  - `reader` function to parse a serialized value"
+  ([tag reader]
+   `(swap! data-readers assoc '~tag ~reader))
+  ([tag cls writer reader]
+   `(do
+      (data/extend-tagged-value ~cls '~tag ~writer)
+      (swap! data-readers assoc '~tag ~reader))))
+
+
+(register-tag! vault/ref
+  HashID str
+  blob/parse-id)
+
+
+(register-tag! inst
+  DateTime
+  (partial time-fmt/unparse (time-fmt/formatters :date-time))
+  (partial time-fmt/parse   (time-fmt/formatters :date-time)))
+
+
+
+;;;;; DATA PRINTING ;;;;;
 
 (def ^:no-doc ^Charset data-charset
   (Charset/forName "UTF-8"))
@@ -44,82 +112,6 @@
    :map-coll-separator :line
    :print-meta false})
 
-
-(def ^:const type-key
-  "Keyword which sets the data type of a map value."
-  :vault/type)
-
-
-(defn value-type
-  "Determines the 'type' of the given value.
-
-  If the value is a standard Clojure data collection, it is given a type of
-  `:map`, `:set`, `:vector`, or `:list` appropriately. For maps, if the
-  [[type-key]] `:vault/type` is present, its value is used instead.
-
-  All other values return their class."
-  [value]
-  (cond
-    (map? value) (get value type-key :map)
-    (set? value) :set
-    (vector? value) :vector
-    (sequential? value) :list
-    :else (class value)))
-
-
-(defn typed-map
-  "Constructs a new map value with the given data type."
-  [t & entries]
-  (apply hash-map type-key t entries))
-
-
-
-;;;;; TAGGED VALUES ;;;;;
-
-(def ^:no-doc data-readers
-  "Atom containing a map of tag readers supported by Vault."
-  (atom
-    {'bin data/read-bin
-     'uri data/read-uri}
-    :validator map?))
-
-
-(defmacro register-tag!
-  "Registers a function as the data reader for an EDN tag."
-  ([tag reader]
-   `(do
-      #_
-      (puget/with-color
-        (println
-          (str "Reading " (puget/color-text :tag (str \# '~tag))
-               " values with " (puget/color-text :function-symbol (str '~reader)))))
-      (swap! data-readers assoc '~tag ~reader)))
-  ([tag t writer reader]
-   `(do
-      #_
-      (puget/with-color
-        (println
-          (str "Writing " (puget/color-text :class-name (str '~t))
-               " values as " (puget/color-text :tag (str \# '~tag))
-               " with " (puget/color-text :function-symbol (str '~writer))
-               " read by " (puget/color-text :function-symbol (str '~reader)))))
-      (data/extend-tagged-value ~t '~tag ~writer)
-      (swap! data-readers assoc '~tag ~reader))))
-
-
-(register-tag! vault/ref
-  HashID str
-  blob/parse-id)
-
-
-(register-tag! inst
-  DateTime
-  (partial time-fmt/unparse (time-fmt/formatters :date-time))
-  (partial time-fmt/parse   (time-fmt/formatters :date-time)))
-
-
-
-;;;;; SERIALIZATION ;;;;;
 
 (defn- print-value
   "Prints the canonical EDN representation for the given Clojure value."
@@ -176,7 +168,7 @@
 
 
 
-;;;;; DESERIALIZATION ;;;;;
+;;;;; DATA PARSING ;;;;;
 
 (defn- counting-reader
   "Wraps the given input stream with a proxy which counts the bytes read
@@ -228,7 +220,7 @@
     (doall (take-while not-eos? edn-stream))))
 
 
-(defn parse-blob
+(defn parse-data
   "Reads the contents of the given blob and attempts to parse it as an EDN data
   structure. Returns an updated blob record, or nil if the content is not EDN."
   [blob]
