@@ -28,7 +28,7 @@
 
 ;;;;; CONSTANTS & CONFIGURATION ;;;;;
 
-(def ^:private ^Charset data-charset
+(def ^:no-doc ^Charset data-charset
   (Charset/forName "UTF-8"))
 
 
