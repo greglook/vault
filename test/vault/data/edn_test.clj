@@ -50,10 +50,10 @@
 (deftest blob-printing
   (is (= "#vault/data\n{:alpha \"foo\" :omega \"bar\"}\n"
          (with-out-str
-           (edn/print-blob {:data/values [{:omega "bar" :alpha "foo"}]}))))
+           (edn/print-data {:data/values [{:omega "bar" :alpha "foo"}]}))))
   (is (= "#vault/data\n[:foo \\b baz]\n\n{:name \"Aaron\"}\n\n:frobnitz\n"
          (with-out-str
-           (edn/print-blob {:data/values [[:foo \b 'baz] {:name "Aaron"} :frobnitz]})))))
+           (edn/print-data {:data/values [[:foo \b 'baz] {:name "Aaron"} :frobnitz]})))))
 
 
 
@@ -61,13 +61,13 @@
 
 (deftest read-non-edn-blob
   (let [blob (blob/read "foobarbaz not a data blob")
-        data (edn/parse-blob blob)]
+        data (edn/parse-data blob)]
     (is (nil? data))))
 
 
 (deftest read-data-blob
   (let [blob (data-fixture "{:foo bar, :vault/type :x/y}")
-        data (edn/parse-blob blob)]
+        data (edn/parse-data blob)]
     (is (= [{:foo 'bar, :vault/type :x/y}]
            (:data/values data)))
     (is (= :x/y (:data/type data)))))
@@ -78,7 +78,7 @@
     (let [primary-value "[1 \\2 :three]"
           value-str (str primary-value " :x/y \"foo\"")
           blob (data-fixture value-str)
-          data (edn/parse-blob blob)
+          data (edn/parse-data blob)
           values (:data/values data)
           primary-bytes (edn/primary-bytes data)]
       (is (= [[1 \2 :three] :x/y "foo"] values))
@@ -91,6 +91,6 @@
 (deftest read-utf8-primary-bytes
   (let [value-str "\"€18.50\""
         blob (data-fixture value-str)
-        data (edn/parse-blob blob)]
+        data (edn/parse-data blob)]
     (is (bytes= (.getBytes value-str edn/data-charset)
                 (edn/primary-bytes data)))))

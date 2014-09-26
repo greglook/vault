@@ -31,7 +31,7 @@
 (defprotocol SignatureProvider
   "Protocol for cryptographic signature providers."
 
-  (sign-content [this key-id content]
+  (sign-content [provider key-id content]
     "Returns a PGP signature of the given byte content with the identified
     private key."))
 

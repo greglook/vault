@@ -133,6 +133,7 @@
 
 
 (defn file-store
-  "Creates a new local file-based blob store."
+  "Creates a new local file-based blob store. Blobs are stored in a hierarchy
+  of directories under the given root path."
   [root]
   (FileBlobStore. (io/file root)))

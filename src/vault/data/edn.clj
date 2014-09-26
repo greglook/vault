@@ -155,7 +155,7 @@
        :data/type (value-type value)))))
 
 
-(defn print-blob
+(defn print-data
   "Prints the values from the given blob. This can be used to pretty-print a
   colorized version of the values in an EDN data blob."
   [blob]

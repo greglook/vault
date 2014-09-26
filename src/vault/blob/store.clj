@@ -39,27 +39,27 @@
 (defprotocol BlobStore
   "Protocol for content storage providers, keyed by hash ids."
 
-  (enumerate [this opts]
+  (enumerate [store opts]
     "Enumerates the ids of the stored blobs with some filtering options. The
     'list' function provides a nicer wrapper around this protocol method.")
 
-  (stat [this id]
+  (stat [store id]
     "Returns a blob record with metadata but no content. Properties are
     generally implementation-specific, but may include:
     * :stat/size        blob size in bytes
     * :stat/stored-at   date blob was added to store
     * :stat/origin      a resource location for the blob")
 
-  (get [this id]
+  (get [store id]
     "Loads content from the store and returns a Blob record. Returns nil if no
     matching content is found. The Blob record may include data as from the
     `stat` function.")
 
-  (put! [this blob]
+  (put! [store blob]
     "Saves a blob into the store. Returns the blob record, potentially updated
     with `stat` metadata.")
 
-  (delete! [this id]
+  (delete! [store id]
     "Removes a blob from the store."))
 
 

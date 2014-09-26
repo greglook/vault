@@ -18,6 +18,6 @@
     (is (= :pgp/public-key (:data/type blob)))
     (is (= [pubkey] (:data/values blob)))
     (let [raw-blob (select-keys blob [:id :content])
-          parsed-blob (key/parse-blob raw-blob)]
+          parsed-blob (key/parse-key raw-blob)]
       (is (= :pgp/public-key (:data/type blob)))
       (is (= [pubkey] (:data/values blob))))))
