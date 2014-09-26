@@ -10,12 +10,11 @@
 (defrecord Blob [id ^bytes content])
 
 
-(defn record
-  "Constructs a new blob record with the given id and optional content."
-  ([id]
-   (Blob. id nil))
-  ([id content]
-   (Blob. id content)))
+(defn empty-blob
+  "Constructs a new blob record with the given hash-id and no content. This is
+  mostly useful for answering `stat` calls."
+  [id]
+  (Blob. id nil))
 
 
 (defn read
@@ -24,7 +23,7 @@
   [source]
   (let [content (byte-streams/to-byte-array source)]
     (when-not (empty? content)
-      (record (digest/hash content) content))))
+      (Blob. (digest/hash content) content))))
 
 
 (defn write

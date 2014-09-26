@@ -94,7 +94,7 @@
 
   (stat [this id]
     (when-blob-file this id
-      (merge (store/record id)
+      (merge (store/empty-blob id)
              (blob-stats file))))
 
 

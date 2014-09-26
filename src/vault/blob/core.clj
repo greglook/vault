@@ -15,7 +15,6 @@
     parse-id
     path-str)
   (vault.blob.store
-    record
     read
     write
     list
