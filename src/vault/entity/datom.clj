@@ -29,7 +29,7 @@
               (Datom. op entity attr value (:id blob) time))
             fragments))
         record (data/blob-value blob)]
-    (condp = (:data/type blob)
+    (condp = (data/blob-type blob)
       tx/root-type
       (map-datoms (:time record) (:id blob) (:data record))
       tx/update-type

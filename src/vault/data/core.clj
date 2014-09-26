@@ -29,6 +29,12 @@
         (assoc blob :data/type :raw))))
 
 
+(defn blob-type
+  "Determines the type of content stored in the blob."
+  [blob]
+  (:data/type blob))
+
+
 (defn blob-value
   "Extracts the first data value from the given blob."
   [blob]
