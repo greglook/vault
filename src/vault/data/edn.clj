@@ -28,11 +28,11 @@
 
 ;;;;; CONSTANTS & CONFIGURATION ;;;;;
 
-(def ^Charset data-charset
+(def ^:private ^Charset data-charset
   (Charset/forName "UTF-8"))
 
 
-(def ^:const data-header
+(def ^:const ^:private data-header
   "Magic header which must appear as the first characters in a data blob."
   "#vault/data\n")
 
@@ -73,7 +73,7 @@
 
 ;;;;; TAGGED VALUES ;;;;;
 
-(def data-readers
+(def ^:no-doc data-readers
   "Atom containing a map of tag readers supported by Vault."
   (atom
     {'bin data/read-bin

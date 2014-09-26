@@ -9,7 +9,7 @@
       PGPPublicKeyRing)))
 
 
-(def ^:private ^:const key-header
+(def ^:const ^:private key-header
   "Magic header which must appear as the first characters in a pgp key blob."
   "-----BEGIN PGP PUBLIC KEY")
 
