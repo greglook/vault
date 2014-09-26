@@ -10,18 +10,24 @@
       [store :as store])
     (vault.blob.store
       [memory :refer [memory-store]]
-      [file :refer [file-store]])))
+      [file :refer [file-store]]))
+  (:import
+    java.io.ByteArrayOutputStream))
 
 
 ;; STORAGE FUNCTION TESTS
 
-(deftest blob-loading
+(deftest blob-io
   (is (nil? (blob/read (byte-array 0))))
   (is (nil? (blob/read "")))
-  (let [blob (blob/read "foo")]
+  (let [content (.getBytes "foo")
+        blob (blob/read content)]
     (is (not (nil? blob)))
     (is (not (nil? (:id blob))))
-    (is (not (empty? (:content blob))))))
+    (is (not (empty? (:content blob))))
+    (let [buffer (ByteArrayOutputStream.)]
+      (blob/write blob buffer)
+      (is (bytes= content (.toByteArray buffer))))))
 
 
 (deftest list-wrapper

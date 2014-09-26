@@ -61,4 +61,6 @@
 (deftest content-hashing
   (testing "digest/hash"
     (is (= blob-id (digest/hash :sha256 blob-content)))
+    (digest/with-digest :md5
+      (is (= :md5 (:algorithm (digest/hash blob-content)))))
     (is (thrown? AssertionError (digest/hash :foo blob-content)))))

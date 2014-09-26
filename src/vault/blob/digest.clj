@@ -23,7 +23,7 @@
 (defmacro with-digest
   "Sets the digest algorithm to use for hashing content."
   [algo & body]
-  `(binding [*algorithm* algo]
+  `(binding [*algorithm* ~algo]
      ~@body))
 
 
