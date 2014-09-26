@@ -8,7 +8,7 @@
 
 ;;;;; DIGEST ALGORITHMS ;;;;;
 
-(def algorithms
+(def ^:const algorithms
   "Map of content hashing algorithms to system names."
   {:md5    "MD5"
    :sha1   "SHA-1"
@@ -18,6 +18,13 @@
 (def ^:dynamic *algorithm*
   "Default digest algorithm to use for content hashing."
   :sha256)
+
+
+(defmacro with-digest
+  "Sets the digest algorithm to use for hashing content."
+  [algo & body]
+  `(binding [*algorithm* algo]
+     ~@body))
 
 
 

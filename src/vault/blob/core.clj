@@ -9,6 +9,7 @@
 
 (import-vars
   (vault.blob.digest
+    with-digest
     hash
     hash-id
     parse-id
