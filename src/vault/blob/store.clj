@@ -96,6 +96,12 @@
     (put! store blob)))
 
 
+(defn scan-size
+  "Scans the blobs in a store to determine the total stored content size."
+  [store]
+  (reduce + 0 (map (comp :stat/size (partial stat store)) (list store))))
+
+
 
 ;;;;; UTILITY FUNCTIONS ;;;;;
 

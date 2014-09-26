@@ -107,6 +107,9 @@
         (test-blob-content store id content))
       (let [[id content] (first (seq stored-content))]
         (test-restore-blob store id content))
+      (let [expected-size (reduce + 0 (map (comp count #(.getBytes %))
+                                           (vals stored-content)))]
+        (is (= expected-size (store/scan-size store))))
       (doseq [id (keys stored-content)]
         (store/delete! store id))
       (is (empty? (blob/list store)) "ends empty"))))
