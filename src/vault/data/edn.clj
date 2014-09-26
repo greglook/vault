@@ -133,12 +133,12 @@
     (puget/pprint-str value opts)))
 
 
-(defn data-blob
+(defn data->blob
   "Constructs a data blob from a value. The second argument may be a function
   which takes the bytes comprising the rendered primary value and returns a
   sequence of secondary data values."
   ([value]
-   (data-blob value nil))
+   (data->blob value nil))
   ([value f]
    (let [value-str (edn-str value)
          secondary-values (when f (f (.getBytes value-str data-charset)))

@@ -6,13 +6,13 @@
     [vault.blob.core :as blob]
     (vault.data
       [key :as key]
-      [edn :as edn-data]))
+      [edn :as edn]))
   (:import
     (org.bouncycastle.openpgp
       PGPSignature)))
 
 
-(edn-data/register-tag! pgp/signature
+(edn/register-tag! pgp/signature
   PGPSignature pgp/encode
   pgp/decode-signature)
 
@@ -62,7 +62,7 @@
   [store provider content pubkey-id]
   (let [pubkey (load-pubkey store pubkey-id)
         pgp-sig (sign-content provider (pgp/key-id pubkey) content)]
-    (edn-data/typed-map
+    (edn/typed-map
       :vault/signature
       :key pubkey-id
       :signature pgp-sig)))
@@ -72,8 +72,7 @@
   "Constructs a data blob with the given value, signed with the given public
   keys."
   [value store provider & pubkey-ids]
-  (edn-data/data-blob
-    value
+  (edn/data->blob value
     (fn [content]
       (map (partial signature-map store provider content)
            pubkey-ids))))
@@ -87,7 +86,7 @@
   [blob]
   (->>
     (rest (:data/values blob))
-    (filter #(= :vault/signature (edn-data/type %)))
+    (filter #(= :vault/signature (edn/type %)))
     seq))
 
 
@@ -98,10 +97,8 @@
   [store data signature]
   (let [pubkey (load-pubkey store (:key signature))
         pgp-sig (:signature signature)]
-    (if (pgp/verify data pgp-sig pubkey)
-      (:key signature)
-      ; TODO: log a warning about invalid signature
-      )))
+    (when (pgp/verify data pgp-sig pubkey)
+      (:key signature))))
 
 
 (defn verify-sigs
@@ -110,7 +107,7 @@
   key hash ids of the valid signatures."
   [blob store]
   (if-let [signatures (inline-signatures blob)]
-    (let [data (edn-data/primary-bytes blob)]
+    (let [data (edn/primary-bytes blob)]
       (->>
         signatures
         (map (partial verify-bytes store data))
