@@ -7,7 +7,21 @@
 (defrecord MemoryIndex
   [schema tuples]
 
-  index/TupleIndex
+  index/Index
+
+  (insert!
+    [this record]
+    {:pre [(map? record)]}
+    (swap! tuples assoc (index/key-vec schema record) record)
+    this)
+
+  (erase!!
+    [this]
+    (swap! tuples empty)
+    nil)
+
+
+  index/SortedIndex
 
   (seek*
     [this start end ascending]
@@ -21,23 +35,24 @@
             >= (index/key-vec schema start)))
         (if end
           (rsubseq @tuples
-            <= (index/key-vec schema start)
-            >  (index/key-vec schema end))
+            >  (index/key-vec schema end)
+            <= (index/key-vec schema start))
           (rsubseq @tuples
-            <= (index/key-vec schema start))))))
+            <= (index/key-vec schema start)))))))
 
 
-  (insert!
-    [this record]
-    {:pre [(map? record)]}
-    (swap! tuples assoc (index/key-vec schema record) record)
-    this)
+(extend-type MemoryIndex
+  index/KeyValueIndex
 
+  (get
+    [{:keys [schema tuples]} key]
+    {:pre [(map? key)]}
+    (get @tuples (index/key-vec schema key)))
 
   (delete!
-    [this record]
+    [{:keys [schema tuples]} key]
     {:pre [(map? key)]}
-    (swap! tuples dissoc (index/key-vec schema record))
+    (swap! tuples dissoc (index/key-vec schema key))
     nil))
 
 
