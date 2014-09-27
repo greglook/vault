@@ -12,7 +12,6 @@
       [edn :as edn-data]
       [test-keys :as keys])
     (vault.entity
-      [core :as entity]
       [tx :as tx])))
 
 
@@ -22,16 +21,16 @@
 (deftest root-records
   (let [owner (content/hash (.getBytes "foo"))]
     (is (thrown? IllegalArgumentException
-                 (entity/root-record {:owner nil})))
+                 (tx/root-record {:owner nil})))
     (is (thrown? RuntimeException
-                 (entity/root-record {:owner owner
+                 (tx/root-record {:owner owner
                                       :data [{:malformed 'value}]})))
-    (let [record (entity/root-record
+    (let [record (tx/root-record
                    {:owner owner})]
       (is (schema/validate tx/EntityRoot record))
-      (is (entity/root? record)))
+      (is (tx/root? record)))
     (let [dt (time/date-time 2014 5 15 1 21 36)
-          record (entity/root-record
+          record (tx/root-record
                    {:owner owner
                     :id "foobar"
                     :time dt
@@ -40,12 +39,12 @@
       (is (= "foobar" (:id record)))
       (is (= dt (:time record)))
       (is (= [[:attr/set :title "Thing #1"]] (:data record)))
-      (is (entity/root? record)))))
+      (is (tx/root? record)))))
 
 
 (deftest root-blobs
   (let [t (time/date-time 2014 5 15 1 21 36)
-        root (entity/root-blob
+        root (tx/root-blob
                blob-store
                keys/sig-provider
                {:owner keys/pubkey-id
@@ -54,47 +53,47 @@
                 :data [[:attr/set :title "Thing #1"]
                        [:attr/add :tags "foo"]
                        [:attr/add :tags "bar"]]})]
-    (is (entity/validate-root-blob root blob-store))
+    (is (tx/validate-root-blob root blob-store))
     (is (thrown? RuntimeException
-          (entity/validate-root-blob
+          (tx/validate-root-blob
             (update-in root [:data/values] (partial take 1))
             blob-store)))))
 
 
 (deftest update-records
   (is (thrown? RuntimeException
-               (entity/update-record {:data nil})))
+               (tx/update-record {:data nil})))
   (is (thrown? RuntimeException
-               (entity/update-record {:data [[:attr/set :title "Thing #2"]]})))
+               (tx/update-record {:data [[:attr/set :title "Thing #2"]]})))
   (let [t (time/date-time 2014 5 14 3 20 36)
-        record (entity/update-record
+        record (tx/update-record
                  {:time t
                   :data {(content/hash (.getBytes "barbaz"))
                          [[:attr/set :title "Thing #3"]]}})]
     (is (schema/validate tx/EntityUpdate record))
     (is (= t (:time record)))
-    (is (entity/update? record))))
+    (is (tx/update? record))))
 
 
 (deftest update-blobs
   (let [t (time/date-time 2014 5 14 3 20 36)
         root-a (->> {:owner keys/pubkey-id}
-                    (entity/root-blob blob-store keys/sig-provider)
+                    (tx/root-blob blob-store keys/sig-provider)
                     (store/put! blob-store))
         root-b (->> {:owner keys/pubkey-id}
-                    (entity/root-blob blob-store keys/sig-provider)
+                    (tx/root-blob blob-store keys/sig-provider)
                     (store/put! blob-store))
         updates {(:id root-a) [[:attr/set :title "Entity A"]
                                [:attr/set :foo/bar 42]]
                  (:id root-b) [[:attr/set :title "Entity B"]
                                [:attr/add :baz/xyz :abc]]}
-        update (entity/update-blob
+        update (tx/update-blob
                  blob-store
                  keys/sig-provider
                  {:data updates
                   :time t})]
-    (is (entity/validate-update-blob update blob-store))
+    (is (tx/validate-update-blob update blob-store))
     (is (thrown? RuntimeException
-          (entity/validate-update-blob
+          (tx/validate-update-blob
             (update-in update [:data/values] (partial take 1))
             blob-store)))))
