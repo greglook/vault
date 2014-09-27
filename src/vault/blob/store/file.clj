@@ -86,19 +86,22 @@
 (extend-type FileBlobStore
   store/BlobStore
 
-  (enumerate [this opts]
+  (enumerate
+    [this opts]
     (->> (enumerate-files (:root this))
          (map (partial file->id (:root this)))
          (store/select-ids opts)))
 
 
-  (stat [this id]
+  (stat
+    [this id]
     (when-blob-file this id
       (merge (store/empty-blob id)
              (blob-stats file))))
 
 
-  (get [this id]
+  (get
+    [this id]
     (when-blob-file this id
       (-> file
           io/input-stream
@@ -106,7 +109,8 @@
           (merge (blob-stats file)))))
 
 
-  (put! [this blob]
+  (put!
+    [this blob]
     (let [{:keys [id content]} blob
           file (id->file (:root this) id)]
       (when-not (.exists file)
@@ -117,19 +121,19 @@
       (merge blob (blob-stats file))))
 
 
-  (delete! [this id]
+  (delete!
+    [this id]
     (when-blob-file this id
-      (.delete file))))
+      (.delete file)))
 
 
-(defn destroy!!
-  "Completely removes a file blob store."
-  [store]
-  (let [rm-r (fn rm-r [^File path]
-               (when (.isDirectory path)
-                 (->> path .listFiles (map rm-r) dorun))
-               (.delete path))]
-    (rm-r (:root store))))
+  (erase!!
+    [this]
+    (let [rm-r (fn rm-r [^File path]
+                 (when (.isDirectory path)
+                   (->> path .listFiles (map rm-r) dorun))
+                 (.delete path))]
+      (rm-r (:root this)))))
 
 
 (defn file-store

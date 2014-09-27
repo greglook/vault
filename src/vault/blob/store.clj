@@ -60,7 +60,10 @@
     with `stat` metadata.")
 
   (delete! [store id]
-    "Removes a blob from the store."))
+    "Removes a blob from the store.")
+
+  (erase!! [store]
+    "Removes all blobs from the store."))
 
 
 (defn list

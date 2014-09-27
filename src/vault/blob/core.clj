@@ -23,4 +23,5 @@
     get'
     put!
     store!
-    delete!))
+    delete!
+    erase!!))

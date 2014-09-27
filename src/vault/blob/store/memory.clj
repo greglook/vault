@@ -30,20 +30,24 @@
 (extend-type MemoryBlobStore
   store/BlobStore
 
-  (enumerate [this opts]
+  (enumerate
+    [this opts]
     (store/select-ids opts (-> this :memory deref keys)))
 
 
-  (stat [this id]
+  (stat
+    [this id]
     (when-let [blob (get-mem this id)]
       (dissoc blob :content)))
 
 
-  (get [this id]
+  (get
+    [this id]
     (get-mem this id))
 
 
-  (put! [this blob]
+  (put!
+    [this blob]
     (if-let [id (:id blob)]
       (or (get-mem this id)
           (let [blob (blob-stats blob)]
@@ -51,8 +55,14 @@
             blob))))
 
 
-  (delete! [this id]
-    (swap! (:memory this) dissoc id)))
+  (delete!
+    [this id]
+    (swap! (:memory this) dissoc id))
+
+
+  (erase!!
+    [this]
+    (swap! (:memory this) empty)))
 
 
 (defn memory-store
