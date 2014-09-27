@@ -1,14 +1,15 @@
-(ns vault.index.search.brute
+(ns vault.search.engine.brute
   (:require
-    [vault.blob.core :as blob]
-    [vault.index.search :as search]))
+    [vault.blob.core :as blob]))
 
 
 ;;;;; BRUTE-FORCE INDEX ;;;;;
 
 (defrecord BruteForceEngine
-  [store projection]
+  [store projection])
 
+#_
+(extend-type BruteForceEngine
   search/SearchEngine
 
   (update!

@@ -1,8 +1,8 @@
-(ns vault.index.catalog
+(ns vault.search.catalog
   (:require
     [clj-time.core :as time]
     [vault.blob.store :as store]
-    [vault.index.search :as search]))
+    [vault.search.index :as index]))
 
 
 ;;;;; HELPER FUNCTIONS ;;;;;
@@ -16,9 +16,8 @@
 ;;;;; INDEX CATALOG ;;;;;
 
 (defrecord IndexCatalog
-  [indexes blob-key])
+  [indexes blob-key]
 
-(extend-type IndexCatalog
   store/BlobStore
 
   (enumerate
@@ -26,16 +25,14 @@
     (store/select-ids opts
       ; TODO: this is where being able to do real queries would help;
       ; specifically, for :after and :prefix.
-      (search/search (get-blob-index this) {})))
+      (index/seek (get-blob-index this))))
 
 
   (stat
     [this id]
     (when id
       ; TODO: rename :size to :stat/size, etc.
-      (-> (get-blob-index this)
-          (search/search {:blob id})
-          first)))
+      (index/get (get-blob-index this) {:blob id})))
 
 
   (put!
@@ -45,7 +42,7 @@
       (doseq [index (vals (:indexes this))]
         (when-let [projection (:projection index)]
           (doseq [record (projection blob)]
-            (search/update! index record)))))
+            (index/insert! index record)))))
     blob))
 
 

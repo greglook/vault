@@ -1,7 +1,6 @@
-(ns vault.index.search.memory
+(ns vault.search.engine.memory
   (:require
-    [puget.order :as order]
-    [vault.index.search :as search]))
+    [puget.order :as order]))
 
 
 ;;;;; HELPER FUNCTIONS ;;;;;
@@ -79,16 +78,20 @@
       ; Narrow scope by recursively getting next level of records.
       (recur more (get records value) (dissoc pattern attr))
       ; Filter remaining entries by pattern attributes.
-      (filter (partial search/matches? pattern)
+      (filter (fn [record]
+                (every? #(= (get pattern %)
+                            (get record %))
+                        (keys pattern)))
               (flatten-times records (count attrs))))))
 
 
 
 ;;;;; MEMORY INDEX ;;;;;
 
-(defrecord MemoryIndex [registers])
+(defrecord MemoryEngine [registers])
 
-(extend-type MemoryIndex
+#_
+(extend-type MemoryEngine
   search/SearchEngine
 
   (update!
@@ -103,8 +106,8 @@
         (search-register pattern opts))))
 
 
-(defn memory-index
+(defn memory-engine
   "Creates a new memory-backed index which optimizes the given queries. The
   argument should be a map of query keyword names to attr vectors."
   [queries]
-  (MemoryIndex. (atom (update-vals queries mem-register))))
+  (MemoryEngine. (atom (update-vals queries mem-register))))
