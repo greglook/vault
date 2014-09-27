@@ -4,7 +4,6 @@
     [clojure.set :as set]
     [clojure.string :as str]
     [schema.core :as schema]
-    [vault.blob.core :as blob]
     [vault.data.core :as data]
     [vault.entity.tx :as tx]))
 

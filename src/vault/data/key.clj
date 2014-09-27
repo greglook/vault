@@ -1,7 +1,7 @@
 (ns vault.data.key
   "Functions to read blobs containing pgp data."
   (:require
-    [vault.blob.core :as blob]
+    [vault.blob.content :as content]
     [mvxcvi.crypto.pgp :as pgp])
   (:import
     (org.bouncycastle.openpgp
@@ -54,6 +54,6 @@
   "Constructs a key blob from a PGP public key."
   [value]
   (when-let [public-key (extract-key value)]
-    (assoc (blob/read (pgp/encode-ascii public-key))
+    (assoc (content/read (pgp/encode-ascii public-key))
       :data/values [public-key]
       :data/type :pgp/public-key)))

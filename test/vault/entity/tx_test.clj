@@ -4,10 +4,13 @@
     [clojure.test :refer :all]
     [puget.printer :as puget]
     [schema.core :as schema]
-    [vault.blob.core :as blob]
-    [vault.data.core :as data]
-    [vault.data.edn :as edn-data]
-    [vault.data.test-keys :as keys]
+    (vault.blob
+      [content :as content]
+      [store :as store])
+    (vault.data
+      [core :as data]
+      [edn :as edn-data]
+      [test-keys :as keys])
     (vault.entity
       [core :as entity]
       [tx :as tx])))
@@ -17,7 +20,7 @@
 
 
 (deftest root-records
-  (let [owner (blob/hash (.getBytes "foo"))]
+  (let [owner (content/hash (.getBytes "foo"))]
     (is (thrown? IllegalArgumentException
                  (entity/root-record {:owner nil})))
     (is (thrown? RuntimeException
@@ -66,7 +69,7 @@
   (let [t (time/date-time 2014 5 14 3 20 36)
         record (entity/update-record
                  {:time t
-                  :data {(blob/hash (.getBytes "barbaz"))
+                  :data {(content/hash (.getBytes "barbaz"))
                          [[:attr/set :title "Thing #3"]]}})]
     (is (schema/validate tx/EntityUpdate record))
     (is (= t (:time record)))
@@ -77,10 +80,10 @@
   (let [t (time/date-time 2014 5 14 3 20 36)
         root-a (->> {:owner keys/pubkey-id}
                     (entity/root-blob blob-store keys/sig-provider)
-                    (blob/put! blob-store))
+                    (store/put! blob-store))
         root-b (->> {:owner keys/pubkey-id}
                     (entity/root-blob blob-store keys/sig-provider)
-                    (blob/put! blob-store))
+                    (store/put! blob-store))
         updates {(:id root-a) [[:attr/set :title "Entity A"]
                                [:attr/set :foo/bar 42]]
                  (:id root-b) [[:attr/set :title "Entity B"]

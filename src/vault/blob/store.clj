@@ -1,37 +1,8 @@
 (ns vault.blob.store
-  (:refer-clojure :exclude [get list read])
+  (:refer-clojure :exclude [get list])
   (:require
     byte-streams
-    [vault.blob.digest :as digest]))
-
-
-;;;;; BLOB RECORD ;;;;;
-
-(defrecord Blob [id ^bytes content])
-
-
-(defn empty-blob
-  "Constructs a new blob record with the given hash-id and no content. This is
-  mostly useful for answering `stat` calls."
-  [id]
-  (Blob. id nil))
-
-
-(defn read
-  "Reads data into memory from the given source and hashes it to identify the
-  blob. This can handle any source supported by the byte-streams library."
-  [source]
-  (let [content (byte-streams/to-byte-array source)]
-    (when-not (empty? content)
-      (Blob. (digest/hash content) content))))
-
-
-(defn write
-  "Writes blob data to a byte stream."
-  [blob sink]
-  (when-let [content (:content blob)]
-    (byte-streams/transfer content sink)))
-
+    [vault.blob.content :as content]))
 
 
 ;;;;; STORAGE INTERFACE ;;;;;
@@ -82,7 +53,7 @@
   verifies that the id matches the actual digest of the data returned."
   [store id]
   (when-let [blob (get store id)]
-    (let [digest (digest/hash (:algorithm id) (:content blob))]
+    (let [digest (content/hash (:algorithm id) (:content blob))]
       (when (not= id digest)
         (throw (RuntimeException.
                  (str "Store " store " returned invalid data: requested "
@@ -95,7 +66,7 @@
   method accepts any data source which can be handled as a byte stream by
   `read`."
   [store source]
-  (when-let [blob (read source)]
+  (when-let [blob (content/read source)]
     (put! store blob)))
 
 

@@ -1,6 +1,7 @@
-(ns vault.blob.digest
-  (:refer-clojure :exclude [hash])
+(ns vault.blob.content
+  (:refer-clojure :exclude [hash read])
   (:require
+    [byte-streams]
     [clojure.string :as str])
   (:import
     java.security.MessageDigest))
@@ -119,3 +120,34 @@
                         (.digest content)
                         hex-str)]
      (HashID. algorithm hex-digest))))
+
+
+
+;;;;; BLOB RECORD ;;;;;
+
+(defrecord Blob
+  [id ^bytes content])
+
+
+(defn empty-blob
+  "Constructs a new blob record with the given hash-id and no content. This is
+  mostly useful for answering `stat` calls."
+  [id]
+  {:pre [(instance? HashID id)]}
+  (Blob. id nil))
+
+
+(defn read
+  "Reads data into memory from the given source and hashes it to identify the
+  blob. This can handle any source supported by the byte-streams library."
+  [source]
+  (let [content (byte-streams/to-byte-array source)]
+    (when-not (empty? content)
+      (Blob. (hash content) content))))
+
+
+(defn write
+  "Writes blob data to a byte stream."
+  [blob sink]
+  (when-let [content (:content blob)]
+    (byte-streams/transfer content sink)))

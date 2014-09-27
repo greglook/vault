@@ -4,7 +4,7 @@
   (:import
     clojure.lang.Keyword
     org.joda.time.DateTime
-    vault.blob.digest.HashID))
+    vault.blob.content.HashID))
 
 
 (def blob-index

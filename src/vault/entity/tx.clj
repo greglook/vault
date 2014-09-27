@@ -4,11 +4,11 @@
     [clojure.set :as set]
     [clojure.string :as str]
     [schema.core :as schema]
-    [vault.blob.core :as blob]
+    [vault.blob.store :as store]
     [vault.data.core :as data])
   (:import
     org.joda.time.DateTime
-    vault.blob.digest.HashID))
+    vault.blob.content.HashID))
 
 
 ;;;;; ENTITY SCHEMAS ;;;;;
@@ -132,7 +132,7 @@
   "Looks up the owner for the given entity root id. Throws an exception if any
   of the ids is not an entity root."
   [blob-store root-id]
-  (let [blob (data/parse-blob (blob/get blob-store root-id))]
+  (let [blob (data/parse-blob (store/get blob-store root-id))]
     (when-not blob
       (throw (IllegalArgumentException.
                (str "Cannot get owner for nonexistent entity " root-id))))

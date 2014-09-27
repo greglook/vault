@@ -9,7 +9,7 @@
     (puget
       [data :as data]
       [printer :as puget])
-    [vault.blob.core :as blob])
+    [vault.blob.content :as content])
   (:import
     (java.io
       ByteArrayInputStream
@@ -21,7 +21,7 @@
       Reader)
     java.nio.charset.Charset
     org.joda.time.DateTime
-    vault.blob.digest.HashID))
+    vault.blob.content.HashID))
 
 
 ;;;;; VALUE TYPING ;;;;;
@@ -83,7 +83,7 @@
 
 (register-tag! vault/ref
   HashID str
-  blob/parse-id)
+  content/parse-id)
 
 
 (register-tag! inst
@@ -149,7 +149,7 @@
        (doseq [v secondary-values]
          (.write content "\n\n")
          (.write content (edn-str v))))
-     (assoc (blob/read (.toByteArray content-bytes))
+     (assoc (content/read (.toByteArray content-bytes))
        :data/primary-bytes (vec byte-range)
        :data/values (vec (cons value secondary-values))
        :data/type (value-type value)))))

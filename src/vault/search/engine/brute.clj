@@ -1,6 +1,6 @@
 (ns vault.search.engine.brute
   (:require
-    [vault.blob.core :as blob]))
+    [vault.blob.store :as store]))
 
 
 ;;;;; BRUTE-FORCE INDEX ;;;;;
@@ -21,7 +21,7 @@
     [this pattern opts]
     ; Exhaustively search projections of stored blobs.
     (filter (partial search/matches? pattern)
-            (mapcat projection (blob/list store)))))
+            (mapcat projection (store/list store)))))
 
 
 (defn brute-force-engine

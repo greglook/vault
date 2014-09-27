@@ -3,7 +3,9 @@
     [clj-time.core :as time]
     [clojure.test :refer :all]
     [puget.printer :as puget]
-    [vault.blob.core :as blob]
+    (vault.blob
+      [content :as content]
+      [store :as store])
     [vault.data.core :as data]
     [vault.data.edn :as edn-data]
     [vault.data.test-keys :as keys]
@@ -19,10 +21,10 @@
   (let [t (time/date-time 2014 5 14 3 20 36)
         root-a (->> {:owner keys/pubkey-id}
                     (entity/root-blob blob-store keys/sig-provider)
-                    (blob/put! blob-store))
+                    (store/put! blob-store))
         root-b (->> {:owner keys/pubkey-id}
                     (entity/root-blob blob-store keys/sig-provider)
-                    (blob/put! blob-store))
+                    (store/put! blob-store))
         updates {(:id root-a) [[:attr/set :title "Entity A"]
                                [:attr/set :foo/bar 42]]
                  (:id root-b) [[:attr/set :title "Entity B"]
@@ -57,7 +59,7 @@
 
 (deftest entity-state
   (let [t (time/date-time 2014 5 14 3 20 36)
-        root-id (blob/hash (.getBytes "foo"))]
+        root-id (content/hash (.getBytes "foo"))]
     (is (thrown? RuntimeException
           (entity/entity-state root-id
             [(entity/datom :foo/bar root-id :attr "value" root-id t)]))

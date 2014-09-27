@@ -3,7 +3,7 @@
   (:require
     [clojure.java.io :as io]
     [mvxcvi.crypto.pgp :as pgp]
-    [vault.blob.core :as blob]
+    [vault.blob.store :as store]
     (vault.data
       [key :as key]
       [edn :as edn]))
@@ -42,7 +42,7 @@
 (defn load-pubkey
   "Loads a PGP public key from a blob store."
   [store id]
-  (let [blob (blob/get store id)
+  (let [blob (store/get store id)
         pubkey-blob (key/parse-key blob)]
     (when-not blob
       (throw (IllegalStateException.

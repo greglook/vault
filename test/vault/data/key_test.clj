@@ -3,7 +3,6 @@
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    [vault.blob.core :as blob]
     (vault.data
       [key :as key]
       [test-keys :as test-keys])))
