@@ -7,7 +7,7 @@
       [coerce :as ctime]
       [core :as time])
     (vault.blob
-      [digest :as digest]
+      [content :as content]
       [store :as store]))
   (:import
     java.io.File))
@@ -18,13 +18,13 @@
 (defn- id->file
   ^File
   [root id]
-  (let [id (digest/hash-id id)
+  (let [id (content/hash-id id)
         {:keys [algorithm digest]} id]
     (io/file root
       (name algorithm)
       (subs digest 0 3)
       (subs digest 3 6)
-      (digest/path-str id))))
+      (content/path-str id))))
 
 
 (defn- file->id
@@ -38,7 +38,7 @@
         (subs (inc (count root)))
         (string/split #"/")
         last
-        digest/parse-id)))
+        content/parse-id)))
 
 
 (defmacro ^:private for-files
@@ -96,7 +96,7 @@
   (stat
     [this id]
     (when-blob-file this id
-      (merge (store/empty-blob id)
+      (merge (content/empty-blob id)
              (blob-stats file))))
 
 
@@ -105,7 +105,7 @@
     (when-blob-file this id
       (-> file
           io/input-stream
-          store/read
+          content/read
           (merge (blob-stats file)))))
 
 

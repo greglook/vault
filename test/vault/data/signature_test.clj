@@ -6,7 +6,9 @@
     (puget
       [data]
       [printer :as puget])
-    [vault.blob.core :as blob]
+    (vault.blob
+      [content :as content]
+      [store :as store])
     (vault.data
       [edn :as edn]
       [signature :as sig]
@@ -34,12 +36,12 @@
               (constantly
                 [(edn/typed-map
                    :vault/signature
-                   :key (blob/hash (.getBytes "bazbar")))]))
+                   :key (content/hash (.getBytes "bazbar")))]))
             (sig/verify-sigs blob-store)))))
 
 
 (deftest non-pubkey-blob
-  (let [non-key (blob/store! blob-store "foobar")]
+  (let [non-key (store/store! blob-store "foobar")]
     (is (thrown? IllegalStateException
           (-> {:foo 'bar}
               (edn/data->blob

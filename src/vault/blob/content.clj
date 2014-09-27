@@ -1,6 +1,7 @@
-(ns vault.blob.digest
-  (:refer-clojure :exclude [hash])
+(ns vault.blob.content
+  (:refer-clojure :exclude [hash read])
   (:require
+    [byte-streams]
     [clojure.string :as str])
   (:import
     java.security.MessageDigest))
@@ -8,14 +9,14 @@
 
 ;;;;; DIGEST ALGORITHMS ;;;;;
 
-(def ^:const algorithms
+(def ^:const digest-algorithms
   "Map of content hashing algorithms to system names."
   {:md5    "MD5"
    :sha1   "SHA-1"
    :sha256 "SHA-256"})
 
 
-(def ^:dynamic *algorithm*
+(def ^:dynamic *digest-algorithm*
   "Default digest algorithm to use for content hashing."
   :sha256)
 
@@ -23,7 +24,7 @@
 (defmacro with-digest
   "Sets the digest algorithm to use for hashing content."
   [algo & body]
-  `(binding [*algorithm* ~algo]
+  `(binding [*digest-algorithm* ~algo]
      ~@body))
 
 
@@ -109,13 +110,44 @@
 
 (defn hash
   "Calculates the digest of the given byte array and returns a HashID. If the
-  algorithm is not specified, the value of `*algorithm*` is used."
+  algorithm is not specified, the value of `*digest-algorithm*` is used."
   ([content]
-   (hash *algorithm* content))
+   (hash *digest-algorithm* content))
   ([algorithm ^bytes content]
-   {:pre [(contains? algorithms algorithm)]}
-   (let [hex-digest (-> (algorithms algorithm)
+   {:pre [(contains? digest-algorithms algorithm)]}
+   (let [hex-digest (-> (digest-algorithms algorithm)
                         MessageDigest/getInstance
                         (.digest content)
                         hex-str)]
      (HashID. algorithm hex-digest))))
+
+
+
+;;;;; BLOB RECORD ;;;;;
+
+(defrecord Blob
+  [id ^bytes content])
+
+
+(defn empty-blob
+  "Constructs a new blob record with the given hash-id and no content. This is
+  mostly useful for answering `stat` calls."
+  [id]
+  {:pre [(instance? HashID id)]}
+  (Blob. id nil))
+
+
+(defn read
+  "Reads data into memory from the given source and hashes it to identify the
+  blob. This can handle any source supported by the byte-streams library."
+  [source]
+  (let [content (byte-streams/to-byte-array source)]
+    (when-not (empty? content)
+      (Blob. (hash content) content))))
+
+
+(defn write
+  "Writes blob data to a byte stream."
+  [blob sink]
+  (when-let [content (:content blob)]
+    (byte-streams/transfer content sink)))

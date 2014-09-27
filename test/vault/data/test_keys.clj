@@ -2,7 +2,7 @@
   (:require
     [clojure.java.io :as io]
     [mvxcvi.crypto.pgp :as pgp]
-    [vault.blob.core :as blob]
+    [vault.blob.store :as store]
     [vault.blob.store.memory :refer [memory-store]]
     [vault.data.key :as key]
     [vault.data.signature :as sig]))
@@ -32,7 +32,7 @@
 (def pubkey-id
   (->> pubkey
        key/key->blob
-       (blob/put! blob-store)
+       (store/put! blob-store)
        :id))
 
 

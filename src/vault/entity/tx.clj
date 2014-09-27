@@ -4,58 +4,12 @@
     [clojure.set :as set]
     [clojure.string :as str]
     [schema.core :as schema]
-    [vault.blob.core :as blob]
-    [vault.data.core :as data])
-  (:import
-    org.joda.time.DateTime
-    vault.blob.digest.HashID))
-
-
-;;;;; ENTITY SCHEMAS ;;;;;
-
-(def ^:const root-type   :vault.entity/root)
-(def ^:const update-type :vault.entity/update)
-
-
-(def DatomOperation
-  "Schema for an operation on a datom."
-  (schema/enum :attr/set :attr/add :attr/del))
-
-
-(def DatomFragment
-  "Schema for a fragment of a datom. Basically, a partial datom vector with
-  :op, :attr, and :value."
-  [(schema/one DatomOperation "operation")
-   (schema/one schema/Keyword "attribute")
-   (schema/one schema/Any "value")])
-
-
-(def DatomFragments
-  "Schema for a vector of one or more datom fragments."
-  [(schema/one DatomFragment "datoms")
-   DatomFragment])
-
-
-(def DatomUpdates
-  "Schema for a map from entity ids to vectors of datom fragments."
-  {HashID DatomFragments})
-
-
-(def EntityRoot
-  "Schema for an entity root value."
-  {data/type-key (schema/eq root-type)
-   :id String
-   :owner HashID
-   :time DateTime
-   (schema/optional-key :data) DatomFragments})
-
-
-(def EntityUpdate
-  "Schema for an entity update value."
-  {data/type-key (schema/eq update-type)
-   :time DateTime
-   :data DatomUpdates})
-
+    [vault.blob.store :as store]
+    (vault.data
+      [core :as data]
+      [edn :as edn]
+      [signature :as sig])
+    [vault.entity.schema :as s]))
 
 
 ;;;;; PREDICATES ;;;;;
@@ -63,20 +17,20 @@
 (defn root?
   "Determines whether the given value is an entity root."
   [value]
-  (= root-type (data/value-type value)))
+  (= s/root-type (edn/value-type value)))
 
 
 (defn update?
   "Determines whether the given value is an entity update."
   [value]
-  (= update-type (data/value-type value)))
+  (= s/update-type (edn/value-type value)))
 
 
 
 ;;;;; ENTITY ROOTS ;;;;;
 
 (defn- random-id!
-  "Generates a random id string for entity roots."
+  "Generates a hexadecimal identifier string from a sequence of random bytes."
   []
   (let [buf (byte-array 16)]
     (.nextBytes (java.security.SecureRandom.) buf)
@@ -89,10 +43,10 @@
   (when-not owner
     (throw (IllegalArgumentException. "Cannot create entity without owner")))
   (when data
-    (schema/validate DatomFragments data))
+    (schema/validate s/DatomFragments data))
   (cond->
-    (data/typed-map
-      root-type
+    (edn/typed-map
+      s/root-type
       :id (or id (random-id!))
       :time (or time (time/now))
       :owner owner)
@@ -101,10 +55,10 @@
 
 (defn root-blob
   "Constructs a new entity blob for the given owner."
-  [blob-store sig-provider args]
-  (data/sign-value
+  [store sig-provider args]
+  (sig/sign-value
     (root-record args)
-    blob-store
+    store
     sig-provider
     (:owner args)))
 
@@ -112,9 +66,9 @@
 (defn validate-root-blob
   "Checks the structure and signatures on an entity root blob. Returns a blob
   record with verified signatures."
-  [blob blob-store]
-  (schema/validate EntityRoot (data/blob-value blob))
-  (let [blob (data/verify-sigs blob blob-store)
+  [blob store]
+  (schema/validate s/EntityRoot (data/blob-value blob))
+  (let [blob (sig/verify-sigs blob store)
         sigs (:data/signatures blob)
         owner (:owner (data/blob-value blob))]
     (when-not (contains? sigs owner)
@@ -131,8 +85,8 @@
 (defn- get-owner
   "Looks up the owner for the given entity root id. Throws an exception if any
   of the ids is not an entity root."
-  [blob-store root-id]
-  (let [blob (data/parse-blob (blob/get blob-store root-id))]
+  [store root-id]
+  (let [blob (data/parse-blob (store/get store root-id))]
     (when-not blob
       (throw (IllegalArgumentException.
                (str "Cannot get owner for nonexistent entity " root-id))))
@@ -145,41 +99,41 @@
 (defn- get-update-owners
   "Given a map of DatomUpdates, returns a set of the hash-ids of the
   keys which own the updated entities."
-  [blob-store updates]
+  [store updates]
   (->> (keys updates)
-       (map (partial get-owner blob-store))
+       (map (partial get-owner store))
        set))
 
 
 (defn update-record
   "Constructs a new entity update value."
   [{:keys [time data]}]
-  (schema/validate DatomUpdates data)
-  (data/typed-map
-    update-type
+  (schema/validate s/DatomUpdates data)
+  (edn/typed-map
+    s/update-type
     :time (or time (time/now))
     :data (into (sorted-map) data)))
 
 
 (defn update-blob
   "Constructs a new update blob from the given args."
-  [blob-store sig-provider args]
+  [store sig-provider args]
   (apply
-    data/sign-value
+    sig/sign-value
     (update-record args)
-    blob-store
+    store
     sig-provider
-    (get-update-owners blob-store (:data args))))
+    (get-update-owners store (:data args))))
 
 
 (defn validate-update-blob
   "Checks the structure and signatures on an entity update blob. Returns a blob
   record with verified signatures."
-  [blob blob-store]
-  (schema/validate EntityUpdate (data/blob-value blob))
-  (let [blob (data/verify-sigs blob blob-store)
+  [blob store]
+  (schema/validate s/EntityUpdate (data/blob-value blob))
+  (let [blob (sig/verify-sigs blob store)
         sigs (:data/signatures blob)
-        owners (get-update-owners blob-store (:data (data/blob-value blob)))
+        owners (get-update-owners store (:data (data/blob-value blob)))
         missing (set/difference owners sigs)]
     (when-not (empty? missing)
       (throw (IllegalStateException.

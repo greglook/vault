@@ -2,14 +2,14 @@
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
-    [vault.blob.core :as blob]
+    [vault.blob.content :as content]
     [vault.data.edn :as edn]))
 
 
 ; FIXME: This is necessary for some reason to placate Cloverage...
 (edn/register-tag! vault/ref
-  vault.blob.digest.HashID str
-  blob/parse-id)
+  vault.blob.content.HashID str
+  content/parse-id)
 
 
 (defn data-fixture
@@ -18,7 +18,7 @@
   (->> values
        (interpose "\n\n")
        (apply str "#vault/data\n")
-       blob/read))
+       content/read))
 
 
 (deftest data-typing
@@ -60,7 +60,7 @@
 ;; DESERIALIZATION
 
 (deftest read-non-edn-blob
-  (let [blob (blob/read "foobarbaz not a data blob")
+  (let [blob (content/read "foobarbaz not a data blob")
         data (edn/parse-data blob)]
     (is (nil? data))))
 
@@ -84,7 +84,7 @@
       (is (= [[1 \2 :three] :x/y "foo"] values))
       (is (bytes= (.getBytes primary-value edn/data-charset) primary-bytes))))
   (testing "non-data blob"
-    (let [blob (blob/read "frobble babble")]
+    (let [blob (content/read "frobble babble")]
       (is (bytes= (:content blob) (edn/primary-bytes blob))))))
 
 
