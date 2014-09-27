@@ -5,7 +5,7 @@
     [clojure.string :as str]
     [schema.core :as schema]
     [vault.data.core :as data]
-    [vault.entity.tx :as tx]))
+    [vault.entity.schema :refer :all]))
 
 
 ; TODO: make this deftype instead, implement equality checks and such.
@@ -29,9 +29,9 @@
             fragments))
         record (data/blob-value blob)]
     (condp = (data/blob-type blob)
-      tx/root-type
+      root-type
       (map-datoms (:time record) (:id blob) (:data record))
-      tx/update-type
+      update-type
       (mapcat (partial apply map-datoms (:time record)) (:data record)))))
 
 

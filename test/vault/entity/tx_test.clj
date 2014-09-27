@@ -12,6 +12,7 @@
       [edn :as edn-data]
       [test-keys :as keys])
     (vault.entity
+      [schema :refer :all]
       [tx :as tx])))
 
 
@@ -27,7 +28,7 @@
                                       :data [{:malformed 'value}]})))
     (let [record (tx/root-record
                    {:owner owner})]
-      (is (schema/validate tx/EntityRoot record))
+      (is (schema/validate EntityRoot record))
       (is (tx/root? record)))
     (let [dt (time/date-time 2014 5 15 1 21 36)
           record (tx/root-record
@@ -35,7 +36,7 @@
                     :id "foobar"
                     :time dt
                     :data [[:attr/set :title "Thing #1"]]})]
-      (is (schema/validate tx/EntityRoot record))
+      (is (schema/validate EntityRoot record))
       (is (= "foobar" (:id record)))
       (is (= dt (:time record)))
       (is (= [[:attr/set :title "Thing #1"]] (:data record)))
@@ -70,7 +71,7 @@
                  {:time t
                   :data {(content/hash (.getBytes "barbaz"))
                          [[:attr/set :title "Thing #3"]]}})]
-    (is (schema/validate tx/EntityUpdate record))
+    (is (schema/validate EntityUpdate record))
     (is (= t (:time record)))
     (is (tx/update? record))))
 
