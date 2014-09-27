@@ -1,6 +1,7 @@
 (ns vault.search.defs
   (:require
-    [clj-time.core :as time])
+    [clj-time.core :as time]
+    [vault.blob.content :as content])
   (:import
     clojure.lang.Keyword
     org.joda.time.DateTime

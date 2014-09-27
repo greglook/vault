@@ -9,14 +9,14 @@
 
 ;;;;; DIGEST ALGORITHMS ;;;;;
 
-(def ^:const algorithms
+(def ^:const digest-algorithms
   "Map of content hashing algorithms to system names."
   {:md5    "MD5"
    :sha1   "SHA-1"
    :sha256 "SHA-256"})
 
 
-(def ^:dynamic *algorithm*
+(def ^:dynamic *digest-algorithm*
   "Default digest algorithm to use for content hashing."
   :sha256)
 
@@ -24,7 +24,7 @@
 (defmacro with-digest
   "Sets the digest algorithm to use for hashing content."
   [algo & body]
-  `(binding [*algorithm* ~algo]
+  `(binding [*digest-algorithm* ~algo]
      ~@body))
 
 
@@ -110,12 +110,12 @@
 
 (defn hash
   "Calculates the digest of the given byte array and returns a HashID. If the
-  algorithm is not specified, the value of `*algorithm*` is used."
+  algorithm is not specified, the value of `*digest-algorithm*` is used."
   ([content]
-   (hash *algorithm* content))
+   (hash *digest-algorithm* content))
   ([algorithm ^bytes content]
-   {:pre [(contains? algorithms algorithm)]}
-   (let [hex-digest (-> (algorithms algorithm)
+   {:pre [(contains? digest-algorithms algorithm)]}
+   (let [hex-digest (-> (digest-algorithms algorithm)
                         MessageDigest/getInstance
                         (.digest content)
                         hex-str)]
