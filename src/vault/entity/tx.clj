@@ -5,7 +5,10 @@
     [clojure.string :as str]
     [schema.core :as schema]
     [vault.blob.store :as store]
-    [vault.data.core :as data])
+    (vault.data
+      [core :as data]
+      [edn :as edn]
+      [signature :as sig]))
   (:import
     org.joda.time.DateTime
     vault.blob.content.HashID))
@@ -43,7 +46,7 @@
 
 (def EntityRoot
   "Schema for an entity root value."
-  {data/type-key (schema/eq root-type)
+  {edn/type-key (schema/eq root-type)
    :id String
    :owner HashID
    :time DateTime
@@ -52,7 +55,7 @@
 
 (def EntityUpdate
   "Schema for an entity update value."
-  {data/type-key (schema/eq update-type)
+  {edn/type-key (schema/eq update-type)
    :time DateTime
    :data DatomUpdates})
 
@@ -63,13 +66,13 @@
 (defn root?
   "Determines whether the given value is an entity root."
   [value]
-  (= root-type (data/value-type value)))
+  (= root-type (edn/value-type value)))
 
 
 (defn update?
   "Determines whether the given value is an entity update."
   [value]
-  (= update-type (data/value-type value)))
+  (= update-type (edn/value-type value)))
 
 
 
@@ -91,7 +94,7 @@
   (when data
     (schema/validate DatomFragments data))
   (cond->
-    (data/typed-map
+    (edn/typed-map
       root-type
       :id (or id (random-id!))
       :time (or time (time/now))
@@ -102,7 +105,7 @@
 (defn root-blob
   "Constructs a new entity blob for the given owner."
   [blob-store sig-provider args]
-  (data/sign-value
+  (sig/sign-value
     (root-record args)
     blob-store
     sig-provider
@@ -114,7 +117,7 @@
   record with verified signatures."
   [blob blob-store]
   (schema/validate EntityRoot (data/blob-value blob))
-  (let [blob (data/verify-sigs blob blob-store)
+  (let [blob (sig/verify-sigs blob blob-store)
         sigs (:data/signatures blob)
         owner (:owner (data/blob-value blob))]
     (when-not (contains? sigs owner)
@@ -155,7 +158,7 @@
   "Constructs a new entity update value."
   [{:keys [time data]}]
   (schema/validate DatomUpdates data)
-  (data/typed-map
+  (edn/typed-map
     update-type
     :time (or time (time/now))
     :data (into (sorted-map) data)))
@@ -165,7 +168,7 @@
   "Constructs a new update blob from the given args."
   [blob-store sig-provider args]
   (apply
-    data/sign-value
+    sig/sign-value
     (update-record args)
     blob-store
     sig-provider
@@ -177,7 +180,7 @@
   record with verified signatures."
   [blob blob-store]
   (schema/validate EntityUpdate (data/blob-value blob))
-  (let [blob (data/verify-sigs blob blob-store)
+  (let [blob (sig/verify-sigs blob blob-store)
         sigs (:data/signatures blob)
         owners (get-update-owners blob-store (:data (data/blob-value blob)))
         missing (set/difference owners sigs)]

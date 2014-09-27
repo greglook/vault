@@ -1,20 +1,9 @@
 (ns vault.data.core
   (:require
-    [potemkin :refer [import-vars]]
     (vault.data
       [edn :as edn]
       [key :as key]
       signature)))
-
-
-(import-vars
-  (vault.data.edn
-    value-type
-    type-key
-    typed-map)
-  (vault.data.signature
-    sign-value
-    verify-sigs))
 
 
 (defn parse-blob
