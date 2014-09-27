@@ -19,12 +19,13 @@
    [prismatic/schema "0.2.6"]]
 
   :codox
-  {:output-dir "target/doc"
+  {:output-dir "target/doc/codox"
    :src-dir-uri "https://github.com/greglook/vault/blob/develop/"
    :src-linenum-anchor-prefix "L"}
 
   :hiera
-  {:vertical? false
+  {:path "target/doc/ns-hiera.png"
+   :vertical? false
    :cluster-depth 2
    :ignore-ns #{clojure byte-streams clj-time potemkin}}
 

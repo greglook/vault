@@ -9,3 +9,5 @@ Glossary
 | data blob  | `data`  | `vault.blob.store.Blob`      | A blob which has been parsed by the data layer.
 | public key | `public-key` | `org.bouncycastle.openpgp.PGPPublicKey` | The public half of a cryptographic keypair.
 | signature  | `signature`  | `org.bouncycastle.openpgp.PGPSignature` | A cryptographic signature.
+| index      | `idx` `index` | ??? | ???
+| catalog    | `catalog`     | ??? | Collection of indexes at the system level.

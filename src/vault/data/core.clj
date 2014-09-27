@@ -2,8 +2,7 @@
   (:require
     (vault.data
       [edn :as edn]
-      [key :as key]
-      signature)))
+      [key :as key])))
 
 
 (defn parse-blob
