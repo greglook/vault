@@ -1,11 +1,7 @@
 (ns vault.entity.datom
   (:require
-    [clj-time.core :as time]
-    [clojure.set :as set]
-    [clojure.string :as str]
-    [schema.core :as schema]
     [vault.data.core :as data]
-    [vault.entity.schema :refer :all]))
+    [vault.entity.schema :as s]))
 
 
 ; TODO: make this deftype instead, implement equality checks and such.
@@ -29,9 +25,9 @@
             fragments))
         record (data/blob-value blob)]
     (condp = (data/blob-type blob)
-      root-type
+      s/root-type
       (map-datoms (:time record) (:id blob) (:data record))
-      update-type
+      s/update-type
       (mapcat (partial apply map-datoms (:time record)) (:data record)))))
 
 
