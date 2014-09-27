@@ -140,4 +140,4 @@
                             (System/currentTimeMillis)))
           store (file-store tmpdir)]
       (test-blob-store store "file-store")
-      (vault.blob.store.file/destroy!! store))))
+      (blob/erase!! store))))
