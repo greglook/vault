@@ -6,16 +6,10 @@
 
 ;;;;; BRUTE-FORCE INDEX ;;;;;
 
-(defrecord BruteForceIndex
-  [blob-store projection])
+(defrecord BruteForceEngine
+  [store projection]
 
-(extend-type BruteForceIndex
   search/SearchEngine
-
-  (init!
-    [this]
-    ; no-op
-    this)
 
   (update!
     [this record]
@@ -26,10 +20,9 @@
     [this pattern opts]
     ; Exhaustively search projections of stored blobs.
     (filter (partial search/matches? pattern)
-            (mapcat (:projection this)
-                    (blob/list (:blob-store this))))))
+            (mapcat projection (blob/list store)))))
 
 
-(defn brute-force-index
+(defn brute-force-engine
   [blob-store projection]
-  (BruteForceIndex. blob-store projection))
+  (BruteForceEngine. blob-store projection))
