@@ -1,4 +1,5 @@
 (ns vault.entity.datom
+  "Functions for handling atomic data assertions."
   (:require
     [vault.data.struct :as struct]
     [vault.entity.schema :as s]))

@@ -1,4 +1,5 @@
 (ns vault.entity.tx
+  "Functions for handling entity transactions."
   (:require
     [clj-time.core :as time]
     [clojure.set :as set]

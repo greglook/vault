@@ -1,5 +1,5 @@
 (ns vault.data.signature
-  "Cryptographic provider functions."
+  "Cryptographic signature functions and provider protocol."
   (:require
     [clojure.java.io :as io]
     [mvxcvi.crypto.pgp :as pgp]

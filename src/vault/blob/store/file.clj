@@ -1,4 +1,5 @@
 (ns vault.blob.store.file
+  "Blob storage backed by files on a local filesystem."
   (:require
     [byte-streams]
     [clojure.java.io :as io]

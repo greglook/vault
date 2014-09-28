@@ -1,4 +1,5 @@
 (ns vault.blob.content
+  "Types and functions for hash identifiers and blobs of byte content."
   (:refer-clojure :exclude [hash read])
   (:require
     [byte-streams]

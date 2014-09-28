@@ -1,4 +1,6 @@
 (ns vault.entity.schema
+  "Schema definitions for entity-related data, including datoms and transaction
+  blobs."
   (:require
     [clj-time.core]
     [schema.core :as schema]

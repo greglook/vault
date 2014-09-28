@@ -1,5 +1,5 @@
 (ns vault.blob.store
-  "Blob storage protocol and related functions."
+  "Blob storage protocol and functions."
   (:refer-clojure :exclude [get list])
   (:require
     byte-streams

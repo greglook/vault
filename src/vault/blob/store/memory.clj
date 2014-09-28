@@ -1,7 +1,8 @@
 (ns vault.blob.store.memory
+  "Blob storage backed by a hash map in memory."
   (:require
-    [clojure.java.io :as io]
     [clj-time.core :as time]
+    [clojure.java.io :as io]
     [vault.blob.store :as store]))
 
 

@@ -1,5 +1,5 @@
 (ns vault.data.key
-  "Functions to read blobs containing pgp data."
+  "Functions to read blobs containing PGP public-key data."
   (:require
     [vault.blob.content :as content]
     [vault.data.struct :as struct]

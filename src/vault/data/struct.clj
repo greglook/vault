@@ -1,4 +1,10 @@
-(ns vault.data.struct)
+(ns vault.data.struct
+  "Base functions for handling data attributes on blobs.
+
+  The two common data attributes include:
+  - `:data/type`    keyword giving type of content stored (`:pgp/public-key`, `:raw`, other edn type)
+  - `:data/values`  vector of data values deserialized from the content"
+  {:doc/format :markdown})
 
 
 (defn data-attrs

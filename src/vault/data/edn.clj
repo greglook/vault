@@ -1,5 +1,9 @@
 (ns vault.data.edn
-  "Functions to handle structured data formatted as EDN."
+  "Functions to handle structured data formatted as EDN.
+
+  In addition to the standard data attributes, edn data blobs also have
+  `:data/primary-bytes` which is a two-element vector giving the first and last
+  byte offsets into the content containing the first EDN value."
   (:require
     (clj-time
       [core :as time]
