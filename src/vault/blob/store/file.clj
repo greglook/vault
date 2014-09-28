@@ -2,11 +2,11 @@
   "Blob storage backed by files on a local filesystem."
   (:require
     [byte-streams]
+    (clj-time
+      [coerce :as coerce-time]
+      [core :as time])
     [clojure.java.io :as io]
     [clojure.string :as string]
-    (clj-time
-      [coerce :as ctime]
-      [core :as time])
     (vault.blob
       [content :as content]
       [store :as store]))
@@ -83,7 +83,7 @@
   "Calculates statistics for a blob file."
   [^File file]
   {:stat/size (.length file)
-   :stat/stored-at (ctime/from-long (.lastModified file))
+   :stat/stored-at (coerce-time/from-long (.lastModified file))
    :stat/origin (.toURI file)})
 
 
