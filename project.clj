@@ -11,12 +11,11 @@
   [[byte-streams "0.1.13"]
    [clj-time "0.8.0"]
    [environ "1.0.0"]
-   [potemkin "0.3.9"]
-   [mvxcvi/clj-pgp "0.5.3"]
-   [mvxcvi/puget "0.6.3"]
+   [mvxcvi/clj-pgp "0.5.4"]
+   [mvxcvi/puget "0.6.4"]
    [org.clojure/clojure "1.6.0"]
    [org.clojure/data.codec "0.1.0"]
-   [prismatic/schema "0.2.6"]]
+   [prismatic/schema "0.3.0"]]
 
   :codox
   {:output-dir "target/doc/codox"
@@ -27,7 +26,7 @@
   {:path "target/doc/ns-hiera.png"
    :vertical? false
    :cluster-depth 2
-   :ignore-ns #{clojure byte-streams clj-time potemkin}}
+   :ignore-ns #{clojure byte-streams clj-time}}
 
   :profiles
   {:coverage
