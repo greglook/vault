@@ -5,11 +5,18 @@
     byte-streams
     [vault.blob.content :as content]))
 
+;; When blob records are returned from a blob store, they may include 'stat'
+;; metadata about the blobs:
+;;
+;; - `:stat/size`        content size in bytes
+;; - `:stat/stored-at`   time blob was added to the store
+;; - `:stat/origin`      resource location for the blob
 
-;;;;; STORAGE INTERFACE ;;;;;
+
+;; ## Storage Interface
 
 (defprotocol BlobStore
-  "Protocol for content storage providers, keyed by hash ids."
+  "Protocol for content storage keyed by hash identifiers."
 
   (enumerate
     [store opts]
@@ -18,21 +25,17 @@
 
   (stat
     [store id]
-    "Returns a blob record with metadata but no content. Properties are
-    generally implementation-specific, but may include:
-    * :stat/size        blob size in bytes
-    * :stat/stored-at   date blob was added to store
-    * :stat/origin      a resource location for the blob")
+    "Returns a blob record with metadata but no content.")
 
   (get*
     [store id]
-    "Loads content for a hash-id and returns a Blob record. Returns nil if no
-    blob is stored. The blob may include `stat` metadata.")
+    "Loads content for a hash-id and returns a blob record. Returns nil if no
+    blob is stored. The blob should include stat metadata.")
 
   (put!
     [store blob]
-    "Saves a blob into the store. Returns the blob record, potentially updated
-    with `stat` metadata.")
+    "Saves a blob into the store. Returns the blob record, updated with stat
+    metadata.")
 
   (delete!
     [store id]
@@ -44,7 +47,7 @@
 
 
 (defn list
-  "Enumerates the stored blobs, returning a sequence of HashIDs.
+  "Enumerates the stored blobs, returning a sequence of `HashID`s.
   See `select-ids` for the available query options."
   ([store]
    (enumerate store nil))
@@ -55,10 +58,11 @@
 
 
 (defn get
-  "Loads content for a hash-id and returns a Blob record. Returns nil if no
-  blob is stored. The blob may contain `stat` metadata.
+  "Loads content for a hash-id and returns a blob record. Returns nil if no
+  blob is stored. The blob should include stat metadata.
 
-  This digest of the loaded content is checked against the requested hash-id."
+  The digest of the loaded content is checked against the requested hash-id.
+  Throws an exception if the digest does not match."
   [store id]
   (when-let [blob (get* store id)]
     (let [digest (content/hash (:algorithm id) (:content blob))]
@@ -72,27 +76,22 @@
 (defn store!
   "Stores content from a byte source in a blob store and returns the blob
   record. This method accepts any source which can be handled as a byte
-  stream by `vault.blob.content/read`."
+  stream by the byte-streams library."
   [store source]
   (when-let [blob (content/read source)]
     (put! store blob)))
 
 
-(defn scan-size
-  "Scans the blobs in a store to determine the total stored content size."
-  [store]
-  (reduce + 0 (map (comp :stat/size (partial stat store)) (list store))))
 
-
-
-;;;;; UTILITY FUNCTIONS ;;;;;
+;; ## Utility Functions
 
 (defn select-ids
   "Selects hash identifiers from a sequence based on input criteria.
   Available options:
-  * :after    start enumerating ids lexically following this string
-  * :prefix   only return ids matching the given string
-  * :limit    limit the number of results returned"
+
+  - `:after`   start enumerating ids lexically following this string
+  - `:prefix`  only return ids starting with the given string
+  - `:limit`   limit the number of results returned"
   [opts ids]
   (let [{:keys [after prefix limit]} opts
         after (or after prefix)]
@@ -100,3 +99,9 @@
       after  (drop-while #(pos? (compare after (str %))))
       prefix (take-while #(.startsWith (str %) prefix))
       limit  (take limit))))
+
+
+(defn scan-size
+  "Scans the blobs in a store to determine the total stored content size."
+  [store]
+  (reduce + 0 (map (comp :stat/size (partial stat store)) (list store))))
