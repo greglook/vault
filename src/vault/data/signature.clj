@@ -121,10 +121,8 @@
 ;;;;; KEYRING SIGNATURE PROVIDER ;;;;;
 
 (defrecord PrivateKeySignatureProvider
-  [hash-algorithm get-key])
+  [hash-algorithm get-key]
 
-
-(extend-type PrivateKeySignatureProvider
   SignatureProvider
 
   (sign-content [this key-id content]

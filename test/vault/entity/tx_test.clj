@@ -7,10 +7,7 @@
     (vault.blob
       [content :as content]
       [store :as store])
-    (vault.data
-      [core :as data]
-      [edn :as edn-data]
-      [test-keys :as keys])
+    [vault.data.test-keys :as keys]
     (vault.entity
       [schema :refer :all]
       [tx :as tx])))

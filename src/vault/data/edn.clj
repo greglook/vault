@@ -9,7 +9,8 @@
     (puget
       [data :as data]
       [printer :as puget])
-    [vault.blob.content :as content])
+    [vault.blob.content :as content]
+    [vault.data.struct :as struct])
   (:import
     (java.io
       ByteArrayInputStream
@@ -149,10 +150,11 @@
        (doseq [v secondary-values]
          (.write content "\n\n")
          (.write content (edn-str v))))
-     (assoc (content/read (.toByteArray content-bytes))
-       :data/primary-bytes (vec byte-range)
-       :data/values (vec (cons value secondary-values))
-       :data/type (value-type value)))))
+     (struct/data-attrs
+       (content/read (.toByteArray content-bytes))
+       (value-type value)
+       (cons value secondary-values)
+       :data/primary-bytes (vec byte-range)))))
 
 
 (defn print-data
@@ -234,10 +236,10 @@
         (.skip reader (count data-header))
         (let [[pvalue byte-range] (read-primary-value! reader bytes-read)
               svalues (read-secondary-values! reader)]
-          (assoc blob
-            :data/primary-bytes byte-range
-            :data/values (vec (cons pvalue svalues))
-            :data/type (value-type pvalue)))))))
+          (struct/data-attrs blob
+            (value-type pvalue)
+            (cons pvalue svalues)
+            :data/primary-bytes byte-range))))))
 
 
 (defn primary-bytes

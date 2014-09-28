@@ -6,9 +6,9 @@
     (vault.blob
       [content :as content]
       [store :as store])
-    [vault.data.core :as data]
-    [vault.data.edn :as edn-data]
-    [vault.data.test-keys :as keys]
+    (vault.data
+      [edn :as edn]
+      [test-keys :as keys])
     (vault.entity
       [datom :as datom]
       [tx :as tx])))
@@ -37,13 +37,13 @@
     #_
     (do
       (println "root-a" (str (:id root-a)))
-      (puget/with-color (edn-data/print-blob root-a))
+      (puget/with-color (edn/print-blob root-a))
       (newline)
       (println "root-b" (str (:id root-b)))
-      (puget/with-color (edn-data/print-blob root-b))
+      (puget/with-color (edn/print-blob root-b))
       (newline)
       (println "update" (str (:id update)))
-      (puget/with-color (edn-data/print-blob update)))
+      (puget/with-color (edn/print-blob update)))
     (if (< 0 (compare (:id root-a) (:id root-b)))
       (is (= [(datom/datom :attr/set (:id root-b) :title "Entity B" (:id update) t)
               (datom/datom :attr/add (:id root-b) :baz/xyz :abc (:id update) t)

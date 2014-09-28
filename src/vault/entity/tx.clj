@@ -6,9 +6,9 @@
     [schema.core :as schema]
     [vault.blob.store :as store]
     (vault.data
-      [core :as data]
       [edn :as edn]
-      [signature :as sig])
+      [signature :as sig]
+      [struct :as struct])
     [vault.entity.schema :as s]))
 
 
@@ -67,10 +67,10 @@
   "Checks the structure and signatures on an entity root blob. Returns a blob
   record with verified signatures."
   [blob store]
-  (schema/validate s/EntityRoot (data/blob-value blob))
+  (schema/validate s/EntityRoot (struct/data-value blob))
   (let [blob (sig/verify-sigs blob store)
         sigs (:data/signatures blob)
-        owner (:owner (data/blob-value blob))]
+        owner (:owner (struct/data-value blob))]
     (when-not (contains? sigs owner)
       (throw (IllegalStateException.
                (str "Entity blob blob " (:id blob)
@@ -86,14 +86,14 @@
   "Looks up the owner for the given entity root id. Throws an exception if any
   of the ids is not an entity root."
   [store root-id]
-  (let [blob (data/parse-blob (store/get store root-id))]
+  (let [blob (edn/parse-data (store/get store root-id))]
     (when-not blob
       (throw (IllegalArgumentException.
                (str "Cannot get owner for nonexistent entity " root-id))))
-    (when-not (root? (data/blob-value blob))
+    (when-not (root? (struct/data-value blob))
       (throw (IllegalArgumentException.
                (str "Cannot get owner for non-root blob " root-id))))
-    (:owner (data/blob-value blob))))
+    (:owner (struct/data-value blob))))
 
 
 (defn- get-update-owners
@@ -130,10 +130,10 @@
   "Checks the structure and signatures on an entity update blob. Returns a blob
   record with verified signatures."
   [blob store]
-  (schema/validate s/EntityUpdate (data/blob-value blob))
+  (schema/validate s/EntityUpdate (struct/data-value blob))
   (let [blob (sig/verify-sigs blob store)
         sigs (:data/signatures blob)
-        owners (get-update-owners store (:data (data/blob-value blob)))
+        owners (get-update-owners store (:data (struct/data-value blob)))
         missing (set/difference owners sigs)]
     (when-not (empty? missing)
       (throw (IllegalStateException.

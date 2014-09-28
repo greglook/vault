@@ -1,10 +1,10 @@
 (ns vault.entity.datom
   (:require
-    [vault.data.core :as data]
+    [vault.data.struct :as struct]
     [vault.entity.schema :as s]))
 
 
-; TODO: make this deftype instead, implement equality checks and such.
+; TODO: make this deftype instead, implement equality checks and such?
 (defrecord Datom [op entity attribute value tx time])
 
 
@@ -23,8 +23,8 @@
             (fn [[op attr value]]
               (Datom. op entity attr value (:id blob) time))
             fragments))
-        record (data/blob-value blob)]
-    (condp = (data/blob-type blob)
+        record (struct/data-value blob)]
+    (condp = (struct/data-type blob)
       s/root-type
       (map-datoms (:time record) (:id blob) (:data record))
       s/update-type
