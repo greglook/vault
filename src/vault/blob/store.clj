@@ -1,4 +1,5 @@
 (ns vault.blob.store
+  "Blob storage protocol and related functions."
   (:refer-clojure :exclude [get list])
   (:require
     byte-streams
@@ -10,30 +11,35 @@
 (defprotocol BlobStore
   "Protocol for content storage providers, keyed by hash ids."
 
-  (enumerate [store opts]
+  (enumerate
+    [store opts]
     "Enumerates the ids of the stored blobs with some filtering options. The
     'list' function provides a nicer wrapper around this protocol method.")
 
-  (stat [store id]
+  (stat
+    [store id]
     "Returns a blob record with metadata but no content. Properties are
     generally implementation-specific, but may include:
     * :stat/size        blob size in bytes
     * :stat/stored-at   date blob was added to store
     * :stat/origin      a resource location for the blob")
 
-  (get [store id]
-    "Loads content from the store and returns a Blob record. Returns nil if no
-    matching content is found. The Blob record may include data as from the
-    `stat` function.")
+  (get*
+    [store id]
+    "Loads content for a hash-id and returns a Blob record. Returns nil if no
+    blob is stored. The blob may include `stat` metadata.")
 
-  (put! [store blob]
+  (put!
+    [store blob]
     "Saves a blob into the store. Returns the blob record, potentially updated
     with `stat` metadata.")
 
-  (delete! [store id]
+  (delete!
+    [store id]
     "Removes a blob from the store.")
 
-  (erase!! [store]
+  (erase!!
+    [store]
     "Removes all blobs from the store."))
 
 
@@ -48,23 +54,25 @@
    (enumerate store (apply hash-map opt-key opt-val opts))))
 
 
-(defn get'
-  "Retrieves data for the given blob and returns the blob record. This function
-  verifies that the id matches the actual digest of the data returned."
+(defn get
+  "Loads content for a hash-id and returns a Blob record. Returns nil if no
+  blob is stored. The blob may contain `stat` metadata.
+
+  This digest of the loaded content is checked against the requested hash-id."
   [store id]
-  (when-let [blob (get store id)]
+  (when-let [blob (get* store id)]
     (let [digest (content/hash (:algorithm id) (:content blob))]
       (when (not= id digest)
         (throw (RuntimeException.
-                 (str "Store " store " returned invalid data: requested "
+                 (str "Store " store " returned invalid content: requested "
                       id " but got " digest)))))
     blob))
 
 
 (defn store!
-  "Stores data from the given byte source and returns the blob record. This
-  method accepts any data source which can be handled as a byte stream by
-  `read`."
+  "Stores content from a byte source in a blob store and returns the blob
+  record. This method accepts any source which can be handled as a byte
+  stream by `vault.blob.content/read`."
   [store source]
   (when-let [blob (content/read source)]
     (put! store blob)))

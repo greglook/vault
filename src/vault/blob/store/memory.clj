@@ -25,14 +25,14 @@
 
 ;;;;; MEMORY STORE ;;;;;
 
-(defrecord MemoryBlobStore [memory])
+(defrecord MemoryBlobStore
+  [memory]
 
-(extend-type MemoryBlobStore
   store/BlobStore
 
   (enumerate
     [this opts]
-    (store/select-ids opts (-> this :memory deref keys)))
+    (store/select-ids opts (keys @memory)))
 
 
   (stat
@@ -41,7 +41,7 @@
       (dissoc blob :content)))
 
 
-  (get
+  (get*
     [this id]
     (get-mem this id))
 
@@ -51,18 +51,18 @@
     (if-let [id (:id blob)]
       (or (get-mem this id)
           (let [blob (blob-stats blob)]
-            (swap! (:memory this) assoc id blob)
+            (swap! memory assoc id blob)
             blob))))
 
 
   (delete!
     [this id]
-    (swap! (:memory this) dissoc id))
+    (swap! memory dissoc id))
 
 
   (erase!!
     [this]
-    (swap! (:memory this) empty)))
+    (swap! memory empty)))
 
 
 (defn memory-store

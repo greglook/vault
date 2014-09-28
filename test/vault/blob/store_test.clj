@@ -24,12 +24,12 @@
 (deftest checked-get
   (let [content (.getBytes "foobarbaz")
         id (content/hash :sha256 content)
-        store (reify store/BlobStore (get [this id] (content/read content)))
-        blob (store/get store id)]
+        store (reify store/BlobStore (get* [this id] (content/read content)))
+        blob (store/get* store id)]
     (is (= id (:id blob)))
     (is (bytes= content (:content blob)))
     (is (thrown? RuntimeException
-                 (store/get' store (:id (content/read "bazbarfoo")))))))
+                 (store/get store (:id (content/read "bazbarfoo")))))))
 
 
 (deftest hash-id-selection

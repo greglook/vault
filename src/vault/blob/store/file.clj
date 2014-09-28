@@ -60,6 +60,14 @@
             blob))))))
 
 
+(defn- rm-r
+  "Recursively removes a directory of files."
+  [^File path]
+  (when (.isDirectory path)
+    (->> path .listFiles (map rm-r) dorun))
+  (.delete path))
+
+
 (defmacro ^:private when-blob-file
   "This is an unhygenic macro which binds the blob file to 'file' and executes
   the body only if it exists."
@@ -81,15 +89,15 @@
 
 ;;;;; FILE STORE ;;;;;
 
-(defrecord FileBlobStore [^File root])
+(defrecord FileBlobStore
+  [^File root]
 
-(extend-type FileBlobStore
   store/BlobStore
 
   (enumerate
     [this opts]
-    (->> (enumerate-files (:root this))
-         (map (partial file->id (:root this)))
+    (->> (enumerate-files root)
+         (map (partial file->id root))
          (store/select-ids opts)))
 
 
@@ -100,7 +108,7 @@
              (blob-stats file))))
 
 
-  (get
+  (get*
     [this id]
     (when-blob-file this id
       (-> file
@@ -112,7 +120,7 @@
   (put!
     [this blob]
     (let [{:keys [id content]} blob
-          file (id->file (:root this) id)]
+          file (id->file root id)]
       (when-not (.exists file)
         (io/make-parents file)
         ; For some reason, io/copy is much faster than byte-streams/transfer here.
@@ -129,11 +137,7 @@
 
   (erase!!
     [this]
-    (let [rm-r (fn rm-r [^File path]
-                 (when (.isDirectory path)
-                   (->> path .listFiles (map rm-r) dorun))
-                 (.delete path))]
-      (rm-r (:root this)))))
+    (rm-r root)))
 
 
 (defn file-store
