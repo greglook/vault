@@ -1,5 +1,5 @@
 (ns vault.data.key
-  "Functions to read blobs containing pgp data."
+  "Functions to read blobs containing PGP public-key data."
   (:require
     [vault.blob.content :as content]
     [vault.data.struct :as struct]
@@ -11,7 +11,7 @@
 
 
 (def ^:const ^:private key-header
-  "Magic header which must appear as the first characters in a pgp key blob."
+  "Header string which must appear as the first characters in a pgp key blob."
   "-----BEGIN PGP PUBLIC KEY")
 
 

@@ -1,4 +1,10 @@
 (ns vault.entity.tx
+  "Entity data is stored in _transaction_ data blobs. These contain entity
+  _roots_ and _updates_.
+
+  A root blob creates a new entity by establishing a stable hash identifier as
+  an _identity_. An update blob adds further modifications to one or more existing
+  entities, identified by their root hash ids."
   (:require
     [clj-time.core :as time]
     [clojure.set :as set]
@@ -9,25 +15,18 @@
       [edn :as edn]
       [signature :as sig]
       [struct :as struct])
-    [vault.entity.schema :as s]))
+    (vault.entity
+      [datom :as datom]
+      [schema :refer :all])))
 
 
-;;;;; PREDICATES ;;;;;
+;; ## Entity Roots
 
 (defn root?
   "Determines whether the given value is an entity root."
   [value]
-  (= s/root-type (edn/value-type value)))
+  (= root-type (edn/value-type value)))
 
-
-(defn update?
-  "Determines whether the given value is an entity update."
-  [value]
-  (= s/update-type (edn/value-type value)))
-
-
-
-;;;;; ENTITY ROOTS ;;;;;
 
 (defn- random-id!
   "Generates a hexadecimal identifier string from a sequence of random bytes."
@@ -37,16 +36,16 @@
     (.toString (BigInteger. 1 buf) 16)))
 
 
-(defn root-record
+(defn root-value
   "Constructs a new entity root value."
   [{:keys [owner id time data]}]
   (when-not owner
     (throw (IllegalArgumentException. "Cannot create entity without owner")))
   (when data
-    (schema/validate s/DatomFragments data))
+    (schema/validate DatomFragments data))
   (cond->
     (edn/typed-map
-      s/root-type
+      root-type
       :id (or id (random-id!))
       :time (or time (time/now))
       :owner owner)
@@ -57,7 +56,7 @@
   "Constructs a new entity blob for the given owner."
   [store sig-provider args]
   (sig/sign-value
-    (root-record args)
+    (root-value args)
     store
     sig-provider
     (:owner args)))
@@ -67,7 +66,7 @@
   "Checks the structure and signatures on an entity root blob. Returns a blob
   record with verified signatures."
   [blob store]
-  (schema/validate s/EntityRoot (struct/data-value blob))
+  (schema/validate EntityRoot (struct/data-value blob))
   (let [blob (sig/verify-sigs blob store)
         sigs (:data/signatures blob)
         owner (:owner (struct/data-value blob))]
@@ -80,7 +79,13 @@
 
 
 
-;;;;; ENTITY UPDATES ;;;;;
+;; ## Entity Updates
+
+(defn update?
+  "Determines whether the given value is an entity update."
+  [value]
+  (= update-type (edn/value-type value)))
+
 
 (defn- get-owner
   "Looks up the owner for the given entity root id. Throws an exception if any
@@ -105,12 +110,12 @@
        set))
 
 
-(defn update-record
+(defn update-value
   "Constructs a new entity update value."
   [{:keys [time data]}]
-  (schema/validate s/DatomUpdates data)
+  (schema/validate DatomUpdates data)
   (edn/typed-map
-    s/update-type
+    update-type
     :time (or time (time/now))
     :data (into (sorted-map) data)))
 
@@ -120,7 +125,7 @@
   [store sig-provider args]
   (apply
     sig/sign-value
-    (update-record args)
+    (update-value args)
     store
     sig-provider
     (get-update-owners store (:data args))))
@@ -130,7 +135,7 @@
   "Checks the structure and signatures on an entity update blob. Returns a blob
   record with verified signatures."
   [blob store]
-  (schema/validate s/EntityUpdate (struct/data-value blob))
+  (schema/validate EntityUpdate (struct/data-value blob))
   (let [blob (sig/verify-sigs blob store)
         sigs (:data/signatures blob)
         owners (get-update-owners store (:data (struct/data-value blob)))
@@ -141,3 +146,24 @@
                     " is missing signatures by some owning keys: "
                     (str/join " " missing)))))
     blob))
+
+
+
+;; ## Transaction Datoms
+
+(defn- map-datoms
+  "Maps a constructor across a sequence of fragments, producing Datom records."
+  [id time entity fragments]
+  (map
+    (fn [[op attr value]]
+      (datom/->Datom op entity attr value id time))
+    fragments))
+
+
+(defn tx->datoms
+  "Reads a sequence of datoms from a transaction blob."
+  [{:keys [id] :as blob}]
+  (let [{:keys [time data] :as tx} (struct/data-value blob)]
+    (condp = (struct/data-type blob)
+      root-type   (map-datoms id time id data)
+      update-type (mapcat (partial apply map-datoms id time) data))))

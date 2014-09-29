@@ -1,16 +1,9 @@
 (ns vault.blob.store.memory
+  "Blob storage backed by a map in memory."
   (:require
-    [clojure.java.io :as io]
     [clj-time.core :as time]
+    [clojure.java.io :as io]
     [vault.blob.store :as store]))
-
-
-;;;;; HELPER FUNCTIONS ;;;;;
-
-(defn- get-mem
-  "Gets a blob out of a memory blob store by id."
-  [store id]
-  (-> store :memory deref (get id)))
 
 
 (defn- blob-stats
@@ -22,9 +15,7 @@
                         (time/now))))
 
 
-
-;;;;; MEMORY STORE ;;;;;
-
+;; Blob records in a memory store are held in a map in an atom.
 (defrecord MemoryBlobStore
   [memory]
 
@@ -37,19 +28,19 @@
 
   (stat
     [this id]
-    (when-let [blob (get-mem this id)]
+    (when-let [blob (get @memory id)]
       (dissoc blob :content)))
 
 
   (get*
     [this id]
-    (get-mem this id))
+    (get @memory id))
 
 
   (put!
     [this blob]
     (if-let [id (:id blob)]
-      (or (get-mem this id)
+      (or (get @memory id)
           (let [blob (blob-stats blob)]
             (swap! memory assoc id blob)
             blob))))

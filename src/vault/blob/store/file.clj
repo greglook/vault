@@ -1,11 +1,28 @@
 (ns vault.blob.store.file
+  "Content storage backed by a local filesystem.
+
+  In many filesystems, directories are limited to 4,096 entries. In order to
+  avoid this limit (and make navigating the filesystem a bit more efficient),
+  blob content is stored in a nested hierarchy three levels deep.
+
+  The first level is the algorithm used in the blob's hash-id. This is almost
+  always `sha256`. The second and third levels are formed by the first three
+  characters and next three characters from the id's digest. Finally, the blob
+  is stored in a file named by the hash-id's path-safe string.
+
+  Thus, a file path for the content \"foobar\" might be:
+
+  `root/sha256/97d/f35/sha256-97df3588b5a3...`
+
+  Using this scheme, leaf directories should start approaching the limit once the
+  user has 2^(3*12) entries, or about 68.7 billion blobs."
   (:require
     [byte-streams]
+    (clj-time
+      [coerce :as coerce-time]
+      [core :as time])
     [clojure.java.io :as io]
     [clojure.string :as string]
-    (clj-time
-      [coerce :as ctime]
-      [core :as time])
     (vault.blob
       [content :as content]
       [store :as store]))
@@ -13,13 +30,14 @@
     java.io.File))
 
 
-;;;;; HELPER FUNCTIONS ;;;;;
+;; ## File System Utilities
 
 (defn- id->file
+  "Determines the filesystem path for a blob of content with the given hash
+  identifier."
   ^File
   [root id]
-  (let [id (content/hash-id id)
-        {:keys [algorithm digest]} id]
+  (let [{:keys [algorithm digest] :as id} (content/hash-id id)]
     (io/file root
       (name algorithm)
       (subs digest 0 3)
@@ -28,6 +46,7 @@
 
 
 (defn- file->id
+  "Reconstructs the hash identifier represented by the given file path."
   [root file]
   (let [root (str root)
         file (str file)]
@@ -41,23 +60,14 @@
         content/parse-id)))
 
 
-(defmacro ^:private for-files
-  [[sym dir] expr]
-  `(let [files# (->> ~dir .listFiles sort)
-         f# (fn [~(vary-meta sym assoc :tag 'java.io.File)] ~expr)]
-     (map f# files#)))
-
-
-(defn- enumerate-files
-  "Generates a lazy sequence of blob files contained in a root directory."
-  [^File root]
-  ; TODO: intelligently skip entries based on 'after'
-  (flatten
-    (for-files [algorithm-dir root]
-      (for-files [prefix-dir algorithm-dir]
-        (for-files [midfix-dir prefix-dir]
-          (for-files [blob midfix-dir]
-            blob))))))
+(defn- find-files
+  "Walks a directory tree depth first, returning a sequence of files found in
+  lexical order."
+  [^File path]
+  (cond
+    (.isFile path) [path]
+    (.isDirectory path) (->> path .listFiles sort (map find-files) flatten)
+    :else []))
 
 
 (defn- rm-r
@@ -69,8 +79,8 @@
 
 
 (defmacro ^:private when-blob-file
-  "This is an unhygenic macro which binds the blob file to 'file' and executes
-  the body only if it exists."
+  "An unhygenic macro which binds the blob file to `file` and executes the body
+  only if it exists."
   [store id & body]
   `(let [~(with-meta 'file {:tag 'java.io.File})
          (id->file (:root ~store) ~id)]
@@ -79,16 +89,18 @@
 
 
 (defn- blob-stats
-  "Calculates statistics for a blob file."
+  "Calculates storage stats for a blob file."
   [^File file]
   {:stat/size (.length file)
-   :stat/stored-at (ctime/from-long (.lastModified file))
+   :stat/stored-at (coerce-time/from-long (.lastModified file))
    :stat/origin (.toURI file)})
 
 
 
-;;;;; FILE STORE ;;;;;
+;; ## File Store
 
+;; Blob content is stored as files in a multi-level hierarchy under the given
+;; root directory.
 (defrecord FileBlobStore
   [^File root]
 
@@ -96,7 +108,7 @@
 
   (enumerate
     [this opts]
-    (->> (enumerate-files root)
+    (->> (find-files root)
          (map (partial file->id root))
          (store/select-ids opts)))
 
@@ -141,7 +153,6 @@
 
 
 (defn file-store
-  "Creates a new local file-based blob store. Blobs are stored in a hierarchy
-  of directories under the given root path."
+  "Creates a new local file-based blob store."
   [root]
   (FileBlobStore. (io/file root)))

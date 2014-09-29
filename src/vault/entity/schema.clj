@@ -1,4 +1,6 @@
 (ns vault.entity.schema
+  "Schema definitions for entity-related data, including datoms and transaction
+  blobs."
   (:require
     [clj-time.core]
     [schema.core :as schema]
@@ -8,8 +10,6 @@
     org.joda.time.DateTime
     vault.blob.content.HashID))
 
-
-;;;;; ENTITY SCHEMAS ;;;;;
 
 (def ^:const root-type   :vault.entity/root)
 (def ^:const update-type :vault.entity/update)
@@ -21,8 +21,8 @@
 
 
 (def DatomFragment
-  "Schema for a fragment of a datom. Basically, a partial datom vector with
-  :op, :attr, and :value."
+  "Schema for a fragment of a datom. Formed by a partial datom vector with
+  `op`, `attribute`, and `value`."
   [(schema/one DatomOperation "operation")
    (schema/one schema/Keyword "attribute")
    (schema/one schema/Any "value")])
@@ -35,7 +35,7 @@
 
 
 (def DatomUpdates
-  "Schema for a map from entity ids to vectors of datom fragments."
+  "Schema for a map from entity hash-ids to vectors of datom fragments."
   {HashID DatomFragments})
 
 

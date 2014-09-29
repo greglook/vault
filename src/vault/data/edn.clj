@@ -1,5 +1,9 @@
 (ns vault.data.edn
-  "Functions to handle structured data formatted as EDN."
+  "Functions to handle structured data formatted as EDN.
+
+  In addition to the standard data attributes, edn data blobs also have
+  `:data/primary-bytes` which is a two-element vector giving the first and last
+  byte offsets into the content containing the first EDN value."
   (:require
     (clj-time
       [core :as time]
@@ -25,8 +29,6 @@
     vault.blob.content.HashID))
 
 
-;;;;; VALUE TYPING ;;;;;
-
 (def ^:const type-key
   "Keyword which sets the data type of a map value."
   :vault/type)
@@ -44,10 +46,9 @@
 
   If the value is a standard Clojure data collection, it is given a type of
   `:map`, `:set`, `:vector`, or `:list` appropriately. For maps, if the
-  [[type-key]] is present, its value is used instead.
+  `type-key` is present, its value is used instead.
 
   All other values return their class."
-  {:doc/format :markdown}
   [value]
   (cond
     (map? value) (get value type-key :map)
@@ -58,7 +59,7 @@
 
 
 
-;;;;; TAGGED VALUES ;;;;;
+;; ## Tagged Values
 
 (def ^:no-doc data-readers
   "Atom containing a map of tag readers supported by Vault."
@@ -70,6 +71,7 @@
 
 (defmacro register-tag!
   "Registers handlers for an EDN tag.
+
   - `tag`    should be the unquoted tag symbol
   - `cls`    class type to assign a tagged representation to
   - `writer` function to generate the serialized value
@@ -94,14 +96,15 @@
 
 
 
-;;;;; DATA PRINTING ;;;;;
+;; ## Data Printing
 
 (def ^:no-doc ^Charset data-charset
+  "Character set which data blob text is serialized as."
   (Charset/forName "UTF-8"))
 
 
 (def ^:const ^:private data-header
-  "Magic header which must appear as the first characters in a data blob."
+  "Header string which must appear as the first characters in a data blob."
   "#vault/data\n")
 
 
@@ -170,7 +173,7 @@
 
 
 
-;;;;; DATA PARSING ;;;;;
+;; ## Data Parsing
 
 (defn- counting-reader
   "Wraps the given input stream with a proxy which counts the bytes read

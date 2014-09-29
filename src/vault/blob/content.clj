@@ -1,4 +1,5 @@
 (ns vault.blob.content
+  "Types and functions for hash identifiers and blobs of byte content."
   (:refer-clojure :exclude [hash read])
   (:require
     [byte-streams]
@@ -7,7 +8,7 @@
     java.security.MessageDigest))
 
 
-;;;;; DIGEST ALGORITHMS ;;;;;
+;; ## Digest Algorithms
 
 (def ^:const digest-algorithms
   "Map of content hashing algorithms to system names."
@@ -17,7 +18,7 @@
 
 
 (def ^:dynamic *digest-algorithm*
-  "Default digest algorithm to use for content hashing."
+  "Default digest algorithm to use for hashing content."
   :sha256)
 
 
@@ -29,8 +30,10 @@
 
 
 
-;;;;; HASH IDENTIFIER ;;;;;
+;; ## Hash Identifiers
 
+;; Hash identifiers have an `:algorithm` keyword and a `:digest` string giving
+;; the hexadecimal output on some byte content.
 (defrecord HashID
   [algorithm ^String digest]
 
@@ -50,16 +53,17 @@
 
 
 (defn path-str
-  "Converts a hash id into a path-safe string. This differs from the normal
-  representation in that the colon (:) is replaced with a hyphen (-). This lets
-  the identifier be used in file paths and URLs."
+  "Converts a hash id into a path-safe string.
+
+  This differs from the normal representation in that the colon (:) is replaced
+  with a hyphen (-). This lets the identifier be used in file paths and URLs."
   [id]
   (str (name (:algorithm id)) \- (:digest id)))
 
 
 (defn parse-id
-  "Parses a string into a hash identifier. This function accepts the following
-  formats:
+  "Parses a string into a hash identifier. Accepts the following formats:
+
   - urn:hash:{algo}:{digest}
   - hash:{algo}:{digest}
   - {algo}:{digest}
@@ -83,7 +87,7 @@
 
 
 
-;;;;; CONTENT HASHING ;;;;;
+;; ## Content Hashing
 
 (defn- zero-pad
   "Pads a string with leading zeroes up to the given width."
@@ -99,7 +103,7 @@
 
 
 (defn hex-str
-  "Converts a byte array into a lowercase hex string."
+  "Converts a byte array into a lowercase hexadecimal string."
   [^bytes value]
   (let [width (* 2 (count value))
         hex (-> (BigInteger. 1 value)
@@ -123,15 +127,20 @@
 
 
 
-;;;;; BLOB RECORD ;;;;;
+;; ## Blob Records
 
+;; Blobs have `:content` and `:id` attributes, giving a byte array of binary
+;; data and a `HashID` of that content.
+;;
+;; Blobs may be given other attributes describing their content. This is used
+;; by blob stores to note storage-level 'stat' metadata, and in the data layer
+;; to hold deserialized values and type information.
 (defrecord Blob
   [id ^bytes content])
 
 
 (defn empty-blob
-  "Constructs a new blob record with the given hash-id and no content. This is
-  mostly useful for answering `stat` calls."
+  "Constructs a new blob record with the given hash-id and no content."
   [id]
   {:pre [(instance? HashID id)]}
   (Blob. id nil))
