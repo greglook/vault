@@ -43,7 +43,7 @@
 
 (deftest root-blobs
   (let [t (time/date-time 2014 5 15 1 21 36)
-        root (tx/root-blob
+        root (tx/root->blob
                blob-store
                keys/sig-provider
                {:owner keys/pubkey-id
@@ -52,9 +52,9 @@
                 :data [[:attr/set :title "Thing #1"]
                        [:attr/add :tags "foo"]
                        [:attr/add :tags "bar"]]})]
-    (is (tx/validate-root-blob root blob-store))
+    (is (tx/validate-root root blob-store))
     (is (thrown? RuntimeException
-          (tx/validate-root-blob
+          (tx/validate-root
             (update-in root [:data/values] (partial take 1))
             blob-store)))))
 
@@ -77,23 +77,23 @@
 (deftest update-blobs
   (let [t (time/date-time 2014 5 14 3 20 36)
         root-a (->> {:owner keys/pubkey-id}
-                    (tx/root-blob blob-store keys/sig-provider)
+                    (tx/root->blob blob-store keys/sig-provider)
                     (store/put! blob-store))
         root-b (->> {:owner keys/pubkey-id}
-                    (tx/root-blob blob-store keys/sig-provider)
+                    (tx/root->blob blob-store keys/sig-provider)
                     (store/put! blob-store))
         updates {(:id root-a) [[:attr/set :title "Entity A"]
                                [:attr/set :foo/bar 42]]
                  (:id root-b) [[:attr/set :title "Entity B"]
                                [:attr/add :baz/xyz :abc]]}
-        update (tx/update-blob
+        update (tx/update->blob
                  blob-store
                  keys/sig-provider
                  {:data updates
                   :time t})]
-    (is (tx/validate-update-blob update blob-store))
+    (is (tx/validate-update update blob-store))
     (is (thrown? RuntimeException
-          (tx/validate-update-blob
+          (tx/validate-update
             (update-in update [:data/values] (partial take 1))
             blob-store)))))
 
@@ -101,16 +101,16 @@
 (deftest tx-datoms
   (let [t (time/date-time 2014 5 14 3 20 36)
         root-a (->> {:owner keys/pubkey-id}
-                    (tx/root-blob blob-store keys/sig-provider)
+                    (tx/root->blob blob-store keys/sig-provider)
                     (store/put! blob-store))
         root-b (->> {:owner keys/pubkey-id}
-                    (tx/root-blob blob-store keys/sig-provider)
+                    (tx/root->blob blob-store keys/sig-provider)
                     (store/put! blob-store))
         updates {(:id root-a) [[:attr/set :title "Entity A"]
                                [:attr/set :foo/bar 42]]
                  (:id root-b) [[:attr/set :title "Entity B"]
                                [:attr/add :baz/xyz :abc]]}
-        update (tx/update-blob
+        update (tx/update->blob
                  blob-store
                  keys/sig-provider
                  {:data updates

@@ -52,7 +52,7 @@
     data (assoc :data data)))
 
 
-(defn root-blob
+(defn root->blob
   "Constructs a new entity blob for the given owner."
   [store sig-provider args]
   (sig/sign-value
@@ -62,7 +62,7 @@
     (:owner args)))
 
 
-(defn validate-root-blob
+(defn validate-root
   "Checks the structure and signatures on an entity root blob. Returns a blob
   record with verified signatures."
   [blob store]
@@ -120,7 +120,7 @@
     :data (into (sorted-map) data)))
 
 
-(defn update-blob
+(defn update->blob
   "Constructs a new update blob from the given args."
   [store sig-provider args]
   (apply
@@ -131,7 +131,7 @@
     (get-update-owners store (:data args))))
 
 
-(defn validate-update-blob
+(defn validate-update
   "Checks the structure and signatures on an entity update blob. Returns a blob
   record with verified signatures."
   [blob store]

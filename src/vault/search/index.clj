@@ -1,4 +1,5 @@
 (ns vault.search.index
+  ""
   (:refer-clojure :exclude [get]))
 
 
