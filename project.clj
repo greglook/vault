@@ -18,7 +18,8 @@
    [prismatic/schema "0.3.0"]]
 
   :codox
-  {:output-dir "target/doc/codox"
+  {:defaults {:doc/format :markdown}
+   :output-dir "target/doc/codox"
    :src-dir-uri "https://github.com/greglook/vault/blob/develop/"
    :src-linenum-anchor-prefix "L"}
 
