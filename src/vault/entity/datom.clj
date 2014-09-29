@@ -1,6 +1,6 @@
 (ns vault.entity.datom
-  "Functions for handling 'datoms', atomic data assertions. Datoms consist of
-  six attributes:
+  "Datoms are atomic data assertions about an entity in Vault. Datoms consist
+  of six attributes:
 
   - `op` the operation being performed
   - `entity` the hash-id of the root blob

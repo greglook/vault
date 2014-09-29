@@ -17,28 +17,28 @@
 (def blob-store keys/blob-store)
 
 
-(deftest root-records
+(deftest root-values
   (let [owner (content/hash (.getBytes "foo"))]
     (is (thrown? IllegalArgumentException
-                 (tx/root-record {:owner nil})))
+                 (tx/root-value {:owner nil})))
     (is (thrown? RuntimeException
-                 (tx/root-record {:owner owner
+                 (tx/root-value {:owner owner
                                       :data [{:malformed 'value}]})))
-    (let [record (tx/root-record
-                   {:owner owner})]
-      (is (schema/validate EntityRoot record))
-      (is (tx/root? record)))
+    (let [value (tx/root-value
+                  {:owner owner})]
+      (is (schema/validate EntityRoot value))
+      (is (tx/root? value)))
     (let [dt (time/date-time 2014 5 15 1 21 36)
-          record (tx/root-record
-                   {:owner owner
-                    :id "foobar"
-                    :time dt
-                    :data [[:attr/set :title "Thing #1"]]})]
-      (is (schema/validate EntityRoot record))
-      (is (= "foobar" (:id record)))
-      (is (= dt (:time record)))
-      (is (= [[:attr/set :title "Thing #1"]] (:data record)))
-      (is (tx/root? record)))))
+          value (tx/root-value
+                  {:owner owner
+                   :id "foobar"
+                   :time dt
+                   :data [[:attr/set :title "Thing #1"]]})]
+      (is (schema/validate EntityRoot value))
+      (is (= "foobar" (:id value)))
+      (is (= dt (:time value)))
+      (is (= [[:attr/set :title "Thing #1"]] (:data value)))
+      (is (tx/root? value)))))
 
 
 (deftest root-blobs
@@ -59,19 +59,19 @@
             blob-store)))))
 
 
-(deftest update-records
+(deftest update-values
   (is (thrown? RuntimeException
-               (tx/update-record {:data nil})))
+               (tx/update-value {:data nil})))
   (is (thrown? RuntimeException
-               (tx/update-record {:data [[:attr/set :title "Thing #2"]]})))
+               (tx/update-value {:data [[:attr/set :title "Thing #2"]]})))
   (let [t (time/date-time 2014 5 14 3 20 36)
-        record (tx/update-record
-                 {:time t
-                  :data {(content/hash (.getBytes "barbaz"))
-                         [[:attr/set :title "Thing #3"]]}})]
-    (is (schema/validate EntityUpdate record))
-    (is (= t (:time record)))
-    (is (tx/update? record))))
+        value (tx/update-value
+                {:time t
+                 :data {(content/hash (.getBytes "barbaz"))
+                        [[:attr/set :title "Thing #3"]]}})]
+    (is (schema/validate EntityUpdate value))
+    (is (= t (:time value)))
+    (is (tx/update? value))))
 
 
 (deftest update-blobs

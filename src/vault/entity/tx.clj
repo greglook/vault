@@ -1,5 +1,10 @@
 (ns vault.entity.tx
-  "Functions for handling entity transactions."
+  "Entity data is stored in _transaction_ data blobs. These contain entity
+  _roots_ and _updates_.
+
+  A root blob creates a new entity by establishing a stable hash identifier as
+  an _identity_. An update blob adds further modifications to one or more existing
+  entities, identified by their root hash ids."
   (:require
     [clj-time.core :as time]
     [clojure.set :as set]
@@ -11,26 +16,17 @@
       [signature :as sig]
       [struct :as struct])
     (vault.entity
-      [datom :as d]
+      [datom :as datom]
       [schema :refer :all])))
 
 
-;;;;; PREDICATES ;;;;;
+;; ## Entity Roots
 
 (defn root?
   "Determines whether the given value is an entity root."
   [value]
   (= root-type (edn/value-type value)))
 
-
-(defn update?
-  "Determines whether the given value is an entity update."
-  [value]
-  (= update-type (edn/value-type value)))
-
-
-
-;;;;; ENTITY ROOTS ;;;;;
 
 (defn- random-id!
   "Generates a hexadecimal identifier string from a sequence of random bytes."
@@ -40,7 +36,7 @@
     (.toString (BigInteger. 1 buf) 16)))
 
 
-(defn root-record
+(defn root-value
   "Constructs a new entity root value."
   [{:keys [owner id time data]}]
   (when-not owner
@@ -60,7 +56,7 @@
   "Constructs a new entity blob for the given owner."
   [store sig-provider args]
   (sig/sign-value
-    (root-record args)
+    (root-value args)
     store
     sig-provider
     (:owner args)))
@@ -83,7 +79,13 @@
 
 
 
-;;;;; ENTITY UPDATES ;;;;;
+;; ## Entity Updates
+
+(defn update?
+  "Determines whether the given value is an entity update."
+  [value]
+  (= update-type (edn/value-type value)))
+
 
 (defn- get-owner
   "Looks up the owner for the given entity root id. Throws an exception if any
@@ -108,7 +110,7 @@
        set))
 
 
-(defn update-record
+(defn update-value
   "Constructs a new entity update value."
   [{:keys [time data]}]
   (schema/validate DatomUpdates data)
@@ -123,7 +125,7 @@
   [store sig-provider args]
   (apply
     sig/sign-value
-    (update-record args)
+    (update-value args)
     store
     sig-provider
     (get-update-owners store (:data args))))
@@ -154,7 +156,7 @@
   [id time entity fragments]
   (map
     (fn [[op attr value]]
-      (d/->Datom op entity attr value id time))
+      (datom/->Datom op entity attr value id time))
     fragments))
 
 
@@ -163,7 +165,5 @@
   [{:keys [id] :as blob}]
   (let [{:keys [time data] :as tx} (struct/data-value blob)]
     (condp = (struct/data-type blob)
-      root-type
-      (map-datoms id time id data)
-      update-type
-      (mapcat (partial apply map-datoms id time) data))))
+      root-type   (map-datoms id time id data)
+      update-type (mapcat (partial apply map-datoms id time) data))))
