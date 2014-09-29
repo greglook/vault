@@ -30,7 +30,10 @@
                  "src/vault/data/struct.clj"
                  "src/vault/data/key.clj"
                  "src/vault/data/edn.clj"
-                 "src/vault/data/signature.clj"]]}
+                 "src/vault/data/signature.clj"
+                 "src/vault/entity/datom.clj"
+                 "src/vault/entity/schema.clj"
+                 "src/vault/entity/tx.clj"]]}
 
   :codox
   {:defaults {:doc/format :markdown}

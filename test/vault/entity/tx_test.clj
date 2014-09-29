@@ -9,6 +9,7 @@
       [store :as store])
     [vault.data.test-keys :as keys]
     (vault.entity
+      [datom :as datom]
       [schema :refer :all]
       [tx :as tx])))
 
@@ -95,3 +96,33 @@
           (tx/validate-update-blob
             (update-in update [:data/values] (partial take 1))
             blob-store)))))
+
+
+(deftest tx-datoms
+  (let [t (time/date-time 2014 5 14 3 20 36)
+        root-a (->> {:owner keys/pubkey-id}
+                    (tx/root-blob blob-store keys/sig-provider)
+                    (store/put! blob-store))
+        root-b (->> {:owner keys/pubkey-id}
+                    (tx/root-blob blob-store keys/sig-provider)
+                    (store/put! blob-store))
+        updates {(:id root-a) [[:attr/set :title "Entity A"]
+                               [:attr/set :foo/bar 42]]
+                 (:id root-b) [[:attr/set :title "Entity B"]
+                               [:attr/add :baz/xyz :abc]]}
+        update (tx/update-blob
+                 blob-store
+                 keys/sig-provider
+                 {:data updates
+                  :time t})]
+    (if (< 0 (compare (:id root-a) (:id root-b)))
+      (is (= [(datom/->Datom :attr/set (:id root-b) :title "Entity B" (:id update) t)
+              (datom/->Datom :attr/add (:id root-b) :baz/xyz :abc (:id update) t)
+              (datom/->Datom :attr/set (:id root-a) :title "Entity A" (:id update) t)
+              (datom/->Datom :attr/set (:id root-a) :foo/bar 42 (:id update) t)]
+             (tx/tx->datoms update)))
+      (is (= [(datom/->Datom :attr/set (:id root-a) :title "Entity A" (:id update) t)
+              (datom/->Datom :attr/set (:id root-a) :foo/bar 42 (:id update) t)
+              (datom/->Datom :attr/set (:id root-b) :title "Entity B" (:id update) t)
+              (datom/->Datom :attr/add (:id root-b) :baz/xyz :abc (:id update) t)]
+             (tx/tx->datoms update))))))
