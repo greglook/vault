@@ -1,5 +1,21 @@
 (ns vault.blob.store.file
-  "Content storage backed by a local filesystem."
+  "Content storage backed by a local filesystem.
+
+  In many filesystems, directories are limited to 4,096 entries. In order to
+  avoid this limit (and make navigating the filesystem a bit more efficient),
+  blob content is stored in a nested hierarchy three levels deep.
+
+  The first level is the algorithm used in the blob's hash-id. This is almost
+  always `sha256`. The second and third levels are formed by the first three
+  characters and next three characters from the id's digest. Finally, the blob
+  is stored in a file named by the hash-id's path-safe string.
+
+  Thus, a file path for the content \"foobar\" might be:
+
+  `root/sha256/97d/f35/sha256-97df3588b5a3...`
+
+  Using this scheme, leaf directories should start approaching the limit once the
+  user has 2^(3*12) entries, or about 68.7 billion blobs."
   (:require
     [byte-streams]
     (clj-time
@@ -85,7 +101,6 @@
 
 ;; Blob content is stored as files in a multi-level hierarchy under the given
 ;; root directory.
-
 (defrecord FileBlobStore
   [^File root]
 

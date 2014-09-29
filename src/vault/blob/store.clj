@@ -1,16 +1,16 @@
 (ns vault.blob.store
-  "Blob storage protocol and functions."
+  "Blob storage protocol and functions.
+
+  When blob records are returned from a blob store, they may include 'stat'
+  metadata about the blobs:
+
+  - `:stat/size`        content size in bytes
+  - `:stat/stored-at`   time blob was added to the store
+  - `:stat/origin`      resource location for the blob"
   (:refer-clojure :exclude [get list])
   (:require
     byte-streams
     [vault.blob.content :as content]))
-
-;; When blob records are returned from a blob store, they may include 'stat'
-;; metadata about the blobs:
-;;
-;; - `:stat/size`        content size in bytes
-;; - `:stat/stored-at`   time blob was added to the store
-;; - `:stat/origin`      resource location for the blob
 
 
 ;; ## Storage Interface

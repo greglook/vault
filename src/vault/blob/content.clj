@@ -34,7 +34,6 @@
 
 ;; Hash identifiers have an `:algorithm` keyword and a `:digest` string giving
 ;; the hexadecimal output on some byte content.
-
 (defrecord HashID
   [algorithm ^String digest]
 
@@ -132,13 +131,12 @@
 
 ;; Blobs have `:content` and `:id` attributes, giving a byte array of binary
 ;; data and a `HashID` of that content.
-
-(defrecord Blob
-  [id ^bytes content])
-
+;;
 ;; Blobs may be given other attributes describing their content. This is used
 ;; by blob stores to note storage-level 'stat' metadata, and in the data layer
 ;; to hold deserialized values and type information.
+(defrecord Blob
+  [id ^bytes content])
 
 
 (defn empty-blob

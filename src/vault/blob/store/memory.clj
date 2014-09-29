@@ -15,11 +15,7 @@
                         (time/now))))
 
 
-
-;; ## Memory Store
-
 ;; Blob records in a memory store are held in a map in an atom.
-
 (defrecord MemoryBlobStore
   [memory]
 
