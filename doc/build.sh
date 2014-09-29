@@ -15,7 +15,7 @@ fi
 mkdir -p $DOC_TARGET
 
 echo "Building coverage, codox, marginalia, and ns-hierarchy"
-lein do test, cloverage, hiera, doc, marg --dir $DOC_TARGET --file marginalia.html
+lein do hiera, docs, cloverage
 
 if [[ -f deps.dot ]]; then
     echo "Generating clique graph"
