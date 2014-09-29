@@ -1,5 +1,5 @@
 (ns vault.blob.store.file
-  "Blob storage backed by files on a local filesystem."
+  "Content storage backed by a local filesystem."
   (:require
     [byte-streams]
     (clj-time
@@ -14,13 +14,14 @@
     java.io.File))
 
 
-;;;;; HELPER FUNCTIONS ;;;;;
+;; ## File System Utilities
 
 (defn- id->file
+  "Determines the filesystem path for a blob of content with the given hash
+  identifier."
   ^File
   [root id]
-  (let [id (content/hash-id id)
-        {:keys [algorithm digest]} id]
+  (let [{:keys [algorithm digest] :as id} (content/hash-id id)]
     (io/file root
       (name algorithm)
       (subs digest 0 3)
@@ -29,6 +30,7 @@
 
 
 (defn- file->id
+  "Reconstructs the hash identifier represented by the given file path."
   [root file]
   (let [root (str root)
         file (str file)]
@@ -42,23 +44,14 @@
         content/parse-id)))
 
 
-(defmacro ^:private for-files
-  [[sym dir] expr]
-  `(let [files# (->> ~dir .listFiles sort)
-         f# (fn [~(vary-meta sym assoc :tag 'java.io.File)] ~expr)]
-     (map f# files#)))
-
-
-(defn- enumerate-files
-  "Generates a lazy sequence of blob files contained in a root directory."
-  [^File root]
-  ; TODO: intelligently skip entries based on 'after'
-  (flatten
-    (for-files [algorithm-dir root]
-      (for-files [prefix-dir algorithm-dir]
-        (for-files [midfix-dir prefix-dir]
-          (for-files [blob midfix-dir]
-            blob))))))
+(defn- find-files
+  "Walks a directory tree depth first, returning a sequence of files found in
+  lexical order."
+  [^File path]
+  (cond
+    (.isFile path) [path]
+    (.isDirectory path) (->> path .listFiles sort (map find-files) flatten)
+    :else []))
 
 
 (defn- rm-r
@@ -70,8 +63,8 @@
 
 
 (defmacro ^:private when-blob-file
-  "This is an unhygenic macro which binds the blob file to 'file' and executes
-  the body only if it exists."
+  "An unhygenic macro which binds the blob file to `file` and executes the body
+  only if it exists."
   [store id & body]
   `(let [~(with-meta 'file {:tag 'java.io.File})
          (id->file (:root ~store) ~id)]
@@ -80,7 +73,7 @@
 
 
 (defn- blob-stats
-  "Calculates statistics for a blob file."
+  "Calculates storage stats for a blob file."
   [^File file]
   {:stat/size (.length file)
    :stat/stored-at (coerce-time/from-long (.lastModified file))
@@ -88,7 +81,10 @@
 
 
 
-;;;;; FILE STORE ;;;;;
+;; ## File Store
+
+;; Blob content is stored as files in a multi-level hierarchy under the given
+;; root directory.
 
 (defrecord FileBlobStore
   [^File root]
@@ -97,7 +93,7 @@
 
   (enumerate
     [this opts]
-    (->> (enumerate-files root)
+    (->> (find-files root)
          (map (partial file->id root))
          (store/select-ids opts)))
 
@@ -142,7 +138,6 @@
 
 
 (defn file-store
-  "Creates a new local file-based blob store. Blobs are stored in a hierarchy
-  of directories under the given root path."
+  "Creates a new local file-based blob store."
   [root]
   (FileBlobStore. (io/file root)))
