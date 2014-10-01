@@ -3,7 +3,8 @@
   matching a pattern."
   (:require
     [puget.order :as order]
-    [schema.core :as schema]))
+    [schema.core :as schema]
+    [vault.data.struct :as struct]))
 
 
 (defprotocol Index
@@ -63,22 +64,33 @@
 
 ;; ## Index Functions
 
-(defn ^:no-doc key-vec
+(defn key-vec
   "Extracts a key vector from a record and a sequence of keywords."
   [key-attrs record]
   {:pre [(vector? key-attrs) (every? keyword? key-attrs)]}
   (vec (map (partial clojure.core/get record) key-attrs)))
 
 
-(defn ^:no-doc matches?
-  "Determines whether a record matches the given pattern."
+(defn matches?
+  "Returns true if the record matches the given pattern. For each key in the
+  pattern, the value must match the value stored in the record."
   [pattern record]
   (every? #(= (get pattern %)
               (get record %))
           (keys pattern)))
 
 
-(defn ^:no-doc filter-records
+(defn filter-types
+  "Wraps a projection function in a check that the blob's data type passes the
+  given predicate."
+  [projection pred]
+  {:pre [(fn? projection)]}
+  (fn [blob]
+    (when (pred (struct/data-type blob))
+      (projection blob))))
+
+
+(defn filter-records
   "Filters and sorts a returned sequence of records to respect the query's
   `:where` and `:order` clauses."
   [query records]
