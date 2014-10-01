@@ -1,59 +1,75 @@
 (ns vault.search.index
-  ""
-  (:refer-clojure :exclude [get]))
+  "Indexes store a collection of _records_ which can be searched for values
+  matching a pattern."
+  (:require
+    [puget.order :as order]))
 
 
 (defprotocol Index
-  "Protocol for a generic index which can collect records."
+  "Protocol for an index which can collect records."
+
+  (search*
+    [index query]
+    "Searches the index for an ordered sequence of records. See `search`.")
 
   (insert!
     [index record]
-    "Updates the index by inserting a record value.")
+    "Updates the index by inserting a new record value.")
+
+  (delete!
+    [index pattern]
+    "Removes records from the index which match the given pattern.")
 
   (erase!!
     [index]
     "Removes all records stored in the index."))
 
 
-(defprotocol KeyValueIndex
-  "Protocol for storing records uniquely identified by a key."
+(defn search
+  "Returns a (potentially-lazy) sequence of records from the index. The order
+  in which records are returned is up to the underlying implementation. Indexes
+  may store records internally in different orders to optimize different query
+  patterns.
 
-  (get
-    [index key]
-    "Returns the record stored for the given key.")
-
-  (delete!
-    [index key]
-    "Removes a record from the index for the given key."))
-
-
-(defprotocol SortedIndex
-  "Protocol for a sorted index of vector tuples. Records are identified by keys, which
-  are stored in sorted order."
-
-  (seek*
-    [index start end ascending]
-    "Searches the index for records following the given start record. If
-    ascending is true, records which are 'greater than or equal to' the start
-    are returned. Otherwise, results are returned in reverse order."))
-
-
-(defn seek
-  "Searches the index for records following the given key. If ascending is
-  true, records which are 'greater than or equal to' the start pattern are
-  returned. Otherwise, results are returned in reverse order." 
+  - `:where` may be a map of keywords to values which will be checked against
+    the stored records
+  - `:order` may specify a keyword or vector of keywords to sort the returned
+    results by"
   ([index]
-   (seek* index nil nil true))
-  ([index start]
-   (seek* index start nil true))
-  ([index start ascending]
-   (seek* index start nil ascending))
-  ([index start end ascending]
-   (seek* index start end ascending)))
+   (search* index nil))
+  ([index query]
+   (search* index query))
+  ([index query-key query-val & more]
+   (search* index (apply hash-map query-key query-val more))))
 
+
+
+;; ## Index Functions
 
 (defn ^:no-doc key-vec
-  "Extracts a key vector from a record and a schema, a sequence of keywords."
-  [schema record]
-  {:pre [(vector? schema) (every? keyword? schema)]}
-  (vec (map (partial clojure.core/get record) schema)))
+  "Extracts a key vector from a record and a sequence of keywords."
+  [key-attrs record]
+  {:pre [(vector? key-attrs) (every? keyword? key-attrs)]}
+  (vec (map (partial clojure.core/get record) key-attrs)))
+
+
+(defn ^:no-doc matches?
+  "Determines whether a record matches the given pattern."
+  [pattern record]
+  (every? #(= (get pattern %)
+              (get record %))
+          (keys pattern)))
+
+
+(defn ^:no-doc filter-records
+  "Filters and sorts a returned sequence of records to respect the query's
+  `:where` and `:order` clauses."
+  [query records]
+  (let [pattern (:where query)
+        order-key (if-let [ordering (:order query)]
+                    (if (keyword? ordering)
+                      (comp vector ordering)
+                      (apply juxt ordering)))]
+    (cond->> records
+      pattern   (filter (partial matches? (:where query)))
+      order-key (sort-by order-key order/rank))))

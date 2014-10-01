@@ -1,19 +1,11 @@
 (ns vault.search.catalog
   (:require
     [clj-time.core :as time]
-    [vault.blob.store :as store]
+    (vault.blob
+      [content :as content]
+      [store :as store])
     [vault.search.index :as index]))
 
-
-;;;;; HELPER FUNCTIONS ;;;;;
-
-(defn- get-blob-index
-  [catalog]
-  (get (:indexes catalog) (:blob-key catalog)))
-
-
-
-;;;;; INDEX CATALOG ;;;;;
 
 (defrecord IndexCatalog
   [indexes blob-key]
@@ -22,17 +14,25 @@
 
   (enumerate
     [this opts]
-    (store/select-ids opts
-      ; TODO: this is where being able to do real queries would help;
-      ; specifically, for :after and :prefix.
-      (index/seek (get-blob-index this))))
+    ; TODO: figure out query syntax for selecting records with ids :after
+    (let [blob-index (get indexes blob-key)]
+      (->> {:order :id}
+           (index/search blob-index)
+           (map :id)
+           (store/select-ids opts))))
 
 
   (stat
     [this id]
-    (when id
-      ; TODO: rename :size to :stat/size, etc.
-      (index/get (get-blob-index this) {:blob id})))
+    (when-let [{:keys [size stored-at type]}
+               (and id (-> (get indexes blob-key)
+                           (index/search :where {:id id})
+                           first))]
+      (assoc
+        (content/empty-blob id)
+        :stat/size size
+        :stat/stored-at stored-at
+        :data/type type)))
 
 
   (put!

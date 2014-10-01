@@ -34,7 +34,9 @@
                  "src/vault/entity/datom.clj"
                  "src/vault/entity/schema.clj"
                  "src/vault/entity/tx.clj"
-                 "src/vault/search/index.clj"]]}
+                 "src/vault/search/index.clj"
+                 "src/vault/search/index/brute.clj"
+                 "src/vault/search/index/memory.clj"]]}
 
   :codox
   {:defaults {:doc/format :markdown}
