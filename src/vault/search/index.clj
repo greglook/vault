@@ -2,7 +2,8 @@
   "Indexes store a collection of _records_ which can be searched for values
   matching a pattern."
   (:require
-    [puget.order :as order]))
+    [puget.order :as order]
+    [schema.core :as schema]))
 
 
 (defprotocol Index
@@ -25,8 +26,19 @@
     "Removes all records stored in the index."))
 
 
+(defn put!
+  "Stores a blob in the index by projecting it into records. The index must
+  contain a `:projection` key with a function which returns a sequence of
+  records for an input blob."
+  [index blob]
+  (when-let [projection (:projection index)]
+    (doseq [record (projection blob)]
+      (insert! index record)))
+  blob)
+
+
 (defn search
-  "Returns a (potentially-lazy) sequence of records from the index. The order
+  "Returns a (potentially lazy) sequence of records from the index. The order
   in which records are returned is up to the underlying implementation. Indexes
   may store records internally in different orders to optimize different query
   patterns.
@@ -34,13 +46,18 @@
   - `:where` may be a map of keywords to values which will be checked against
     the stored records
   - `:order` may specify a keyword or vector of keywords to sort the returned
-    results by"
+    results by
+
+  If the index has a `:schema` key set, the returned records will be validated
+  before they are returned."
   ([index]
-   (search* index nil))
+   (search index nil))
   ([index query]
-   (search* index query))
+   (let [schema (:schema index)]
+     (cond->> (search* index query)
+       schema (map #(do (schema/validate schema %) %)))))
   ([index query-key query-val & more]
-   (search* index (apply hash-map query-key query-val more))))
+   (search index (apply hash-map query-key query-val more))))
 
 
 
