@@ -1,16 +1,13 @@
 Data Indexing
 =============
 
-While it is possible to exhaustively scan the entire data store and calculate
-the relevant information each time a query is performed, a much better aproach
-is to _index_ the data in the blobs.
+The information in Vault is indexed to enable efficient access. At a basic
+level, an index stores a certain type of records and provides an efficient way
+to search them by querying.
 
-An index provides a view of the stored data which caches desired blob properties
-as rapidly-accessible _records_. Indexes are **not** authoritative stores of the
-blob data, and should not store entire blob contents.
-
-Since index state is not intended to be durable, it can be destroyed and rebuilt
-at any time from the source blob data.
+Indexes are **not** authoritative stores of the blob data, and should not store
+entire blob contents. Since index state is not intended to be durable, it can be
+destroyed and rebuilt at any time from the source blob data.
 
 ## Index Definition
 

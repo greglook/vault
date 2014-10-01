@@ -9,7 +9,7 @@
 ;; record is keyed by a sequence of attributes, which determines the order in
 ;; which they are stored.
 (defrecord MemoryIndex
-  [key-attrs tuples]
+  [records unique-key]
 
   index/Index
 
@@ -17,36 +17,37 @@
     [this query]
     (index/filter-records
       query
-      (if-let [start (some->> query :where (index/key-vec key-attrs))]
-        (map val (subseq @tuples >= start))
-        (vals @tuples))))
+      (if-let [start (some->> query :where (index/key-vec unique-key))]
+        (map val (subseq @records >= start))
+        (vals @records))))
 
 
   (insert!
     [this record]
     {:pre [(map? record)]}
-    (swap! tuples assoc (index/key-vec key-attrs record) record)
+    (swap! records assoc (index/key-vec unique-key record) record)
     this)
 
 
   (delete!
     [this pattern]
     {:pre [(map? pattern)]}
-    (swap! tuples dissoc (index/key-vec key-attrs pattern))
+    (swap! records dissoc (index/key-vec unique-key pattern))
     nil)
 
 
   (erase!!
     [this]
-    (swap! tuples empty)
+    (swap! records empty)
     nil))
 
 
 (defn memory-index
-  "Creates a new memory-backed index keyed on the given attributes. The records
-  inserted will be ordered by their values for those attributes."
-  [& key-attrs]
-  {:pre [(<= 1 (count key-attrs))]}
-  (MemoryIndex.
-    (vec key-attrs)
-    (atom (sorted-map-by order/rank))))
+  "Creates a new memory-backed index keyed on attributes in `:unique-key`. The
+  records inserted will be ordered by their values for those attributes."
+  [opts]
+  {:pre [(contains? opts :unique-key)
+         (pos? (count (:unique-key opts)))]}
+  (assoc
+    (map->MemoryIndex opts)
+    :records (atom (sorted-map-by order/rank))))

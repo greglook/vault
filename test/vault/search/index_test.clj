@@ -30,5 +30,5 @@
 
 
 (deftest memory-index-test
-  (let [idx (memory-index :alpha :omega)]
+  (let [idx (memory-index {:unique-key [:alpha :omega]})]
     (test-index "memory-index" idx)))

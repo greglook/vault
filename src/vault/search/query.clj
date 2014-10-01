@@ -26,7 +26,7 @@
       :stored-at (time/now)}]))
 
 
-(def blob-index
+(def blob-records
   "Index definition for blob statistic records."
   {:schema
    {:blob      HashID      ; blob hash-id (pk)
@@ -53,7 +53,7 @@
     []))
 
 
-(def ref-index
+(def ref-records
   "Stores forward and back references between blobs."
   {:schema
    {:blob HashID    ; source hash-id
@@ -80,7 +80,7 @@
      :owner (:owner tx)}))
 
 
-(def tx-log
+(def tx-records
   "Stores a log of entity transactions."
   {:schema
    {:tx    HashID       ; transaction blob hash-id
@@ -100,7 +100,7 @@
        :vault.entity/update})})
 
 
-(def datom-index
+(def datom-records
   "Stores datoms."
   {:schema
    {:op        Keyword     ; datom operation (:attr/set, :attr/add, etc)

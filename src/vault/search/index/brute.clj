@@ -32,5 +32,7 @@
 (defn brute-force-index
   "Constructs a new brute-force 'index' which will search records from the
   given blob store."
-  [store projection]
-  (BruteForceIndex. store projection))
+  [opts]
+  {:pre [(some? (:store opts))
+         (fn? (:projection opts))]}
+  (map->BruteForceIndex opts))
