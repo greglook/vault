@@ -12,47 +12,28 @@ destroyed and rebuilt at any time from the source blob data.
 ## Index Definition
 
 An index is defined by three properties:
-- A _record schema_ which specifies the properties being indexed.
+- A _record schema_ which specifies the attributes being indexed.
 - A _projection function_ which transforms a blob into a sequence of records.
-- A set of _query types_ which give the attributes used to search the index.
+- A set of _query types_ which name the attributes used to search the index.
 
 Blobs may map to zero records, indicating that the blob is not relevant to the
 index. Alternately, a single blob can map to many records, as in the case of
 datoms from an entity update blob.
 
-Each index is then implemented by an underlying _search engine_ which handles
-the record storage and querying. For example, a brute-force engine could be
-implemented with a backing blob store and the projection function. To answer a
-query, the entire blob store would be enumerated, each blob transformed into
-records, and the records matched against the given pattern.
+## Implementations
 
-Engines can be implemented on many kinds of databases. Early support will
-probably consist of an in-memory implementation and later a SQLite3-backed
-engine.
+An index is implemented by an underlying system which handles the record storage
+and querying. For example, a brute-force index could be implemented with a
+backing blob store and the projection function alone. To answer a query, the
+entire blob store would be enumerated, each blob transformed into records, and
+the records matched against the given pattern.
 
-## Search Interface
+Indexes can be implemented on many kinds of databases. Early support will
+consist of an in-memory index and later a SQLite3-backed index.
 
-Each index contains _records_ of data and provides quick lookups based on the
-values of the record attributes. To search for matching records, the user
-provides a _pattern_ of attributes to match on.
-
-```clojure
-; If records in 'foo' look like this:
-{:id    String
- :alpha Long
- :beta  Long}
-
-; Searches return a sequence of matching records:
-(index/search foo {:alpha 123})
-;=>
-({:id "abc", :alpha 123, :beta 456}
- {:id "xyz", :alpha 123, :beta 897}
- ...)
-```
-
-Ideally, the index should optimize lookups for common patterns. In a relational
-database, the records in an index would map to rows in a table, and
-optimizations could be made by creating indexes on the relevant columns.
+For ideas on later implementations which could use a blob store as backing data,
+see [this blog
+post](http://tonsky.me/blog/unofficial-guide-to-datomic-internals/) for ideas.
 
 ## Catalogue
 
@@ -61,16 +42,16 @@ _catalogue_. The catalogue supports most of the methods of a blob-store except
 the `get` operation. To index a blob, you simply `put!` it into the catalogue.
 
 The catalogue uses one of the contained indexes to determine whether it's
-already seen a blob. See the [blob index](#blob-index) below.
+already seen a blob. See the [blob stats index](#blob-stats) below.
 
-## Low-Level Indexes
+## Graph Indexes
 
 The first two indexes deal with blobs and references, mapping the nodes and
 edges of the blob graph.
 
-### Blob Index
+### Blob Stats
 
-This is the most basic index; it stores data about the blobs which have been
+This is the most basic index; it stores records about the blobs which have been
 indexed. This lets the catalogue implement the `enumerate` and `stat` blob-store
 operations.
 
@@ -81,7 +62,6 @@ operations.
  :label     String      ; type-specific annotation
  :stored-at DateTime}   ; time added to index
 
-; Queries:
 :direct [blob]          ; direct lookups
 :typed  [type label]    ; blobs by type/label
 ```
@@ -92,10 +72,10 @@ Use cases:
 - Looking up PGP keys by storing the hexadecimal key identifier as the blob
   label.
 
-### Ref Index
+### Data Links
 
-This index stores the references between blobs, giving quick access forwards
-and backwards.
+This index stores records about hash-id references between blobs, giving quick
+access forwards and backwards.
 
 ```clojure
 {:blob HashID         ; source hash-id
@@ -180,11 +160,5 @@ reverse.
 
 The full-text index provides a way to efficiently search for matches in text
 data. How blobs are selected to be stored in the full-text index is still to be
-determined.
-
-```clojure
-{:blob HashID
- :text String}
-
-; ...?
-```
+determined. Presumably the index only covers latest-value of selected entity
+attributes.
