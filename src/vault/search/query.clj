@@ -26,7 +26,7 @@
       :stored-at (time/now)}]))
 
 
-(def blob-records
+(def blob-stats
   "Index definition for blob statistic records."
   {:schema
    {:blob      HashID      ; blob hash-id (pk)
@@ -44,17 +44,17 @@
    :projection blob->stats})
 
 
-(defn- blob->refs
-  "Projects a blob into hash-id reference records."
+(defn- blob->links
+  "Projects a blob into hash-id link records."
   [blob]
   (let [record {:blob (:id blob)
                 :type (:data/type blob)}]
-    ; TODO: walk the blob data structure and record refs
+    ; TODO: walk the blob data structure and record links
     []))
 
 
-(def ref-records
-  "Stores forward and back references between blobs."
+(def blob-links
+  "Stores hash-id links between blobs."
   {:schema
    {:blob HashID    ; source hash-id
     :type Keyword   ; source blob type
@@ -80,7 +80,7 @@
      :owner (:owner tx)}))
 
 
-(def tx-records
+(def tx-log
   "Stores a log of entity transactions."
   {:schema
    {:tx    HashID       ; transaction blob hash-id
@@ -100,7 +100,7 @@
        :vault.entity/update})})
 
 
-(def datom-records
+(def entity-datoms
   "Stores datoms."
   {:schema
    {:op        Keyword     ; datom operation (:attr/set, :attr/add, etc)
