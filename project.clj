@@ -36,7 +36,6 @@
    {:plugins
     [[codox "0.8.10"]
      [lein-marginalia "0.8.0"]]
-
     :aliases
     {"docs" ["do" ["doc"]
                   ["marg"
@@ -60,11 +59,10 @@
                    "src/vault/search/query.clj"]]}}
 
    :tool
-   {:dependencies
+   {:source-paths ["tool"]
+    :dependencies
     [[mvxcvi/directive "0.4.2"]
      [org.clojure/tools.namespace "0.2.7"]]
-    :jvm-opts []
-    :repl-options {:init-ns vault.system}
-    :source-paths ["tool"]}
+    :jvm-opts []}
 
    :repl [:tool]})
