@@ -33,15 +33,16 @@ consist of an in-memory index and later a SQLite3-backed index.
 
 For ideas on later implementations which could use a blob store as backing data,
 see [this blog
-post](http://tonsky.me/blog/unofficial-guide-to-datomic-internals/) for ideas.
+post](http://tonsky.me/blog/unofficial-guide-to-datomic-internals/) about
+Datomic's internal index data structure.
 
-## Catalogue
+## Catalog
 
 The various indexes on the blobs in a user's store are collected into a
-_catalogue_. The catalogue supports most of the methods of a blob-store except
-the `get` operation. To index a blob, you simply `put!` it into the catalogue.
+_catalog_. The catalog supports most of the methods of a blob-store except
+the `get` operation. To index a blob, you simply `put!` it into the catalog.
 
-The catalogue uses one of the contained indexes to determine whether it's
+The catalog uses one of the contained indexes to determine whether it's
 already seen a blob. See the [blob stats index](#blob-stats) below.
 
 ## Graph Indexes
@@ -52,7 +53,7 @@ edges of the blob graph.
 ### Blob Stats
 
 This is the most basic index; it stores records about the blobs which have been
-indexed. This lets the catalogue implement the `enumerate` and `stat` blob-store
+indexed. This lets the catalog implement the `enumerate` and `stat` blob-store
 operations.
 
 ```clojure
