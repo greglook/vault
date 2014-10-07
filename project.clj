@@ -33,7 +33,8 @@
     [[lein-cloverage "1.0.2"]]}
 
    :dev
-   {:plugins
+   {:source-paths ["dev/src"]
+    :plugins
     [[codox "0.8.10"]
      [lein-marginalia "0.8.0"]]
     :aliases
