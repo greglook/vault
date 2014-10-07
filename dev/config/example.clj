@@ -1,4 +1,11 @@
-; Vault development storage configuration.
+; Example Vault system configuration.
+
+(defaults
+  :store    :store.cache/memory
+  :catalog  :index/catalog
+  :identity :signature/keyring)
+
+
 
 ;; S3 Encrypted Blob Storage
 
@@ -53,7 +60,7 @@
 
 
 
-;; Index Configuration
+;; SQLite Indexes
 
 (defn sqlite-table
   [table recipe]
@@ -91,12 +98,3 @@
     :sha1
     (pgp/load-secret-keyring "/home/$USER/.gnupg/secring.gpg")
     pinentry/ask-pass))
-
-
-
-;; Component Selections
-
-(defaults
-  :store    :store.cache/memory
-  :catalog  :index/catalog
-  :identity :signature/keyring)
