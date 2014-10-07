@@ -66,7 +66,7 @@
    {:forward [:blob]        ; references from a source blob
     :reverse [:ref :type]}  ; references to a target blob (by type)
 
-   :projection blob->refs})
+   :projection blob->links})
 
 
 (defn- blob->tx
