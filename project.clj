@@ -8,6 +8,7 @@
   [[byte-streams "0.1.13"]
    [clj-time "0.8.0"]
    [com.stuartsierra/component "0.2.2"]
+   [com.taoensso/timbre "3.3.1"]
    [environ "1.0.0"]
    [mvxcvi/clj-pgp "0.5.4"]
    [mvxcvi/puget "0.6.4"]
