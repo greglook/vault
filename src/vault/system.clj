@@ -4,8 +4,12 @@
     [clj-time.core :as time]
     [clojure.java.io :as io]
     [com.stuartsierra.component :as component]
-    [environ.core :refer [env]]))
+    [environ.core :refer [env]])
+  (:import
+    java.io.File))
 
+
+;; ## System Components
 
 (def core
   (component/system-map))
@@ -25,4 +29,24 @@
   (component :defaults (apply hash-map ks)))
 
 
-; TODO: see riemann.config/include
+
+;; ## Configuration Files
+
+(defn- clj-file?
+  "Determines whether the given file is a clojure file."
+  [^File file]
+  (and (.isFile file)
+       (.matches (.getName file) ".*\\.clj$")))
+
+
+(defn include
+  "Include another config file or directory. If the path points to a directory,
+  all files with names ending in `.clj` within it will be loaded recursively."
+  [path]
+  (let  [file (io/file path)]
+    (binding [*ns* (find-ns 'vault.system)]
+      (if (.isDirectory file)
+        (doseq [f (file-seq file)]
+          (when (clj-file? f)
+            (load-file (str f))))
+        (load-file path)))))
