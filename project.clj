@@ -26,7 +26,7 @@
   {:path "target/doc/ns-hiera.png"
    :vertical? false
    :cluster-depth 2
-   :ignore-ns #{user clojure byte-streams clj-time vault.search.query}}
+   :ignore-ns #{user clojure byte-streams clj-time vault.search vault.tool}}
 
   :profiles
   {:coverage
@@ -66,6 +66,4 @@
    {:source-paths ["tool"]
     :dependencies
     [[mvxcvi/directive "0.4.2"]]
-    :jvm-opts []}
-
-   :repl [:tool]})
+    :jvm-opts []}})

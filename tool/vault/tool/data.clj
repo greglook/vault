@@ -2,9 +2,11 @@
   (:require
     [byte-streams]
     [clojure.java.io :as io]
+    [mvxcvi.crypto.pgp :as pgp]
     [puget.printer :as puget]
-    [vault.blob.core :as blob]
-    [vault.data.edn :as edn-data]
+    [vault.blob.store :as store]
+    [vault.data.edn :as edn]
+    [vault.data.key :as key]
     [vault.tool.blob :refer [enumerate-prefix]]))
 
 
@@ -34,11 +36,17 @@
       (println (str \u001b "[7m" \% \u001b "[0m")))))
 
 
+(defn- print-key-blob
+  "Prints a public-key blob info."
+  [blob]
+  (-> blob :data/values first pgp/key-info puget/cprint))
+
+
 (defn- print-edn-blob
   "Prints an EDN blob's values."
   [blob]
-  (binding [puget/*colored-output* true]
-    (edn-data/print-blob blob)))
+  (puget/with-color
+    (edn/print-data blob)))
 
 
 
@@ -48,11 +56,13 @@
   [opts args]
   (let [store (:blob-store opts)]
     (doseq [id (apply enumerate-prefix store args)]
-      (when-let [blob (blob/get store id)]
+      (when-let [blob (store/get store id)]
         (println (str id))
         (let [content (:content blob)
-              data (edn-data/read-blob blob)]
-          (cond data               (print-edn-blob data)
+              key (key/parse-key blob)
+              data (edn/parse-data blob)]
+          (cond key                (print-key-blob key)
+                data               (print-edn-blob data)
                 (:binary opts)     (print-binary-blob content)
                 (textual? content) (print-text-blob content)
                 :else              (print-binary-blob content)))

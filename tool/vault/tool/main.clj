@@ -5,7 +5,8 @@
     [vault.system :as sys]
     (vault.tool
       [blob :as blob-tool]
-      [data :as data-tool]))
+      [data :as data-tool]
+      [key :as key-tool]))
   #_ (:gen-class :main true))
 
 
@@ -34,7 +35,8 @@
     ["-h" "--help"    "Show usage information."]
 
     (init [opts]
-      (assoc opts :blob-store sys/blobs))
+      (let [store (some->> sys/core :defaults :store (get sys/core))]
+        (assoc opts :blob-store store)))
 
 
     (command "blob <action> [args]"
@@ -78,25 +80,20 @@
 
         (action data-tool/show-blob))
 
-      (command "create [args]"
-        "Create a new object."
-
-        ["-t" "--time" "Set the time to create the object root with. Defaults to the current time."]
-        ["-i" "--id" "Set an identity for the object root. Defaults to a random string."]
-        ["-a" "--attribute" "Provide an initial set of attributes for the object."]
-
-        (action not-yet-implemented))
-
-      (command "update <entity> <type> [args]"
-        "Apply an update to an existing object."
-
-        (action not-yet-implemented)))
+      ; TODO: command to store EDN as a data blob
+      )
 
 
-    (command "search <query>"
-      "Search entity attributes for properties."
+    (command "key <action> [args]"
+      "Interact with PGP keys."
 
-      (action not-yet-implemented))))
+      (command "import <keyring> <id>"
+        "Imports the identified PGP public key from the keyring file."
+
+        (action key-tool/import-key))
+
+      ; TODO: list identities and corresponding keys in the system
+      )))
 
 
 (defn -main [& args]
