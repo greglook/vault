@@ -34,7 +34,7 @@
     ["-h" "--help"    "Show usage information."]
 
     (init [opts]
-      (assoc opts :blob-store sys/blobs))
+      (assoc opts :blob-store (:store sys/core)))
 
 
     (command "blob <action> [args]"

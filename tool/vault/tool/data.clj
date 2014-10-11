@@ -3,8 +3,8 @@
     [byte-streams]
     [clojure.java.io :as io]
     [puget.printer :as puget]
-    [vault.blob.core :as blob]
-    [vault.data.edn :as edn-data]
+    [vault.blob.store :as store]
+    [vault.data.edn :as edn]
     [vault.tool.blob :refer [enumerate-prefix]]))
 
 
@@ -37,8 +37,8 @@
 (defn- print-edn-blob
   "Prints an EDN blob's values."
   [blob]
-  (binding [puget/*colored-output* true]
-    (edn-data/print-blob blob)))
+  (puget/with-color
+    (edn/print-data blob)))
 
 
 
@@ -48,10 +48,10 @@
   [opts args]
   (let [store (:blob-store opts)]
     (doseq [id (apply enumerate-prefix store args)]
-      (when-let [blob (blob/get store id)]
+      (when-let [blob (store/get store id)]
         (println (str id))
         (let [content (:content blob)
-              data (edn-data/read-blob blob)]
+              data (edn/parse-data blob)]
           (cond data               (print-edn-blob data)
                 (:binary opts)     (print-binary-blob content)
                 (textual? content) (print-text-blob content)

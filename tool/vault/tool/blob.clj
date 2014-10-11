@@ -5,8 +5,7 @@
     [mvxcvi.directive :refer [fail print-err]]
     [puget.printer :refer [cprint]]
     (vault.blob
-      [core :as blob]
-      [digest :as digest]
+      [content :as content]
       [store :as store])))
 
 
@@ -24,9 +23,9 @@
   "Lists stored blobs with references matching the given prefixes.
   Automatically prepends the store's algorithm if none is given."
   ([store]
-   (blob/list store))
+   (store/list store))
   ([store prefix]
-   (blob/list store :prefix (prefix-id digest/*algorithm* prefix)))
+   (store/list store :prefix (prefix-id content/*digest-algorithm* prefix)))
   ([store prefix & more]
    (mapcat (partial enumerate-prefix store) (cons prefix more))))
 
@@ -38,7 +37,7 @@
   [opts args]
   (let [store (:blob-store opts)
         controls (select-keys opts [:after :prefix :limit])
-        blobs (blob/list store controls)]
+        blobs (store/list store controls)]
     (doseq [hash-id blobs]
       (println (str hash-id)))))
 
@@ -47,7 +46,7 @@
   [opts args]
   (let [store (:blob-store opts)]
     (doseq [hash-id (apply enumerate-prefix store args)]
-      (let [info (blob/stat store hash-id)]
+      (let [info (store/stat store hash-id)]
         (if (:pretty opts)
           (do
             (println (str hash-id))
@@ -66,7 +65,7 @@
         ids (enumerate-prefix store (first args))]
     (when (< 1 (count ids))
       (fail (str (count ids) " blobs match prefix: " (str/join ids " "))))
-    (let [blob (blob/get store (first ids))]
+    (let [blob (store/get store (first ids))]
       (io/copy (:content blob) *out*))))
 
 
@@ -75,6 +74,6 @@
   (when (or (empty? args) (< 1 (count args)))
     (fail "Must provide a single source of blob data."))
   (let [source (io/file (first args))]
-    (if-let [blob (blob/store! (:blob-store opts) source)]
+    (if-let [blob (store/store! (:blob-store opts) source)]
       (println (str (:id blob)))
       (print-err "(no content)"))))

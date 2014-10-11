@@ -43,15 +43,3 @@
            [file :refer [file-store]]
            [memory :refer [memory-store]]))
       (configure :indexers))))
-
-
-
-;; BLOB STORAGE CONFIGURATION
-
-(defn select-blob-store
-  "Recursively selects a blob store in a config map."
-  [stores selection]
-  (->> (or selection :default)
-       (iterate stores)
-       (drop-while keyword?)
-       first))
