@@ -13,7 +13,8 @@
     (vault.blob
       [content :as content]
       [store :as store])
-    [vault.entity.datom]))
+    [vault.entity.datom]
+    [vault.system :as sys]))
 
 
 ;; GENERAL CONFIG
@@ -27,41 +28,15 @@
 
 ;; VAULT SYSTEM
 
-(def system nil)
-
-
-(defn init!
-  "Initialize the Vault system."
-  [config-path]
-  ; TODO: implement
-  :init)
-
-
-(defn start!
-  "Start the Vault system."
-  []
-  (when system
-    (alter-var-root #'system component/start))
-  :start)
-
-
 (defn go!
   "Initializes with the default config and starts the system."
   []
-  (init! (env :vault-config "dev/config"))
-  (start!))
-
-
-(defn stop!
-  "Stops the wonderdome system."
-  []
-  (when system
-    (alter-var-root #'system component/stop))
-  :stop)
+  (sys/include (env :vault-config "dev/config/dev.clj"))
+  (sys/start!))
 
 
 (defn reload!
   "Reloads all changed namespaces to update code, then re-launches the system."
   []
-  (stop!)
+  (sys/stop!)
   (refresh :after 'user/go!))
