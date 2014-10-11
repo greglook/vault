@@ -13,9 +13,7 @@
     (vault.blob
       [content :as content]
       [store :as store])
-    [vault.entity.datom]
-    (vault.tool
-      [config :as conf])))
+    [vault.entity.datom]))
 
 
 ;; GENERAL CONFIG
@@ -35,7 +33,6 @@
 (defn init!
   "Initialize the Vault system."
   [config-path]
-  (conf/load-configs config-path)
   ; TODO: implement
   :init)
 

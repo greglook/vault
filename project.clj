@@ -26,7 +26,7 @@
   {:path "target/doc/ns-hiera.png"
    :vertical? false
    :cluster-depth 2
-   :ignore-ns #{clojure byte-streams clj-time}}
+   :ignore-ns #{user clojure byte-streams clj-time vault.search.query}}
 
   :profiles
   {:coverage
@@ -38,6 +38,8 @@
     :plugins
     [[codox "0.8.10"]
      [lein-marginalia "0.8.0"]]
+    :dependencies
+    [[org.clojure/tools.namespace "0.2.7"]]
     :aliases
     {"docs" ["do" ["doc"]
                   ["marg"
@@ -63,8 +65,7 @@
    :tool
    {:source-paths ["tool"]
     :dependencies
-    [[mvxcvi/directive "0.4.2"]
-     [org.clojure/tools.namespace "0.2.7"]]
+    [[mvxcvi/directive "0.4.2"]]
     :jvm-opts []}
 
    :repl [:tool]})
