@@ -5,7 +5,8 @@
     [vault.system :as sys]
     (vault.tool
       [blob :as blob-tool]
-      [data :as data-tool]))
+      [data :as data-tool]
+      [key :as key-tool]))
   #_ (:gen-class :main true))
 
 
@@ -80,6 +81,18 @@
         (action data-tool/show-blob))
 
       ; TODO: command to store EDN as a data blob
+      )
+
+
+    (command "key <action> [args]"
+      "Interact with PGP keys."
+
+      (command "import <keyring> <id>"
+        "Imports the identified PGP public key from the keyring file."
+
+        (action key-tool/import-key))
+
+      ; TODO: list identities and corresponding keys in the system
       )))
 
 

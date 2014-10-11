@@ -64,7 +64,7 @@
   (let [store (:blob-store opts)
         ids (enumerate-prefix store (first args))]
     (when (< 1 (count ids))
-      (fail (str (count ids) " blobs match prefix: " (str/join ids " "))))
+      (fail (str (count ids) " blobs match prefix:\n" (str/join \newline ids))))
     (let [blob (store/get store (first ids))]
       (io/copy (:content blob) *out*))))
 

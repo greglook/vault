@@ -52,6 +52,7 @@
         (println (str id))
         (let [content (:content blob)
               data (edn/parse-data blob)]
+          ; TODO: interpret PGP keys
           (cond data               (print-edn-blob data)
                 (:binary opts)     (print-binary-blob content)
                 (textual? content) (print-text-blob content)
