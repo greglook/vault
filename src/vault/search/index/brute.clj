@@ -17,6 +17,7 @@
 
   index/Index
 
+  #_
   (search*
     [this query]
     (->> (store/list store)

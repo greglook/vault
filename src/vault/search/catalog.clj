@@ -10,7 +10,7 @@
     [vault.search.index :as index]))
 
 
-(defn- blob-stats
+(defn- stats->blob
   "Constructs an empty blob with stat metadata from the blobs index."
   [record]
   (assoc
@@ -21,14 +21,13 @@
 
 
 (defrecord IndexCatalog
-  [blobs refs txns datoms]
+  [blobs links tx-log datoms]
 
   store/BlobStore
 
   (enumerate
     [this opts]
-    ; TODO: figure out query syntax for selecting records with ids :after
-    (->> (index/search blobs :order :blob)
+    (->> (index/seek blobs :key (:after opts))
          (map :blob)
          (store/select-ids opts)))
 
@@ -36,8 +35,7 @@
   (stat
     [this id]
     (when id
-      (when-let [record (first (index/search blobs :where {:blob id}))]
-        (blob-stats record))))
+      (some-> blobs (index/get* id) stats->blob)))
 
 
   (put!
@@ -47,6 +45,31 @@
       (doseq [index (vals this)]
         (index/put! index blob)))
     blob))
+
+
+(defn find-blobs
+  "Look up blob stat records by type keyword and label."
+  [catalog data-type label]
+  (some->
+    catalog :blobs
+    (index/find :type data-type label)
+    (->> (map stats->blob))))
+
+
+(defn links-from
+  "Look up data links by source hash-id."
+  [catalog source-id]
+  (some->
+    catalog :links
+    (index/find :source source-id)))
+
+
+(defn links-to
+  "Look up data sorted by target hash-id and source blob type."
+  [catalog target-id data-type]
+  (some->
+    catalog :links
+    (index/find :target target-id data-type)))
 
 
 (defn catalog

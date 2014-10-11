@@ -1,6 +1,7 @@
 (ns vault.search.index
   "Indexes store a collection of _records_ which can be searched for values
   matching a pattern."
+  (:refer-clojure :exclude [find])
   (:require
     [puget.order :as order]
     [schema.core :as schema]
@@ -8,23 +9,44 @@
 
 
 (defprotocol Index
-  "Protocol for an index which can collect records."
+  "Protocol for an index which stores efficiently-searchable records."
 
-  (search*
-    [index query]
-    "Searches the index for an ordered sequence of records. See `search`.")
+  (get*
+    [index key]
+    "Looks up a record directly by key.")
+
+  (seek*
+    [index order components]
+    "Seeks into the index with a certain ordering. See `seek`.")
 
   (insert!
     [index record]
-    "Updates the index by inserting a new record value.")
+    "Updates the index by inserting a new record.")
 
   (delete!
-    [index pattern]
-    "Removes records from the index which match the given pattern.")
+    [index key]
+    "Removes records from the index which match the given key.")
 
   (erase!!
     [index]
     "Removes all records stored in the index."))
+
+
+(defn seek
+  "Raw access to the index data, by index. The index must be supplied, and,
+  optionally, one or more leading components of the index can be supplied for
+  the initial search. Note that there need not be an exact match on the
+  supplied components. The iteration will begin at or after the point in the
+  index where the components would reside. Further, the iteration is not bound
+  by the supplied components, and will only terminate at the end of the index."
+  [index order & components]
+  (seek* index order components))
+
+
+(defn find
+  "Search for records matching the given pattern."
+  [index order & components]
+  nil)
 
 
 (defn put!
@@ -36,29 +58,6 @@
     (doseq [record (projection blob)]
       (insert! index record)))
   blob)
-
-
-(defn search
-  "Returns a (potentially lazy) sequence of records from the index. The order
-  in which records are returned is up to the underlying implementation. Indexes
-  may store records internally in different orders to optimize different query
-  patterns.
-
-  - `:where` may be a map of keywords to values which will be checked against
-    the stored records
-  - `:order` may specify a keyword or vector of keywords to sort the returned
-    results by
-
-  If the index has a `:schema` key set, the returned records will be validated
-  before they are returned."
-  ([index]
-   (search index nil))
-  ([index query]
-   (let [schema (:schema index)]
-     (cond->> (search* index query)
-       schema (map #(do (schema/validate schema %) %)))))
-  ([index query-key query-val & more]
-   (search index (apply hash-map query-key query-val more))))
 
 
 

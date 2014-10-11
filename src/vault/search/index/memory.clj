@@ -13,6 +13,7 @@
 
   index/Index
 
+  #_
   (search*
     [this query]
     (index/filter-records
