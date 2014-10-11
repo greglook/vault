@@ -66,6 +66,4 @@
    {:source-paths ["tool"]
     :dependencies
     [[mvxcvi/directive "0.4.2"]]
-    :jvm-opts []}
-
-   :repl [:tool]})
+    :jvm-opts []}})

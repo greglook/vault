@@ -7,27 +7,15 @@ uses [grenchman](http://leiningen.org/grench.html) to communicate with a running
 REPL process.
 
 ```bash
-$ cd /path/to/vault
-$ lein trampoline repl :headless
-$ alias vault="$PWD/bin/vault"
-$ vault help
+% cd /path/to/vault
+% lein with-profile +tool repl
+# user=> (go!)
+% alias vault="$PWD/bin/vault"
+% vault help
 ```
 
 Use `-h` `--help` or `help` to show usage information for any command. General
 usage is similar to git, with nested subcommands for various types of actions.
-
-## Configuration
-
-Vault needs to know a number of things to be useful. All of the configuration is
-stored in `$HOME/.config/vault/` by default. Currently, the main configuration
-is to specify blob stores in `$HOME/.config/vault/blob-stores.edn`:
-
-```clojure
-{:default :local
-
- :local
- (file-store "/home/USER/var/vault")}
-```
 
 ## Blobs
 
@@ -43,8 +31,8 @@ sha256:97df3588b5a3f24babc3851b372f0ba71a9dcdded43b14b9d06961bfc1707d9d
 sha256:dc2c12477854b5719356c6413cb6b61880d89c38b7865a98601ea624202234a8
 ```
 
-The `put` command will read from STDIN until terminated by C-d. Alternately,
-pipe some text into it. It returns the blobref to the stored content.
+The `put` command will read from a file path, or STDIN until terminated by C-d.
+It returns the blobref to the stored content.
 
 ```
 % vault blob put
@@ -67,4 +55,16 @@ sha256:e0f2c726eca178f80ba12ff3720ba03c01f02f7a6e979ba78e3f26b9b522056a
 
 % vault blob get e0f
 I made a blob for the README!
+```
+
+## Data
+
+The data tool currently offers a basic way to show blob data in a richer format.
+Data blobs are shown as colored EDN, text blobs are printed, and raw blobs are
+shown as a binary hex dump:
+
+```
+% vault data show --binary 070
+sha256:07015e5cb892988cda1521143aa91381df4d20a475a21bdc324b0652f83ad4ac
+66 72 6F 62 62 6C 65 6E  69 74 7A 21                  frobblenitz!
 ```
