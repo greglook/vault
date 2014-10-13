@@ -39,7 +39,9 @@
 (defn- print-key-blob
   "Prints a public-key blob info."
   [blob]
-  (-> blob :data/values first pgp/key-info puget/cprint))
+  (puget/with-color
+    (println (puget/color-text :tag "#vault.tool/public-key"))
+    (-> blob :data/values first pgp/key-info puget/pprint)))
 
 
 (defn- print-edn-blob
