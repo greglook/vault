@@ -8,22 +8,20 @@
             "tests" ["do" "check" "test" "cloverage"]
             "tool-repl" ["with-profile" "+tool" "repl"]}
 
-  :plugins
-  [[codox "0.8.10"]
-   [lein-cloverage "1.0.2"]
-   [lein-marginalia "0.8.0"]]
+  :plugins [[codox "0.8.10"]
+            [lein-cloverage "1.0.2"]
+            [lein-marginalia "0.8.0"]]
 
-  :dependencies
-  [[byte-streams "0.1.13"]
-   [clj-time "0.8.0"]
-   [com.stuartsierra/component "0.2.2"]
-   [com.taoensso/timbre "3.3.1"]
-   [environ "1.0.0"]
-   [mvxcvi/clj-pgp "0.5.4"]
-   [mvxcvi/puget "0.6.4"]
-   [org.clojure/clojure "1.6.0"]
-   [org.clojure/data.codec "0.1.0"]
-   [prismatic/schema "0.3.0"]]
+  :dependencies [[byte-streams "0.1.13"]
+                 [clj-time "0.8.0"]
+                 [com.stuartsierra/component "0.2.2"]
+                 [com.taoensso/timbre "3.3.1"]
+                 [environ "1.0.0"]
+                 [mvxcvi/clj-pgp "0.5.4"]
+                 [mvxcvi/puget "0.6.4"]
+                 [org.clojure/clojure "1.6.0"]
+                 [org.clojure/data.codec "0.1.0"]
+                 [prismatic/schema "0.3.0"]]
 
   :hiera {:path "target/doc/ns-hiera.png"
           :vertical? false
