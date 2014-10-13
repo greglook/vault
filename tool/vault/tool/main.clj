@@ -35,8 +35,9 @@
     ["-h" "--help"    "Show usage information."]
 
     (init [opts]
-      (let [store (some->> sys/core :defaults :store (get sys/core))]
-        (assoc opts :blob-store store)))
+      (let [select #(get sys/core (or (get opts %) (get (:defaults sys/core) %)))
+            store (select :store)]
+        (assoc opts :store store)))
 
 
     (command "blob <action> [args]"

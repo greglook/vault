@@ -10,7 +10,7 @@
 
 (defn import-key
   [opts args]
-  (let [store (:blob-store opts)
+  (let [store (:store opts)
         [path key-id] args
         keyring (pgp/load-public-keyring (io/file path))]
     (when-not keyring

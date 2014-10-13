@@ -54,7 +54,7 @@
 
 (defn show-blob
   [opts args]
-  (let [store (:blob-store opts)]
+  (let [store (:store opts)]
     (doseq [id (apply enumerate-prefix store args)]
       (when-let [blob (store/get store id)]
         (println (str id))
