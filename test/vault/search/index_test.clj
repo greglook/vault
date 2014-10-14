@@ -8,25 +8,23 @@
 
 
 (defn test-index
-  "Tests an implementation of `vault.search.index/Index`."
+  "Tests an implementation of `vault.search.index/SortedIndex`."
   [label index]
   (let [r1 {:alpha 123, :beta "456", :gamma true,  :omega :bar}
         r2 {:alpha 123, :beta "789", :gamma false, :omega :foo}]
-    (testing (str (-> index class .getSimpleName))
+    (testing (.getSimpleName (class index))
       (println "  *" label)
-      (is (empty? (index/search index)))
+      (is (empty? (index/seek index nil)))
       (is (identical? index (index/insert! index r1)))
-      (is (= [r1] (index/search index nil)))
-      (is (empty? (index/search index {:where {:alpha 200}})))
-      (is (= [r1] (index/search index {:where {:alpha 123}})))
+      (is (= [r1] (index/seek index nil)))
+      (is (empty? (index/seek index {:alpha 200})))
+      (is (= [r1] (index/seek index {:alpha 123})))
       (index/insert! index r2)
-      (is (= [r1 r2] (index/search index {:alpha 123})))
-      (index/delete! index {:alpha 123, :omega :elk})
-      (is (= 2 (count (index/search index))))
-      (index/delete! index {:alpha 123, :omega :foo})
-      (is (empty? (index/search index :where {:alpha 123, :omega :foo})))
+      (is (= [r1 r2] (index/seek index {:alpha 123})))
+      (is (= 2 (count (index/seek index nil))))
+      (is (empty? (index/seek index {:alpha 123, :omega :zag})))
       (index/erase!! index)
-      (is (empty? (index/search index))))))
+      (is (empty? (index/seek index nil))))))
 
 
 (deftest memory-index-test

@@ -27,7 +27,7 @@
 
   (enumerate
     [this opts]
-    (->> (index/seek blobs :key (:after opts))
+    (->> (index/seek blobs {:blob (:after opts)})
          (map :blob)
          (store/select-ids opts)))
 
@@ -35,14 +35,18 @@
   (stat
     [this id]
     (when id
-      (some-> blobs (index/get* id) stats->blob)))
+      (some->
+        blobs
+        (index/seek {:blob id})
+        first
+        stats->blob)))
 
 
   (put!
     [this blob]
     (when-not (store/stat this (:id blob))
       ; TODO: ensure blob has been parsed?
-      (doseq [index (vals this)]
+      (doseq [index (set (vals this))]
         (index/put! index blob)))
     blob))
 

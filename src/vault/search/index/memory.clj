@@ -9,32 +9,24 @@
 ;; record is keyed by a sequence of attributes, which determines the order in
 ;; which they are stored.
 (defrecord MemoryIndex
-  [records unique-key]
+  [unique-key records]
 
-  index/Index
+  index/SortedIndex
 
-  #_
-  (search*
-    [this query]
-    (index/filter-records
-      query
-      (if-let [start (some->> query :where (index/key-vec unique-key))]
-        (map val (subseq @records >= start))
-        (vals @records))))
+  (seek
+    [this components]
+    (if components
+      (let [start-key (index/key-vec unique-key components)]
+        (map val (subseq @records >= start-key)))
+      (vals @records)))
 
 
   (insert!
     [this record]
     {:pre [(map? record)]}
-    (swap! records assoc (index/key-vec unique-key record) record)
+    (let [pkey (index/key-vec unique-key record)]
+      (swap! records assoc pkey record))
     this)
-
-
-  (delete!
-    [this pattern]
-    {:pre [(map? pattern)]}
-    (swap! records dissoc (index/key-vec unique-key pattern))
-    nil)
 
 
   (erase!!
