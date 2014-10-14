@@ -4,8 +4,8 @@
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
 
-  :aliases {"docs" ["do" "hiera" "doc" ["marg" "--multi" "--dir" "target/doc/marginalia"]]
-            "tests" ["do" "check" "test" "cloverage"]
+  :aliases {"docs" ["do" ["hiera"] ["doc"] ["marg" "--multi" "--dir" "target/doc/marginalia"]]
+            "tests" ["do" ["check"] ["test"] ["cloverage"]]
             "tool-repl" ["with-profile" "+tool" "repl"]}
 
   :plugins [[codox "0.8.10"]
@@ -26,7 +26,7 @@
   :hiera {:path "target/doc/ns-hiera.png"
           :vertical? false
           :cluster-depth 2
-          :ignore-ns #{user clojure byte-streams clj-time vault.search vault.tool}}
+          :ignore-ns #{user clojure byte-streams clj-time}}
 
   :codox {:defaults {:doc/format :markdown}
           :exclude #{user}
