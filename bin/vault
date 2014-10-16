@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Handle 'blob put' from stdin as a special case.
+if [[ "$1 $2" == "blob put" && ( -z "$3" || "$3" == "-" ) ]]; then
+    TMPFILE=$(mktemp --tmpdir vault.$$.XXXXXXXX)
+    cat > $TMPFILE
+    grench main vault.tool.main blob put $TMPFILE
+    rm $TMPFILE
+else
+    grench main vault.tool.main "$@"
+fi
