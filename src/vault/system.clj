@@ -62,6 +62,17 @@
    (component k (component/using v deps))))
 
 
+(defn components
+  "Registers a collection of components in the system map. May be passed a map
+  of keys to components, or a sequence of key/component pairs."
+  [& more]
+  (let [comps (if (and (= 1 (count more))
+                       (map? (first more)))
+                (first more)
+                (apply array-map more))]
+     (alter-var-root #'core merge comps)))
+
+
 (defn defaults
   "Select default components by supplying a map of key-value pairs."
   [& ks]
