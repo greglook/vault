@@ -2,7 +2,6 @@
   "Definitions for common index configurations and queries."
   (:require
     [clj-time.core :as time]
-    [puget.order :as order]
     [schema.core :as schema]
     [vault.blob.content]
     [vault.data.struct :as struct]
@@ -13,60 +12,6 @@
     clojure.lang.Keyword
     org.joda.time.DateTime
     vault.blob.content.HashID))
-
-
-(defn- blob->stats
-  "Projects a blob into a stat record."
-  [blob]
-  (when-let [{:keys [id content]} blob]
-    [{:blob id
-      :size (count content)
-      :type (:data/type blob)
-      ; TODO: label pgp keys
-      :stored-at (time/now)}]))
-
-
-(def blob-stats
-  "Index definition for blob statistic records."
-  {:schema
-   {:blob      HashID      ; blob hash-id (pk)
-    :size      Long        ; blob byte length
-    :type      Keyword     ; data type
-    :label     String      ; type-specific annotation
-    :stored-at DateTime}   ; time added to index
-
-   :unique-key :blob
-
-   :query-types
-   {:direct [:blob]        ; direct lookups (pk)
-    :typed [:type :label]} ; blobs by type/label
-
-   :projection blob->stats})
-
-
-(defn- blob->links
-  "Projects a blob into hash-id link records."
-  [blob]
-  (let [record {:blob (:id blob)
-                :type (:data/type blob)}]
-    ; TODO: walk the blob data structure and record links
-    []))
-
-
-(def blob-links
-  "Stores hash-id links between blobs."
-  {:schema
-   {:blob HashID    ; source hash-id
-    :type Keyword   ; source blob type
-    :ref  HashID}   ; target hash-id
-
-   :unique-key [:blob :ref]
-
-   :query-types
-   {:forward [:blob]        ; references from a source blob
-    :reverse [:ref :type]}  ; references to a target blob (by type)
-
-   :projection blob->links})
 
 
 (defn- blob->tx
@@ -83,7 +28,7 @@
 (def tx-log
   "Stores a log of entity transactions."
   {:schema
-   {:tx    HashID       ; transaction blob hash-id
+   {:id    HashID       ; transaction blob hash-id
     :type  Keyword      ; transaction type (root/update)
     :time  DateTime     ; time of modification
     :owner HashID}      ; owner's public-key hash-id
