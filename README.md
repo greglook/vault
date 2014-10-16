@@ -7,18 +7,27 @@ Vault
 
 Vault is a content-addressable, version-controlled, hypermedia datastore which
 provides strong assertions about the integrity and provenance of stored data.
-Read on for a general introduction, or see the docs for more detailed
-explanations of the various concepts.
 
-This is heavily inspired by both [Camlistore](http://camlistore.org/) and
-[Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
+This project is heavily inspired by both [Camlistore](http://camlistore.org/)
+and [Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
 compatible with either, though many of the ideas are similar. Why use a new data
 storage system? See [some comparisons to other systems](doc/vs.md).
 
+## Usage
+
+To get started working with Vault, the command-line tool is the simplest
+interface. After initializing some basic configuration, you can use the tool to
+explore the contents of the blob store. Use `-h` `--help` or `help` to show
+usage information for any command. General usage is similar to git, with nested
+subcommands for various types of actions.
+
+See the [usage docs](doc/tool.md) for more information. Please keep in mind that
+this software is still experimental and unstable!
+
 ## System Layers
 
-This is a quick tour of the concepts in Vault. For more details, follow the
-links or browse around the [doc](doc/) folder.
+This section provides a quick tour of the concepts in Vault. The system is
+broken into several layers with tightly-scoped domains.
 
 ### Blob Storage
 
@@ -36,51 +45,41 @@ contained blobs. The simplest type of blob storage is a hash map in memory.
 Another simple example is a store backed by a local file system, where blobs are
 stored as files.
 
-### Data Format
+### Data and Signatures
 
-By default, blobs are treated as opaque binary data. However, Vault recognizes
-certain special kinds of data. To represent structured data, Vault uses
-[EDN](https://github.com/edn-format/edn). Certain PGP objects can also be stored
-in Vault as a recognized data type; this is primarily for public key blobs.
+Blob content is parsed and classified in the [data layer](doc/data.md). There
+are three general classes of blobs: _data blobs_, _key blobs_, and _raw blobs_.
 
-[Data blobs](doc/data.md) are UTF-8 encoded EDN values recognized by a header
-tag: `#vault/data`. An example data blob representing a file might look like
-this:
+Vault represents structured data using [EDN](https://github.com/edn-format/edn)
+values. Data blobs are recognized by the header tag `#vault/data` as the first
+line of text in the blob. An example data blob representing a file might look
+like this:
 
 ```clojure
 #vault/data
-{:change-time #inst "2013-10-23T20:06:13.000-00:00"
+{:vault/type :fs/file
  :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
- :group "users"
- :group-id 500
- :modify-time #inst "2013-10-25T09:13:24.000-00:00"
  :name "foo.clj"
+ :permissions "0755"
  :owner "greglook"
  :owner-id 1000
- :permissions "0755"
- :vault/type :fs/file}
+ :group "users"
+ :group-id 500
+ :change-time #inst "2013-10-23T20:06:13.000-00:00"
+ :modify-time #inst "2013-10-25T09:13:24.000-00:00"}
 ```
 
-Blob references through hash-ids provide a secure way to link to immutable data,
-so it is simple to build data structures which automatically deduplicate shared
-data. These are similar to Clojure's persistent collections; see the schema for
-[hierarchical byte sequences](doc/schemas/byte-sequences.edn) for an example.
+Blob references through hash-ids provide a consistent way to link to immutable
+data, so it is simple to build data structures which automatically deduplicate
+shared data. These are similar to Clojure's persistent collections; see the
+schema for [hierarchical byte sequences](doc/schemas/byte-sequences.edn) for an
+example.
 
-### Entities and State
-
-Mutable data is represented in Vault by [entities](doc/entities.md). An entity
-provides a stable identity to a collection of _attributes_. Attributes may be
-single-valued properties such as `:description` or multi-valued sets like
-`:contact/phone`.
-
-Entities are created and modified by adding signed _transaction blobs_ to the
-store. A _root blob_ creates a new entity and serves as its identifier. _Update
-blobs_ can later modify entities' attributes.
-
-Identity and ownership in Vault are asserted by cryptographic signatures. These
-provide trust to the provenance of data that is present in the blob layer.
-Signatures are provided as secondary values in a data blob, following the
-primary value:
+PGP public keys are another type of content recognized by Vault. The hash-id of
+these _key blobs_ provides a secure identifier for the owner of the key.
+Ownership in Vault is asserted by cryptographic signatures which provide trust
+to the provenance of data. Signatures are provided as secondary values in a data
+blob, following the primary value:
 
 ```clojure
 {:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
@@ -88,12 +87,26 @@ primary value:
  :vault/type :vault/signature}
 ```
 
-### Indexing
+### Entities and State
 
-Another important component of the system is a set of
-[indexes](doc/indexing.md) of the data stored in Vault. Indexes can be thought
-of as a sorted list of tuples. Different indexes will store different subsets of
-the blob data.
+An [entity](doc/entities.md) provides a stable identity to a collection of
+attributes. This allows Vault to represent mutable data as a history of
+immutable values, similar to a Clojure reference type. Attributes may be
+single-valued properties such as `:description` or multi-valued sets like
+`:contact/phone`.
+
+Entities are created and modified by adding signed _transaction blobs_ to the
+store. A _root blob_ creates a new entity and serves as its identifier. _Update
+blobs_ can later modify entities' attributes.
+
+### Search Indexing
+
+Another important component of the system is a set of [indexes](doc/indexing.md)
+of the data stored in Vault. Indexes can be thought of as a sorted list of
+tuples. Different indexes will store different subsets of the blob data.
+
+Groups of indexes are collected together into a _catalog_. The two main catalogs
+in Vault are the _blob graph_ and the _database_.
 
 ### Applications
 
@@ -108,16 +121,6 @@ application defines semantics for a set of data types. Some example usages:
 One significant advantage of building on a common data layer is the ability to
 draw relations between many different kinds of data. Information from a variety
 of systems can be correlated into more meaningful, higher-level aggregates.
-
-## Usage
-
-To get started working with Vault, the command-line tool is the simplest
-interface. After initializing some basic configuration, you can use the tool to
-explore the contents of the blob store. Use `-h` `--help` or `help` to show
-usage information for any command. General usage is similar to git, with nested
-subcommands for various types of actions.
-
-See the [usage docs](doc/tool.md) for more information.
 
 ## License
 
