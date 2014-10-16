@@ -6,10 +6,10 @@ level, an index stores a certain type of records and provides an efficient way
 to search them by querying.
 
 Indexes are **not** authoritative stores of the blob data, and should not store
-entire blob contents. Since index state is not intended to be durable, it can be
-destroyed and rebuilt at any time from the source blob data.
+blob contents. Since index state is not intended to be durable, it can be
+rebuilt at any time from the source blob data.
 
-## Index Definition
+## Definition
 
 An index is defined by three properties:
 - A _record schema_ which specifies the attributes being indexed.

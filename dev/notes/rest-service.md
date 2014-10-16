@@ -4,6 +4,7 @@ Rest Server
 ## Blob Service
 
 ```
+  POST /blobs/
    PUT /blobs/{hash-id}
    GET /blobs/{hash-id}
    GET /blobs{?prefix,after,limit}
@@ -37,19 +38,3 @@ DELETE /state/{hash-id}              ; mark an entity root or update blob as del
    GET /index/avet/{attr}/{value}/{entity}    ; indexed attributes
    GET /index/vaet/{value}/{attr}/{entity}    ; reverse index
 ```
-
-### Type Index
-
-Indexes blobs by 'type'. Supported by the following table:
-
-```
-VARCHAR     hash_id         PRIMARY KEY
-INTEGER     size            NOT NULL
-VARCHAR     type
-TIMESTAMP   stored_at       NOT NULL
-```
-
-Indexed on:
-- `[hash_id]` for blob enumeration (also, the public key)
-- `[type stored_at]` for type lookup
-- `[stored_at]` potentially for store history
