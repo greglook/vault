@@ -1,4 +1,4 @@
-(defproject mvxcvi/vault "0.3.0-SNAPSHOT"
+(defproject mvxcvi/vault "0.3.0"
   :description "Content-addressable data store."
   :url "https://github.com/greglook/vault"
   :license {:name "Public Domain"
