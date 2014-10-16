@@ -6,7 +6,6 @@
     [vault.blob.content]
     [vault.data.struct :as struct]
     (vault.entity
-      [schema :refer [root-type update-type]]
       [tx :as tx])
     [vault.search.index :as index])
   (:import
@@ -19,7 +18,7 @@
 
 (def tx-types
   "Set of allowable transaction value types."
-  (set [root-type update-type]))
+  (set [tx/root-type tx/update-type]))
 
 
 (def tx-schema
