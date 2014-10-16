@@ -10,7 +10,6 @@
     [vault.data.test-keys :as keys]
     (vault.entity
       [datom :as datom]
-      [schema :refer :all]
       [tx :as tx])))
 
 
@@ -26,7 +25,7 @@
                                       :data [{:malformed 'value}]})))
     (let [value (tx/root-value
                   {:owner owner})]
-      (is (schema/validate EntityRoot value))
+      (is (schema/validate tx/EntityRoot value))
       (is (tx/root? value)))
     (let [dt (time/date-time 2014 5 15 1 21 36)
           value (tx/root-value
@@ -34,7 +33,7 @@
                    :id "foobar"
                    :time dt
                    :data [[:attr/set :title "Thing #1"]]})]
-      (is (schema/validate EntityRoot value))
+      (is (schema/validate tx/EntityRoot value))
       (is (= "foobar" (:id value)))
       (is (= dt (:time value)))
       (is (= [[:attr/set :title "Thing #1"]] (:data value)))
@@ -69,7 +68,7 @@
                 {:time t
                  :data {(content/hash (.getBytes "barbaz"))
                         [[:attr/set :title "Thing #3"]]}})]
-    (is (schema/validate EntityUpdate value))
+    (is (schema/validate tx/EntityUpdate value))
     (is (= t (:time value)))
     (is (tx/update? value))))
 
