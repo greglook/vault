@@ -13,7 +13,7 @@
       [file :refer [file-store]])))
 
 
-;; STORAGE FUNCTION TESTS
+;; ## Storage Function Tests
 
 (deftest list-wrapper
   (let [store (reify store/BlobStore (enumerate [this opts] (vector :list opts)))]
@@ -47,7 +47,7 @@
 
 
 
-;; STORAGE IMPLEMENTATION TESTS
+;; ## Blob Store Tests
 
 (defn- store-test-blobs!
   "Stores some test blobs in the given blob store and returns a map of the
@@ -100,29 +100,18 @@
       (is (empty? (store/list store)) "ends empty"))))
 
 
-(defn store-enabled?
-  "Uses the VAULT_BLOB_STORE_TESTS environment variable to determine which
-  tests to run."
-  [store-type]
-  (some->
-    (env :vault-blob-store-tests)
-    str/lower-case
-    (str/split #",")
-    set
-    (contains? store-type)))
 
+;; ## Storage Implementations
 
 (deftest test-memory-store
-  ; Always enabled.
   (let [store (memory-store)]
     (test-blob-store store "memory-store")))
 
 
 (deftest test-file-store
-  (when (store-enabled? "file")
-    (let [tmpdir (io/file "target" "test" "tmp"
-                          (str "file-blob-store."
-                            (System/currentTimeMillis)))
-          store (file-store tmpdir)]
-      (test-blob-store store "file-store")
-      (store/erase!! store))))
+  (let [tmpdir (io/file "target" "test" "tmp"
+                        (str "file-blob-store."
+                          (System/currentTimeMillis)))
+        store (file-store tmpdir)]
+    (test-blob-store store "file-store")
+    (store/erase!! store)))
