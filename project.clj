@@ -30,7 +30,7 @@
 
   :codox {:defaults {:doc/format :markdown}
           :exclude #{user}
-          :output-dir "target/doc/codox"
+          :output-dir "target/doc/api"
           :src-dir-uri "https://github.com/greglook/vault/blob/develop/"
           :src-linenum-anchor-prefix "L"}
 
