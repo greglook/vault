@@ -141,14 +141,14 @@
   "Looks up the owner for the given entity root id. Throws an exception if any
   of the ids is not an entity root."
   [store root-id]
-  (let [blob (edn/parse-data (store/get store root-id))]
-    (when-not blob
-      (throw (IllegalArgumentException.
+  (let [data (->> root-id (store/get store) edn/parse-data struct/data-value)]
+    (when-not data
+      (throw (IllegalStateException.
                (str "Cannot get owner for nonexistent entity " root-id))))
-    (when-not (root? (struct/data-value blob))
-      (throw (IllegalArgumentException.
+    (when-not (root? data)
+      (throw (IllegalStateException.
                (str "Cannot get owner for non-root blob " root-id))))
-    (:owner (struct/data-value blob))))
+    (:owner data)))
 
 
 (defn- get-update-owners
