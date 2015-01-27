@@ -9,25 +9,35 @@
   - `:data/values` a vector of values deserialized from the content")
 
 
+(def ^:const type-key
+  "Keyword in a blob record which stores the type of the contained data."
+  :data/type)
+
+
+(def ^:const values-key
+  "Keyword in a blob record which stores the type of the contained data."
+  :data/values)
+
+
 (defn data-attrs
   "Associates data attributes with the blob content."
   [blob data-type values & ks]
   (apply assoc blob
-    :data/type data-type
-    :data/values (vec values)
+    type-key data-type
+    values-key (vec values)
     ks))
 
 
 (defn data-type
   "Returns the type of data stored in the blob."
   [blob]
-  (:data/type blob))
+  (type-key blob))
 
 
 (defn data-value
   "Returns the first data value from the blob."
   [blob]
-  (first (:data/values blob)))
+  (first (values-key blob)))
 
 
 #_
@@ -36,8 +46,8 @@
   Returns an updated copy of the blob with a :data/type key set."
   [blob]
   ; If blob has a data type, assume it's already been processed.
-  (if (:data/type blob)
+  (if (type-key blob)
     blob
     (or (edn/parse-data blob)
         (key/parse-key blob)
-        (assoc blob :data/type :raw))))
+        (assoc blob type-key :raw))))

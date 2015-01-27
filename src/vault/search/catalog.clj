@@ -10,14 +10,6 @@
     [vault.search.index :as index]))
 
 
-(defn- stats->blob
-  "Constructs an empty blob with stat metadata from the blobs index."
-  [record]
-  (assoc
-    (content/empty-blob (:blob record))
-    :stat/size (:size record)
-    :stat/stored-at (:stored-at record)
-    :data/type (:type record)))
 
 
 (defrecord IndexCatalog
@@ -27,8 +19,8 @@
 
   (enumerate
     [this opts]
-    (->> (index/seek blobs {:blob (:after opts)})
-         (map :blob)
+    (->> (index/seek blobs {:id (:after opts)})
+         (map :id)
          (store/select-ids opts)))
 
 
@@ -38,8 +30,7 @@
       (some->
         blobs
         (index/seek {:blob id})
-        first
-        stats->blob)))
+        first)))
 
 
   (put!
@@ -49,31 +40,6 @@
       (doseq [index (set (vals this))]
         (index/put! index blob)))
     blob))
-
-
-(defn find-blobs
-  "Look up blob stat records by type keyword and label."
-  [catalog data-type label]
-  (some->
-    catalog :blobs
-    (index/find :type data-type label)
-    (->> (map stats->blob))))
-
-
-(defn links-from
-  "Look up data links by source hash-id."
-  [catalog source-id]
-  (some->
-    catalog :links
-    (index/find :source source-id)))
-
-
-(defn links-to
-  "Look up data sorted by target hash-id and source blob type."
-  [catalog target-id data-type]
-  (some->
-    catalog :links
-    (index/find :target target-id data-type)))
 
 
 (defn catalog

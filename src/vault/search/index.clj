@@ -7,13 +7,19 @@
 
 
 (defprotocol SortedIndex
-  "Protocol for an index of data which stores efficiently-searchable records."
+  "Protocol for a table which stores efficiently-searchable indexes of record
+  data."
+
+  (lookup
+    [index key]
+    "Looks up a record directly by a unique key. If every component of the key
+    is not specified, lookup should throw an exception.")
 
   (seek
     [index components]
-    "Provides raw access to the index data as a (potentially lazy) sequence.
-    Optionally, one or more leading components of the index can be supplied as
-    a map of keys to component values.
+    "Provides raw access to the index data as a (potentially lazy) sequence of
+    records. Optionally, one or more leading components of the index can be
+    supplied as a map of keys to component values.
 
     Note that there need not be an exact match on the supplied components. The
     sequence will begin at or after the point in the index where the components
@@ -30,11 +36,11 @@
 
 
 (defn matches?
-  "Returns true if the record matches the given pattern. For each key in the
-  pattern, the value must match the value stored in the record."
+  "Returns true if the record matches the pattern. For each key in the pattern
+  with some value, the value stored in the record must match."
   [pattern record]
-  (every? #(= (get pattern %)
-              (get record %))
+  (every? #(when-let [v (get pattern %)]
+             (= v (get record %)))
           (keys pattern)))
 
 

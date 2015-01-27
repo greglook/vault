@@ -62,32 +62,126 @@
 
 ;; SQLite Indexes
 
-(defn sqlite-table
-  [table recipe]
-  (sqlite-index
-    recipe
-    "/home/$USER/var/vault/catalog.db"
-    :table table))
+(components
+  (sqlite-graph-catalog
+    :catalog/graph
+    "/home/$USER/var/vault/graph.db"))
+
+(components
+  (sqlite-state-catalog
+    :catalog/state
+    "/home/$USER/var/vault/state.db"))
+
+; Expand to the following, respectively:
+
+(let [db-path "/home/$USER/var/vault/graph.db"]
+
+  ; Tables
+
+  (component :sqlite.table/blobs
+    (sqlite-table
+      db-path "blobs"
+      :schema graph/node-schema
+      :indexes {:typed [:type :label]}))
+
+  (component :sqlite.table/links
+    (sqlite-table
+      db-path "links"
+      :schema graph/link-schema
+      :indexes {:forward [:source]
+                :reverse [:target :type]}
+      :unique-key [:source :target]))
+
+  ; Indexes
+
+  (component :sqlite.index/blob-stats
+    (sqlite-index [:id])
+    {:table :sqlite.table/blobs})
+
+  (component :sqlite.index/blob-types
+    (sqlite-index [:type :label])
+    {:table :sqlite.table/blobs})
+
+  (component :sqlite.index/links-forward
+    (sqlite-index [:source])
+    {:table :sqlite.table/links})
+
+  (component :sqlite.index/links-reverse
+    (sqlite-index [:target :type])
+    {:table :sqlite.table/links})
+
+  ; Catalog
+
+  (component/using
+    (index/catalog)
+    {:blob-stats    :sqlite.index/blob-stats
+     :blob-types    :sqlite.index/blob-types
+     :links-forward :sqlite.index/links-forward
+     :links-reverse :sqlite.index/links-reverse}))
 
 
-(component :index.sqlite/blobs
-  (sqlite-table "blobs" query/blob-stats))
+(let [db-path "/home/$USER/var/vault/state.db"]
 
-(component :index.sqlite/links
-  (sqlite-table "links" query/blob-links))
+  ; Tables
 
-(component :index.sqlite/tx-log
-  (sqlite-table "tx_log" query/tx-log))
+  (component :sqlite.table/tx-log
+    (sqlite-table
+      db-path "tx_log"
+      :schema tx/tx-schema
+      :indexes {:history [:owner :time]}))
 
-(component :index.sqlite/datoms
-  (sqlite-table "datoms" query/entity-datoms))
+  (component :sqlite.table/datoms-all
+    (sqlite-table
+      db-path "datoms_all"
+      :schema tx/datom-schema
+      :indexes {:eavt [:entity :attribute :value :time]
+                :aevt [:attribute :entity :value :time]}))
 
-(component :index/catalog
-  (index/catalog)
-  {:blobs  :index.sqlite/blobs
-   :links  :index.sqlite/links
-   :txns   :index.sqlite/tx-log
-   :datoms :index.sqlite/datoms})
+  ; only 'indexed' attrs
+  (component :sqlite.table/datoms-avet
+    (sqlite-table
+      db-path "datoms_avet"
+      :schema tx/datom-schema
+      :indexes {:avet [:attribute :value :entity :time]}))
+
+  ; only vault/ref values (reverse index)
+  (component :sqlite.table/datoms-vaet
+    (sqlite-table
+      db-path "datoms_vaet"
+      :schema tx/datom-schema
+      :indexes {:vaet [:value :attribute :entity :time]}))
+
+  ; Indexes
+
+  (component :sqlite.index/tx-log
+    (sqlite-index [:owner :time])
+    {:table :sqlite.table/tx-log})
+
+  (component :sqlite.index/eavt
+    (sqlite-index [:entity :attribute :value :time])
+    {:table :sqlite.table/datoms-all})
+
+  (component :sqlite.index/aevt
+    (sqlite-index [:attribute :entity :value :time])
+    {:table :sqlite.table/datoms-all})
+
+  (component :sqlite.index/avet
+    (sqlite-index [:attribute :value :entity :time])
+    {:table :sqlite.table/datoms-avet})
+
+  (component :sqlite.index/vaet
+    (sqlite-index [:value :attribute :entity :time])
+    {:table :sqlite.table/datoms-vaet})
+
+  ; Catalog
+
+  (component/using
+    (index/catalog)
+    {:tx-log :sqlite.index/tx-log
+     :eavt   :sqlite.index/eavt
+     :aevt   :sqlite.index/aevt
+     :avet   :sqlite.index/avet
+     :vaet   :sqlite.index/vaet}))
 
 
 
