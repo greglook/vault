@@ -13,7 +13,9 @@
             [lein-marginalia "0.8.0"]]
 
   :dependencies [[byte-streams "0.1.13"]
+                 [ch.qos.logback/logback-classic "1.1.2"]
                  [clj-time "0.8.0"]
+                 [compojure "1.3.1"]
                  [com.stuartsierra/component "0.2.2"]
                  [com.taoensso/timbre "3.3.1"]
                  [environ "1.0.0"]
@@ -21,7 +23,11 @@
                  [mvxcvi/puget "0.6.4"]
                  [org.clojure/clojure "1.6.0"]
                  [org.clojure/data.codec "0.1.0"]
-                 [prismatic/schema "0.3.0"]]
+                 [org.clojure/tools.logging "0.3.1"]
+                 [prismatic/schema "0.3.0"]
+                 [ring/ring-core "1.3.2"]
+                 [ring/ring-jetty-adapter "1.3.2"]
+                 [ring-middleware-format "0.4.0"]]
 
   :hiera {:path "target/doc/ns-hiera.png"
           :vertical? false
@@ -35,8 +41,12 @@
           :src-linenum-anchor-prefix "L"}
 
   :profiles {:dev {:source-paths ["dev/src"]
-                   :dependencies [[org.clojure/tools.namespace "0.2.7"]]}
+                   :dependencies [[org.clojure/tools.namespace "0.2.8"]]}
 
              :tool {:source-paths ["tool"]
                     :dependencies [[mvxcvi/directive "0.4.2"]]
-                    :jvm-opts []}})
+                    :jvm-opts []}
+
+             :uberjar {:aot :all
+                       :target-path "target/uberjar"
+                       :main vault.service.main}})
