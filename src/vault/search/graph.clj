@@ -25,11 +25,11 @@
   "Projects a blob into a node record."
   [blob]
   (when-let [{:keys [id content]} blob]
-    [{:blob id
-      :size (count content)
-      :type (:data/type blob)
-      ; TODO: label pgp keys
-      :stored-at (time/now)}]))
+    {:blob id
+     :size (count content)
+     :type (:data/type blob)
+     ; TODO: label pgp keys
+     :stored-at (time/now)}))
 
 
 (defn node->stats
@@ -42,21 +42,6 @@
     :data/type (:type node)))
 
 
-(defn get-node
-  "Looks up a node record by hash-id."
-  [graph id]
-  (index/lookup (:nodes graph)
-                {:id id}))
-
-
-(defn find-nodes
-  "Find node records by type keyword and label."
-  [graph & [data-type label]]
-  (index/find (:node-types graph)
-              {:type data-type
-               :label label}))
-
-
 
 ;; ## Blob Graph Links
 
@@ -64,6 +49,7 @@
   "Schema for blob graph link records."
   {:source HashID     ; source hash-id
    :type   Keyword    ; source blob type
+   :key    Keyword    ; if the blob is a map, top-level key the link was found under
    :target HashID})   ; target hash-id
 
 
@@ -76,16 +62,84 @@
     []))
 
 
-(defn links-from
-  "Look up data links by source hash-id."
-  [graph & [source-id]]
-  (index/find (:links-from graph)
-              {:source source-id}))
+
+;; ## Graph Protocol
+
+(defprotocol GraphCatalog
+  "Graph catalogs store records about the nodes and the links among them in the
+  blob graph."
+
+  (get-node
+    [graph id]
+    "Looks up a node record by hash-id.")
+
+  (find-nodes
+    [graph data-type label]
+    "Find node records by type keyword and optional label string.")
+
+  (links-from
+    [graph source-id]
+    "Look up data links by source hash-id.")
+
+  (links-to
+    [graph target-id data-type]
+    "Look up data sorted by target hash-id and source blob type."))
 
 
-(defn links-to
-  "Look up data sorted by target hash-id and source blob type."
-  [graph & [target-id data-type]]
-  (index/find (:links-reverse graph)
-              {:target target-id
-               :type data-type}))
+;; The brute-force graph catalog iterates over all the blobs in a store to
+;; determine the answers to the graph queries.
+(defrecord BruteGraphCatalog
+  [store]
+
+  GraphCatalog
+
+  (get-node
+    [this id]
+    (some->> id (store/get* store) blob->node))
+
+
+  (find-nodes
+    [this data-type label]
+    nil)
+
+
+  (links-from
+    [this source-id]
+    nil)
+
+
+  (links-to
+    [this target-id data-type]
+    nil))
+
+
+;; An indexed graph catalog stored blob node and link records in sorted index
+;; data structures, which makes lookups much more efficient.
+(defrecord IndexGraphCatalog
+  [nodes node-types forward-links reverse-links]
+
+  GraphCatalog
+
+  (find-node
+    [this id]
+    (index/lookup nodes {:id id}))
+
+
+  (find-nodes
+    [this data-type label]
+    (index/find node-types
+                {:type data-type
+                 :label label}))
+
+
+  (links-from
+    [this source-id]
+    (index/find forward-links
+                {:source source-id}))
+
+
+  (links-to
+    [this target-id data-type]
+    (index/find reverse-links
+                {:target target-id
+                 :type data-type})))
