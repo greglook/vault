@@ -3,6 +3,7 @@
   (:require
     [clj-time.core :as time]
     [vault.blob.content :as content]
+    [vault.blob.store :as store]
     [vault.search.index :as index])
   (:import
     clojure.lang.Keyword
@@ -120,7 +121,7 @@
 
   GraphCatalog
 
-  (find-node
+  (get-node
     [this id]
     (index/lookup nodes {:id id}))
 
