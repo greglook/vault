@@ -1,4 +1,7 @@
 (ns user.save
+  "This namespace will not be reloaded by the tools.namespace refresh code. The
+  included protocol and functions offer a way to store in-memory state in a safe
+  location while reloading the rest of the codebase."
   (:require
     [clojure.tools.namespace.repl :refer [disable-reload!]]))
 
@@ -6,10 +9,8 @@
 (disable-reload!)
 
 
-(def storage
-  "Temporary persistent storage which will not be destroyed during a reload."
-  nil)
 
+;; ## State Protocol
 
 (defprotocol Memorable
   "Simple protocol to describe components which primarily use an in-memory
@@ -27,6 +28,7 @@
     component value in the system map."))
 
 
+;; By default, components don't save state and are not affected by restoration.
 (extend-type Object
   Memorable
 
@@ -37,3 +39,31 @@
   (restore!
     [this]
     this))
+
+
+
+;; ## State Storage
+
+(def storage
+  "Temporary persistent storage which will not be destroyed during a reload."
+  nil)
+
+
+(defn save-states!
+  "Takes a map of components and attempts to snapshot the state of each one.
+  State values are stored in the `storage` var under the corresponding keys."
+  [system]
+  (let [states (->> system
+                    (map (juxt key (comp snapshot val)))
+                    (remove (comp nil? val))
+                    (into {}))]
+    (alter-var-root #'storage (constantly states))))
+
+
+(defn restore-states!
+  "Takes a map of components and attempts to restore each one's corresponding
+  state from the `storage` var."
+  [system]
+  (doseq [[k state] storage]
+    (when-let [component (get system k)]
+      (save/restore! component state))))

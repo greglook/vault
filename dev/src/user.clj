@@ -27,6 +27,8 @@
   vault.entity.datom.Datom 'vault.tool/datom
   (juxt :op :entity :attribute :value :tx :time))
 
+; TODO: extend save/Memorable to in-memory blob and index storage components
+
 
 
 ;; ## System Lifecycle
@@ -34,22 +36,15 @@
 (defn save!
   "Saves state to storage before a reload."
   []
-  (let [states (->> system
-                    (map (juxt key (comp save/snapshot val)))
-                    (remove (comp nil? val))
-                    (into {}))]
-    (alter-var-root #'save/storage (constantly states))
-    :save!))
+  (save/save-states! system)
+  :saved)
 
 
 (defn load!
   "Loads state from storage after a reload. Should be called after `init!`."
   []
-  (doseq [[k state] save/storage]
-    (when-let [component (get system k)]
-      (save/restore! component state)))
-  ;(alter-var-root #'save/storage (constantly nil))
-  :load!)
+  (save/restore-states! system)
+  :loaded)
 
 
 (defn go!
