@@ -19,7 +19,7 @@
                  [com.stuartsierra/component "0.2.2"]
                  [environ "1.0.0"]
                  [mvxcvi/clj-pgp "0.5.4"]
-                 [mvxcvi/puget "0.6.6"]
+                 [mvxcvi/puget "0.7.0"]
                  [org.clojure/clojure "1.6.0"]
                  [org.clojure/data.codec "0.1.0"]
                  [org.clojure/tools.logging "0.3.1"]
