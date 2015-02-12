@@ -2,7 +2,6 @@
   "Blob storage backed by a map in memory."
   (:require
     [clj-time.core :as time]
-    [clojure.java.io :as io]
     [vault.blob.store :as store]))
 
 

@@ -2,15 +2,12 @@
   (:require
     [clj-time.core :as time]
     [clojure.test :refer :all]
-    [puget.printer :as puget]
     [schema.core :as schema]
-    (vault.blob
-      [content :as content]
-      [store :as store])
+    [vault.blob.content :as content]
+    [vault.blob.store :as store]
     [vault.data.test-keys :as keys]
-    (vault.entity
-      [datom :as datom]
-      [tx :as tx])))
+    [vault.entity.datom :as datom]
+    [vault.entity.tx :as tx]))
 
 
 (def blob-store keys/blob-store)

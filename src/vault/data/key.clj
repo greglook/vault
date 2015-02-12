@@ -1,9 +1,9 @@
 (ns vault.data.key
   "Functions to read blobs containing PGP public-key data."
   (:require
+    [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.content :as content]
-    [vault.data.struct :as struct]
-    [mvxcvi.crypto.pgp :as pgp])
+    [vault.data.struct :as struct])
   (:import
     (org.bouncycastle.openpgp
       PGPPublicKey

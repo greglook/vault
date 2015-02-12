@@ -2,15 +2,11 @@
   (:require
     [byte-streams :refer [bytes=]]
     [clojure.java.io :as io]
-    [clojure.string :as str]
     [clojure.test :refer :all]
-    [environ.core :refer [env]]
-    (vault.blob
-      [content :as content]
-      [store :as store])
-    (vault.blob.store
-      [memory :refer [memory-store]]
-      [file :refer [file-store]])))
+    [vault.blob.content :as content]
+    [vault.blob.store :as store]
+    [vault.blob.store.file :refer [file-store]]
+    [vault.blob.store.memory :refer [memory-store]]))
 
 
 ;; ## Storage Function Tests

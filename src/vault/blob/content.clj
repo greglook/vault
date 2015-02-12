@@ -2,7 +2,7 @@
   "Types and functions for hash identifiers and blobs of byte content."
   (:refer-clojure :exclude [hash read])
   (:require
-    [byte-streams]
+    [byte-streams :as bytes]
     [clojure.string :as str])
   (:import
     java.security.MessageDigest))
@@ -150,7 +150,7 @@
   "Reads data into memory from the given source and hashes it to identify the
   blob. This can handle any source supported by the byte-streams library."
   [source]
-  (let [content (byte-streams/to-byte-array source)]
+  (let [content (bytes/to-byte-array source)]
     (when-not (empty? content)
       (Blob. (hash content) content))))
 
@@ -159,4 +159,4 @@
   "Writes blob data to a byte stream."
   [blob sink]
   (when-let [content (:content blob)]
-    (byte-streams/transfer content sink)))
+    (bytes/transfer content sink)))

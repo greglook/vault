@@ -1,13 +1,10 @@
 (ns vault.search.state
   "Entity state data search functions and index definitions."
   (:require
-    [clj-time.core :as time]
     [schema.core :as schema]
     [vault.blob.content]
     [vault.data.struct :as struct]
-    (vault.entity
-      [tx :as tx])
-    [vault.search.index :as index])
+    [vault.entity.tx :as tx])
   (:import
     clojure.lang.Keyword
     org.joda.time.DateTime

@@ -10,14 +10,12 @@
     [clojure.set :as set]
     [clojure.string :as str]
     [schema.core :as schema]
-    ;[vault.blob.content]
+    [vault.blob.content]
     [vault.blob.store :as store]
-    (vault.data
-      [edn :as edn]
-      [signature :as sig]
-      [struct :as struct])
-    (vault.entity
-      [datom :as datom]))
+    [vault.data.edn :as edn]
+    [vault.data.signature :as sig]
+    [vault.data.struct :as struct]
+    [vault.entity.datom :as datom])
   (:import
     org.joda.time.DateTime
     vault.blob.content.HashID))

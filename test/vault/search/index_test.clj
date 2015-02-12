@@ -1,10 +1,8 @@
 (ns vault.search.index-test
   (:require
     [clojure.test :refer :all]
-    [environ.core :refer [env]]
     [vault.search.index :as index]
-    (vault.search.index
-      [memory :refer [memory-index]])))
+    [vault.search.index.memory :refer [memory-index]]))
 
 
 (defn test-index

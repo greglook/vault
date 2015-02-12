@@ -1,24 +1,12 @@
 (ns vault.data.signature-test
   (:require
-    [clojure.java.io :as io]
     [clojure.test :refer :all]
-    [mvxcvi.crypto.pgp :as pgp]
-    (puget
-      [data]
-      [printer :as puget])
-    (vault.blob
-      [content :as content]
-      [store :as store])
-    (vault.data
-      [edn :as edn]
-      [signature :as sig]
-      [test-keys :as test-keys :refer [blob-store pubkey pubkey-id]]))
-  (:import
-    ; FIXME: why is this necessary??
-    ; clojure.lang.Compiler$HostExpr.tagToClass(Compiler.java:1060)
-    (org.bouncycastle.openpgp
-      PGPPrivateKey
-      PGPSecretKey)))
+    [vault.blob.content :as content]
+    [vault.blob.store :as store]
+    [vault.data.edn :as edn]
+    [vault.data.signature :as sig]
+    [vault.data.test-keys :as test-keys
+     :refer [blob-store pubkey-id]]))
 
 
 (deftest no-signature-blob

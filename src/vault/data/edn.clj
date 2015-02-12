@@ -5,14 +5,10 @@
   `:data/primary-bytes` which is a two-element vector giving the first and last
   byte offsets into the content containing the first EDN value."
   (:require
-    (clj-time
-      [core :as time]
-      [format :as time-fmt])
-    [clojure.string :as str]
+    [clj-time.format :as time-fmt]
     [clojure.edn :as edn]
-    (puget
-      [data :as data]
-      [printer :as puget])
+    [puget.data :as data]
+    [puget.printer :as puget]
     [vault.blob.content :as content]
     [vault.data.struct :as struct])
   (:import

@@ -4,13 +4,11 @@
     [clojure.java.io :as io]
     [mvxcvi.crypto.pgp :as pgp]
     [vault.blob.store :as store]
-    (vault.data
-      [edn :as edn]
-      [key :as key]
-      [struct :as struct]))
+    [vault.data.edn :as edn]
+    [vault.data.key :as key]
+    [vault.data.struct :as struct])
   (:import
-    (org.bouncycastle.openpgp
-      PGPSignature)))
+    org.bouncycastle.openpgp.PGPSignature))
 
 
 ;; Register an EDN tag for PGP signatures, encoded as binary blocks.
