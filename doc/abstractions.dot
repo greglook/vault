@@ -1,0 +1,20 @@
+// Abstraction layers in Vault.
+digraph abstractions {
+    node [shape=box];
+
+    blob_storage;
+
+    data_layer -> blob_storage;
+
+    entity_tx -> blob_storage;
+    entity_tx -> data_layer;
+
+    indexes -> blob_storage;
+    indexes -> data_layer;
+
+    schema;
+
+    database -> schema;
+    database -> entity_tx;
+    database -> indexes;
+}

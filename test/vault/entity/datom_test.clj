@@ -2,7 +2,6 @@
   (:require
     [clj-time.core :as time]
     [clojure.test :refer :all]
-    [puget.printer :as puget]
     [vault.blob.content :as content]
     [vault.entity.datom :as datom]))
 

@@ -3,10 +3,7 @@
   around them for updates. Each index must define a `:projection` function which
   converts blobs to a sequence of records to store."
   (:require
-    [clj-time.core :as time]
-    (vault.blob
-      [content :as content]
-      [store :as store])
+    [vault.blob.store :as store]
     [vault.search.index :as index]))
 
 

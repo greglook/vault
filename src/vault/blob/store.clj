@@ -9,7 +9,6 @@
   - `:stat/origin`      resource location for the blob"
   (:refer-clojure :exclude [get list])
   (:require
-    byte-streams
     [vault.blob.content :as content]))
 
 

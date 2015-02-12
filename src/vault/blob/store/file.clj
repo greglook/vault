@@ -17,15 +17,11 @@
   Using this scheme, leaf directories should start approaching the limit once the
   user has 2^(3*12) entries, or about 68.7 billion blobs."
   (:require
-    [byte-streams]
-    (clj-time
-      [coerce :as coerce-time]
-      [core :as time])
+    [clj-time.coerce :as coerce-time]
     [clojure.java.io :as io]
     [clojure.string :as string]
-    (vault.blob
-      [content :as content]
-      [store :as store]))
+    [vault.blob.content :as content]
+    [vault.blob.store :as store])
   (:import
     java.io.File))
 

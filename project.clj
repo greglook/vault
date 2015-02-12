@@ -17,7 +17,6 @@
                  [clj-time "0.9.0"]
                  [compojure "1.3.1"]
                  [com.stuartsierra/component "0.2.2"]
-                 [com.taoensso/timbre "3.3.1"]
                  [environ "1.0.0"]
                  [mvxcvi/clj-pgp "0.5.4"]
                  [mvxcvi/puget "0.6.6"]
@@ -40,12 +39,17 @@
           :src-dir-uri "https://github.com/greglook/vault/blob/develop/"
           :src-linenum-anchor-prefix "L"}
 
-  :profiles {:dev {:source-paths ["dev/src"]
-                   :dependencies [[org.clojure/tools.namespace "0.2.8"]]}
+  :profiles {:repl {:source-paths ["dev/src"]
+                    :dependencies [[org.clojure/tools.namespace "0.2.8"]]
+                    :jvm-opts ["-DVAULT_LOG_APPENDER=repl"
+                               "-DVAULT_LOG_LEVEL=DEBUG"]}
+
+             :test {:resource-paths ["test-resources"]
+                    :jvm-opts ["-DVAULT_LOG_APPENDER=nop"
+                               "-DVAULT_LOG_LEVEL=TRACE"] }
 
              :tool {:source-paths ["tool"]
-                    :dependencies [[mvxcvi/directive "0.4.2"]]
-                    :jvm-opts []}
+                    :dependencies [[mvxcvi/directive "0.4.2"]]}
 
              :uberjar {:aot :all
                        :target-path "target/uberjar"

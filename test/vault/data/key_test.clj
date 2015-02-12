@@ -1,11 +1,9 @@
 (ns vault.data.key-test
   (:require
-    [byte-streams :refer [bytes=]]
     [clojure.test :refer :all]
     [mvxcvi.crypto.pgp :as pgp]
-    (vault.data
-      [key :as key]
-      [test-keys :as test-keys])))
+    [vault.data.key :as key]
+    [vault.data.test-keys :as test-keys]))
 
 
 (def pubkey
