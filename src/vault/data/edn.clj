@@ -60,8 +60,8 @@
 (def ^:no-doc data-readers
   "Atom containing a map of tag readers supported by Vault."
   (atom
-    {'bin data/read-bin
-     'uri data/read-uri}
+    {'puget/bin data/read-bin
+     'puget/uri data/read-uri}
     :validator map?))
 
 
