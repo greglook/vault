@@ -52,16 +52,9 @@ like this:
 
 ```clojure
 #vault/data
-{:vault/type :fs/file
- :content #vault/blob "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
- :name "foo.clj"
- :permissions "0755"
- :owner "greglook"
- :owner-id 1000
- :group "users"
- :group-id 500
- :change-time #inst "2013-10-23T20:06:13.000-00:00"
- :modify-time #inst "2013-10-25T09:13:24.000-00:00"}
+{:name "foo.clj"
+ :content #bytes/raw #vault/blob "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+ ...}
 ```
 
 Blob references through hash-ids provide a consistent way to link to immutable
@@ -72,8 +65,24 @@ example.
 
 ### Link Paths
 
-Structured data in Vault can be _linked_ to other data using the `:vault/links`
-key.
+Structured data in Vault can be _linked_ to other data by providing a vector of
+_path keys_ and their corresponding hash identifier links in the `:vault/links`
+attribute. This provides a generic way to address tree-like data structures.
+
+If blob A links to blob B with the "foo" key, then the uri
+`sha256:<hash-of-A>/foo` will resolve to blob B. Similarly, if blob B links to C
+as "bar", and C links to D as "baz", then the following URIs all resolve to the
+same blob:
+
+```
+sha256:<hash-of-A>/foo/bar/baz
+sha256:<hash-of-B>/bar/baz
+sha256:<hash-of-C>/baz
+sha256:<hash-of-D>
+```
+
+See the [path traversal doc](doc/path-traversal.md) for more details on how this
+is accomplished.
 
 ### Identity and State
 
@@ -88,7 +97,7 @@ primary value:
 
 ```clojure
 {:key #vault/blob "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
- :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
+ :signature #pgp/signature #bytes/bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
  :vault/type :vault/signature}
 ```
 
