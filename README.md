@@ -7,22 +7,17 @@ Vault
 
 Vault is a content-addressable, version-controlled, hypermedia datastore which
 provides strong assertions about the integrity and provenance of stored data.
+This is heavily inspired by the following projects:
 
-This project is heavily inspired by both [Camlistore](http://camlistore.org/)
-and [Datomic](http://www.datomic.com/). Vault does not aim to be (directly)
-compatible with either, though many of the ideas are similar. Why use a new data
-storage system? See [some comparisons to other systems](doc/vs.md).
+- [Camlistore](http://camlistore.org/)
+- [Datomic](http://www.datomic.com/)
+- [IPFS](http://ipfs.io/)
 
-## Usage
+Vault does not aim to be (directly) compatible with any of these, though many of
+the ideas are similar. Why use a new data storage system? See [some comparisons
+to other systems](doc/vs.md).
 
-To get started working with Vault, the command-line tool is the simplest
-interface. After initializing some basic configuration, you can use the tool to
-explore the contents of the blob store. Use `-h` `--help` or `help` to show
-usage information for any command. General usage is similar to git, with nested
-subcommands for various types of actions.
-
-See the [usage docs](doc/tool.md) for more information. Please keep in mind that
-this software is still experimental and unstable!
+***VAULT IS HIGHLY EXPERIMENTAL AND NOT FULLY IMPLEMENTED!***
 
 ## System Layers
 
@@ -45,7 +40,7 @@ contained blobs. The simplest type of blob storage is a hash map in memory.
 Another simple example is a store backed by a local file system, where blobs are
 stored as files.
 
-### Data and Signatures
+### Structured Data
 
 Blob content is parsed and classified in the [data layer](doc/data.md). There
 are three general classes of blobs: _data blobs_, _key blobs_, and _raw blobs_.
@@ -58,7 +53,7 @@ like this:
 ```clojure
 #vault/data
 {:vault/type :fs/file
- :content #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+ :content #vault/blob "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
  :name "foo.clj"
  :permissions "0755"
  :owner "greglook"
@@ -72,32 +67,30 @@ like this:
 Blob references through hash-ids provide a consistent way to link to immutable
 data, so it is simple to build data structures which automatically deduplicate
 shared data. These are similar to Clojure's persistent collections; see the
-schema for [hierarchical byte sequences](doc/schemas/byte-sequences.edn) for an
+schema for [hierarchical byte sequences](doc/schemas/byte-sequences.md) for an
 example.
 
-PGP public keys are another type of content recognized by Vault. The hash-id of
-these _key blobs_ provides a secure identifier for the owner of the key.
-Ownership in Vault is asserted by cryptographic signatures which provide trust
-to the provenance of data. Signatures are provided as secondary values in a data
-blob, following the primary value:
+### Link Paths
+
+Structured data in Vault can be _linked_ to other data using the `:vault/links`
+key.
+
+### Identity and State
+
+PGP public keys establish _identity_ in Vault. The hash-id of these _key blobs_
+provides a secure identifier for a mutable reference. Each identity may be bound
+to a value by _transaction_ blobs which are signed by the corresponding private
+key. This allows Vault to represent mutable data as a history of immutable
+values, similar to a Clojure reference type.
+
+Signatures are provided as secondary values in a transaction blob, following the
+primary value:
 
 ```clojure
-{:key #vault/ref "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
+{:key #vault/blob "sha256:461566632203729fe8e1c6f373e53b5618069817f00f916cceb451853e0b9f75"
  :signature #pgp/signature #bin "iQIcBAABAgAGBQJSeHKNAAoJEAadbp3eATs56ckP/2W5QsCPH5SMrV61su7iGPQsdXvZqBb2LKUhGku6ZQxqBYOvDdXaTmYIZJBY0CtAOlTe3NXn0kvnTuaPoA6fe6Ji1mndYUudKPpWWld9vzxIYpqnxL/ZtjgjWqkDf02q7M8ogSZ7dp09D1+P5mNnS4UOBTgpQuBNPWzoQ84QP/N0TaDMYYCyMuZaSsjZsSjZ0CcCm3GMIfTCkrkaBXOIMsHk4eddb3V7cswMGUjLY72k/NKhRQzmt5N/4jw/kI5gl1sN9+RSdp9caYkAumc1see44fJ1m+nOPfF8G79bpCQTKklnMhgdTOMJsCLZPdOuLxyxDJ2yte1lHKN/nlAOZiHFX4WXr0eYXV7NqjH4adA5LN0tkC5yMg86IRIY9B3QpkDPr5oQhlzfQZ+iAHX1MyfmhQCp8kmWiVsX8x/mZBLS0kHq6dJs//C1DoWEmvwyP7iIEPwEYFwMNQinOedu6ys0hQE0AN68WH9RgTfubKqRxeDi4+peNmg2jX/ws39C5YyaeJW7tO+1TslKhgoQFa61Ke9lMkcakHZeldZMaKu4Vg19OLAMFSiVBvmijZKuANJgmddpw0qr+hwAhVJBflB/txq8DylHvJJdyoezHTpRnPzkCSbNyalOxEtFZ8k6KX3i+JTYgpc2FLrn1Fa0zLGac7dIb88MMV8+Wt4H2d1c"
  :vault/type :vault/signature}
 ```
-
-### Entities and State
-
-An [entity](doc/entities.md) provides a stable identity to a collection of
-attributes. This allows Vault to represent mutable data as a history of
-immutable values, similar to a Clojure reference type. Attributes may be
-single-valued properties such as `:description` or multi-valued sets like
-`:contact/phone`.
-
-Entities are created and modified by adding signed _transaction blobs_ to the
-store. A _root blob_ creates a new entity and serves as its identifier. _Update
-blobs_ can later modify entities' attributes.
 
 ### Search Indexing
 
@@ -121,6 +114,17 @@ application defines semantics for a set of data types. Some example usages:
 One significant advantage of building on a common data layer is the ability to
 draw relations between many different kinds of data. Information from a variety
 of systems can be correlated into more meaningful, higher-level aggregates.
+
+## Usage
+
+To get started working with Vault, the command-line tool is the simplest
+interface. After initializing some basic configuration, you can use the tool to
+explore the contents of the blob store. Use `-h` `--help` or `help` to show
+usage information for any command. General usage is similar to git, with nested
+subcommands for various types of actions.
+
+See the [usage docs](doc/tool.md) for more information. Please keep in mind that
+this software is still experimental and unstable!
 
 ## License
 
