@@ -84,7 +84,7 @@ sha256:<hash-of-D>
 See the [path traversal doc](doc/path-traversal.md) for more details on how this
 is accomplished.
 
-### Identity and State
+### Identity and Mutable State
 
 PGP public keys establish _identity_ in Vault. The hash-id of these _key blobs_
 provides a secure identifier for a mutable reference. Each identity may be bound
