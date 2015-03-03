@@ -5,6 +5,7 @@
     [vault.search.index.memory :refer [memory-index]]))
 
 
+#_
 (defn test-index
   "Tests an implementation of `vault.search.index/SortedIndex`."
   [label index]
@@ -25,6 +26,7 @@
       (is (empty? (index/seek index nil))))))
 
 
+#_
 (deftest memory-index-test
   (let [idx (memory-index {:unique-key [:alpha :omega]})]
     (test-index "memory-index" idx)))

@@ -10,9 +10,11 @@
     [vault.entity.tx :as tx]))
 
 
+#_
 (def blob-store keys/blob-store)
 
 
+#_
 (deftest root-values
   (let [owner (content/hash (.getBytes "foo"))]
     (is (thrown? IllegalArgumentException
@@ -37,6 +39,7 @@
       (is (tx/root? value)))))
 
 
+#_
 (deftest root-blobs
   (let [t (time/date-time 2014 5 15 1 21 36)
         root (tx/root->blob
@@ -55,6 +58,7 @@
             blob-store)))))
 
 
+#_
 (deftest update-values
   (is (thrown? RuntimeException
                (tx/update-value {:data nil})))
@@ -70,6 +74,7 @@
     (is (tx/update? value))))
 
 
+#_
 (deftest update-blobs
   (let [t (time/date-time 2014 5 14 3 20 36)
         root-a (->> {:owner keys/pubkey-id}
@@ -94,6 +99,7 @@
             blob-store)))))
 
 
+#_
 (deftest tx-datoms
   (let [t (time/date-time 2014 5 14 3 20 36)
         root-a (->> {:owner keys/pubkey-id}
