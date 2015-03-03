@@ -59,10 +59,7 @@
 
 (def ^:no-doc data-readers
   "Atom containing a map of tag readers supported by Vault."
-  (atom
-    {'puget/bin data/read-bin
-     'puget/uri data/read-uri}
-    :validator map?))
+  (atom {} :validator map?))
 
 
 (defmacro register-tag!
@@ -72,15 +69,13 @@
   - `cls`    class type to assign a tagged representation to
   - `writer` function to generate the serialized value
   - `reader` function to parse a serialized value"
-  ([tag reader]
-   `(swap! data-readers assoc '~tag ~reader))
-  ([tag cls writer reader]
-   `(do
-      (data/extend-tagged-value ~cls '~tag ~writer)
-      (swap! data-readers assoc '~tag ~reader))))
+  [tag cls writer reader]
+  `(do
+     (data/extend-tagged-value ~cls '~tag ~writer)
+     (swap! data-readers assoc '~tag ~reader)))
 
 
-(register-tag! vault/ref
+(register-tag! vault/blob
   HashID str
   content/parse-id)
 
