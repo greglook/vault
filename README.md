@@ -1,3 +1,15 @@
+**NOTE:** I've stopped working on Vault in favor of splitting the pieces out
+into smaller, composable libraries. This will also improve compatibility with
+other similar systems, especially IPFS. The current pieces are:
+
+- [clj-multihash](https://github.com/greglook/clj-multihash) for hash
+  digest identifiers
+- [blocks](https://github.com/greglook/blocks) for content-addressed storage
+- [clj-merkledag](https://github.com/greglook/clj-merkledag) for the EDN data
+  layer
+
+The remainder of the README is preserved here for posterity.
+
 Vault
 =====
 
@@ -16,8 +28,6 @@ This is heavily inspired by the following projects:
 Vault does not aim to be (directly) compatible with any of these, though many of
 the ideas are similar. Why use a new data storage system? See [some comparisons
 to other systems](doc/vs.md).
-
-***VAULT IS HIGHLY EXPERIMENTAL AND NOT FULLY IMPLEMENTED!***
 
 ## System Layers
 
